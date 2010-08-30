@@ -30,11 +30,15 @@ static int luaH_callinitmethod (lua_State *L, int nargs)
 /* {{{ luaH_setgcmethod() */
 static void luaH_setgcmethod (lua_State *L)
 {
-	lua_getfield (L, 1, "__gc");
+	lua_getfield (L, 1, "del");
 	if (!lua_isnil (L, -1))
 	{
 		lua_newuserdata (L, sizeof (int));
+		lua_newtable (L);
+		lua_pushvalue (L, -3);
+		lua_setfield (L, -2, "__gc");
 		lua_pushvalue (L, 1);
+		lua_setfield (L, -2, "__index");
 		lua_setmetatable (L, -2);
 		lua_setfield (L, 1, "__gcobj");
 	}
