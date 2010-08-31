@@ -203,7 +203,7 @@ int luaopen_luah_netlib_epoll (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", myepoll_init},
-		{"__gc", myepoll_del},
+		{"del", myepoll_del},
 		{"register", myepoll_register},
 		{"modify", myepoll_modify},
 		{"unregister", myepoll_unregister},

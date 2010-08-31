@@ -9,6 +9,7 @@
 int luaopen_luah_netlib_socket (lua_State *L)
 {
 	luaL_Reg meths[] = {
+		{"init", mysocket_init},
 		{NULL}
 	};
 
