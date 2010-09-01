@@ -31,6 +31,58 @@ void luaH_setfieldint (lua_State *L, int index, const char *name, int value)
 }
 /* }}} */
 
+/* {{{ luaH_callfunction() */
+int luaH_callfunction (lua_State *L, int index, int nargs)
+{
+	int t = lua_gettop (L);
+	lua_pushvalue (L, index);
+	lua_insert (L, -nargs-1);
+	lua_call (L, nargs, LUA_MULTRET);
+	return lua_gettop (L) - t;
+}
+/* }}} */
+
+/* {{{ luaH_callmethod() */
+int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
+{
+	int t = lua_gettop (L);
+	lua_pushvalue (L, index);
+	lua_getfield (L, index, method);
+	lua_insert (L, -2);
+	lua_insert (L, -nargs-2);
+	lua_insert (L, -nargs-2);
+	lua_call (L, nargs+1, LUA_MULTRET);
+	return lua_gettop (L) - t;
+}
+/* }}} */
+
+/* {{{ luaH_strmatch() */
+int luaH_strmatch (lua_State *L, const char *match)
+{
+	lua_pushstring (L, match);
+	int rets = luaH_callmethod (L, -2, "match", 1);
+	if (lua_isnil (L, -1))
+	{
+		lua_pop (L, rets);
+		return 0;
+	}
+	return 1;
+}
+/* }}} */
+
+/* {{{ luaH_strequal() */
+int luaH_strequal (lua_State *L, int index, const char *cmp)
+{
+	int ret;
+
+	lua_pushstring (L, cmp);
+	ret = lua_equal (L, index, -1);
+	lua_pop (L, 1);
+
+	return ret;
+}
+/* }}} */
+
 /* {{{ luaH_stackdump() */
 void luaH_stackdump (lua_State *L)
 {

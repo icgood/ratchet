@@ -3,6 +3,7 @@
 
 #include <lua.h>
 
+int luaopen_luah_netlib_socket_parseurl (lua_State *L);
 int luaH_parseurl (lua_State *L);
 
 #endif
