@@ -5,9 +5,9 @@
 
 #define luaH_perror(L) luaH_perror_ln (L, __FILE__, __LINE__)
 
-#define luaH_setmethod(L, i, n, m) do { \
+#define luaH_setmethod(L, n, m) do { \
 	lua_pushcfunction (L, m); \
-	lua_setfield (L, i-1, n); \
+	lua_setfield (L, -2, n); \
 } while (1 == 0)
 
 int luaH_perror_ln (lua_State *L, const char *file, int line);

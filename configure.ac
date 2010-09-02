@@ -45,8 +45,7 @@ AC_FUNC_STRERROR_R
 AC_CONFIG_FILES([Makefile
 		 misc/Makefile
 		 makeclass/Makefile
+		 ratchet/Makefile
 		 luah/Makefile
-		 epoll/Makefile
-		 socket/Makefile
 		 test/Makefile])
 AC_OUTPUT

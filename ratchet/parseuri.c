@@ -8,7 +8,7 @@
 #include <netinet/in.h>
 #include <sys/un.h>
 
-#include "urls.h"
+#include "parseuri.h"
 
 #define IPV4_IP_PATTERN 
 
@@ -72,19 +72,11 @@ static int tcp_endpoint (lua_State *L)
 }
 /* }}} */
 
-/* {{{ zmq_endpoint() */
-static int zmq_endpoint (lua_State *L)
-{
-	/* ZMQ sockets are directly passed the endpoint string, already on top. */
-	lua_pushvalue (L, -1);
-	return 1;
-}
-/* }}} */
-
-/* {{{ luaH_parseurl() */
-int luaH_parseurl (lua_State *L)
+/* {{{ luaH_parseuri() */
+int luaH_parseuri (lua_State *L)
 {
 	const char *url = luaL_checkstring (L, 1);
+	luaL_checktype (L, 2, LUA_TTABLE);
 
 	lua_pushvalue (L, 1);
 	if (!luaH_strmatch (L, "^([%w%+%.%-]+):(.*)$"))
@@ -95,7 +87,7 @@ int luaH_parseurl (lua_State *L)
 	lua_remove (L, -3);
 
 	lua_pushvalue (L, -2);
-	lua_gettable (L, lua_upvalueindex (1));
+	lua_gettable (L, 2);
 	if (lua_isnil (L, -1))
 		return luaL_error (L, "Unknown URL scheme: <%s>", url);
 	lua_insert (L, -2);
@@ -105,20 +97,13 @@ int luaH_parseurl (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_netlib_socket_parseurl() */
-int luaopen_luah_netlib_socket_parseurl (lua_State *L)
+/* {{{ luaH_parseuri_add_builtin() */
+void luaH_parseuri_add_builtin (lua_State *L)
 {
-	lua_newtable (L);
-
 	lua_pushcfunction (L, unix_endpoint);
 	lua_setfield (L, -2, "unix");
 	lua_pushcfunction (L, tcp_endpoint);
 	lua_setfield (L, -2, "tcp");
-	lua_pushcfunction (L, zmq_endpoint);
-	lua_setfield (L, -2, "zmq");
-
-	lua_pushcclosure (L, luaH_parseurl, 1);
-	return 1;
 }
 /* }}} */
 

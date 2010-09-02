@@ -1,7 +1,10 @@
+#include <stdio.h>
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "misc.h"
 #include "makeclass.h"
 
 /* {{{ luaH_callinitmethod() */
@@ -46,6 +49,18 @@ static void luaH_setgcmethod (lua_State *L)
 }
 /* }}} */
 
+/* {{{ luaH_isinstance() */
+static int luaH_isinstance (lua_State *L)
+{
+	lua_getfield (L, 2, "prototype");
+	lua_getmetatable (L, 1);
+	int ret = lua_equal (L, -1, -2);
+	lua_pop (L, 2);
+	lua_pushboolean (L, ret);
+	return 1;
+}
+/* }}} */
+
 /* {{{ luaH_newclass_new() */
 static int luaH_newclass_new (lua_State *L)
 {
@@ -75,14 +90,22 @@ static int luaH_newclass_newindex (lua_State *L)
 /* }}} */
 
 /* {{{ luaH_newclass() */
-static void luaH_newclass (lua_State *L)
+void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths)
 {
-	lua_newtable (L);
+	static const luaL_Reg nomeths[] = {{NULL}};
+
+	if (!meths)
+		meths = nomeths;
+	if (!name)
+		lua_newtable (L);
+	luaL_register (L, name, meths);
 
 	/* Set up the class prototype object. */
 	lua_newtable (L);
 	lua_pushvalue (L, -1);
 	lua_setfield (L, -2, "__index");
+	lua_pushcfunction (L, luaH_isinstance);
+	lua_setfield (L, -2, "isinstance");
 	lua_setfield (L, -2, "prototype");
 
 	/* Set up the class object metatable. */
@@ -95,28 +118,11 @@ static void luaH_newclass (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaH_makecclass() */
-void luaH_makecclass (lua_State *L, const luaL_Reg *meths)
-{
-	luaH_newclass (L);
-	if (meths)
-		luaL_register (L, NULL, meths);
-}
-/* }}} */
-
 /* {{{ luaH_makeclass() */
-static int luaH_makeclass (lua_State *L)
+int luaH_makeclass (lua_State *L)
 {
-	luaH_newclass (L);
-	return 1;
-}
-/* }}} */
-
-/* {{{ luaopen_luah_makeclass() */
-int luaopen_luah_makeclass (lua_State *L)
-{
-	lua_pushcfunction (L, luaH_makeclass);
-
+	const char *name = lua_tostring (L, -1);
+	luaH_newclass (L, name, NULL);
 	return 1;
 }
 /* }}} */

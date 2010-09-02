@@ -198,8 +198,8 @@ static int myepoll_happened (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_netlib_epoll() */
-int luaopen_luah_netlib_epoll (lua_State *L)
+/* {{{ luaopen_luah_ratchet_epoll() */
+int luaopen_luah_ratchet_epoll (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", myepoll_init},
@@ -212,7 +212,7 @@ int luaopen_luah_netlib_epoll (lua_State *L)
 		{NULL}
 	};
 
-	luaH_makecclass (L, meths);
+	luaH_newclass (L, "luah.ratchet.epoll", meths);
 
 	luaH_setfieldint (L, -1, "poll_err", EPOLLERR);
 	luaH_setfieldint (L, -1, "poll_edge", EPOLLET);

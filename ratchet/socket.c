@@ -5,19 +5,15 @@
 #include "misc.h"
 #include "makeclass.h"
 #include "socket.h"
-#include "urls.h"
 
-/* {{{ luaopen_luah_netlib_socket() */
-int luaopen_luah_netlib_socket (lua_State *L)
+/* {{{ luaopen_luah_ratchet_socket() */
+int luaopen_luah_ratchet_socket (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{NULL}
 	};
 
-	luaH_makecclass (L, meths);
-
-	luaopen_luah_netlib_socket_parseurl (L);
-	lua_setfield (L, -2, "parseurl");
+	luaH_newclass (L, "luah.ratchet.socket", meths);
 
 	return 1;
 }

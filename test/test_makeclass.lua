@@ -1,9 +1,9 @@
 #!/usr/bin/env lua
 
-local makeclass = require("luah.makeclass")
+require "luah"
 
 remaining = 0
-testing = makeclass()
+testing = luah.makeclass()
 
 function testing:init(m1, m2)
 	self.data = m1
@@ -27,6 +27,10 @@ assert("a b one" == t1:stuff("a", "b"))
 
 assert("data2" == ret2)
 assert("c d two" == t2:stuff("c", "d"))
+
+assert(t1:isinstance(testing), "isinstance method is incorrect.")
+assert(t2:isinstance(testing), "isinstance method is incorrect.")
+assert(not t1:isinstance(t2), "isinstance method is incorrect.")
 
 -- Check for destructors
 assert(2 == remaining)

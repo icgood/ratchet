@@ -4,7 +4,7 @@
 #include <lua.h>
 
 void luaH_makecclass (lua_State *L, const luaL_Reg *meths);
-int luaopen_luah_makeclass (lua_State *L);
+int luaH_makeclass (lua_State *L);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:
