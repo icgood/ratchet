@@ -106,6 +106,8 @@ void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths)
 	lua_setfield (L, -2, "__index");
 	lua_pushcfunction (L, luaH_isinstance);
 	lua_setfield (L, -2, "isinstance");
+	lua_pushvalue (L, -2);
+	lua_setfield (L, -2, "class");
 	lua_setfield (L, -2, "prototype");
 
 	/* Set up the class object metatable. */

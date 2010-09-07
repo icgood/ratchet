@@ -59,20 +59,18 @@ static int luaH_ratchet_factory (lua_State *L)
 /* {{{ luaopen_luah_ratchet() */
 int luaopen_luah_ratchet (lua_State *L)
 {
-	const luaL_Reg funcs[] = {
-//		{"poll_all", luaH_ratchet_poll_all},
-		{"factory", luaH_ratchet_factory},
+	const luaL_Reg meths[] = {
 		{"parseuri", luaH_parseuri},
 		{NULL}
 	};
 
-	luaL_register (L, "luah.ratchet", funcs);
+	luaH_newclass (L, "luah.ratchet", meths);
 
 	/* Set up submodule. */
 	luaopen_luah_ratchet_epoll (L);
-	lua_setfield (L, -2, "epoll");
+	luaH_rawsetfield (L, -2, "epoll");
 	luaopen_luah_ratchet_socket (L);
-	lua_setfield (L, -2, "socket");
+	luaH_rawsetfield (L, -2, "socket");
 
 	/* Set up URI schema table. */
 	lua_newtable (L);

@@ -31,6 +31,17 @@ void luaH_setfieldint (lua_State *L, int index, const char *name, int value)
 }
 /* }}} */
 
+/* {{{ luaH_rawsetfield() */
+void luaH_rawsetfield (lua_State *L, int index, const char *key)
+{
+	lua_pushvalue (L, index);
+	lua_pushstring (L, key);
+	lua_pushvalue (L, -3);
+	lua_rawset (L, -3);
+	lua_pop (L, 2);
+}
+/* }}} */
+
 /* {{{ luaH_callfunction() */
 int luaH_callfunction (lua_State *L, int index, int nargs)
 {
@@ -75,9 +86,10 @@ int luaH_strequal (lua_State *L, int index, const char *cmp)
 {
 	int ret;
 
+	lua_pushvalue (L, index);
 	lua_pushstring (L, cmp);
-	ret = lua_equal (L, index, -1);
-	lua_pop (L, 1);
+	ret = lua_equal (L, -2, -1);
+	lua_pop (L, 2);
 
 	return ret;
 }
