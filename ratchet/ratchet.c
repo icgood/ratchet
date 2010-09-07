@@ -3,6 +3,7 @@
 #include <lualib.h>
 
 #include "misc.h"
+#include "makeclass.h"
 #include "ratchet.h"
 #include "epoll.h"
 #include "parseuri.h"
@@ -68,9 +69,9 @@ int luaopen_luah_ratchet (lua_State *L)
 
 	/* Set up submodule. */
 	luaopen_luah_ratchet_epoll (L);
-	luaH_rawsetfield (L, -2, "epoll");
+	luaH_setclassfield (L, -2, "epoll");
 	luaopen_luah_ratchet_socket (L);
-	luaH_rawsetfield (L, -2, "socket");
+	luaH_setclassfield (L, -2, "socket");
 
 	/* Set up URI schema table. */
 	lua_newtable (L);
