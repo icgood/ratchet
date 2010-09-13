@@ -7,7 +7,7 @@ function testparser(extra)
 	return "testparts"
 end
 
-t, d = luah.ratchet.parseuri("test://1.2.3.4", {test = testparser})
+t, d = luah.ratchet.prototype.parseuri("test://1.2.3.4", {test = testparser})
 assert(t == "test")
 assert(d == "testparts")
 

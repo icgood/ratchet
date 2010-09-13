@@ -45,7 +45,7 @@ void luaH_rawsetfield (lua_State *L, int index, const char *key)
 /* {{{ luaH_callfunction() */
 int luaH_callfunction (lua_State *L, int index, int nargs)
 {
-	int t = lua_gettop (L);
+	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
 	lua_insert (L, -nargs-1);
 	lua_call (L, nargs, LUA_MULTRET);
@@ -56,12 +56,11 @@ int luaH_callfunction (lua_State *L, int index, int nargs)
 /* {{{ luaH_callmethod() */
 int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
 {
-	int t = lua_gettop (L);
+	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
 	lua_getfield (L, index, method);
-	lua_insert (L, -2);
 	lua_insert (L, -nargs-2);
-	lua_insert (L, -nargs-2);
+	lua_insert (L, -nargs-1);
 	lua_call (L, nargs+1, LUA_MULTRET);
 	return lua_gettop (L) - t;
 }

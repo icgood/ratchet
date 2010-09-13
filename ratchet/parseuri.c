@@ -1,16 +1,15 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
+
 #include <stdlib.h>
 #include <strings.h>
 #include <stdint.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <sys/un.h>
 
 #include "parseuri.h"
-
-#define IPV4_IP_PATTERN 
+#include "dns.h"
 
 /* {{{ unix_endpoint() */
 static int unix_endpoint (lua_State *L)
@@ -28,45 +27,48 @@ static int unix_endpoint (lua_State *L)
 /* {{{ tcp_endpoint() */
 static int tcp_endpoint (lua_State *L)
 {
-	struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
-	memset (addr, 0, sizeof (struct sockaddr_in6));
+	lua_pushvalue (L, 1);
 
-	addr->sin6_family = AF_INET6;
-	lua_pushvalue (L, -2);
-
-	if (luaH_strmatch (L, "^%/+(%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?)(%:?)(%d*)$"))
+	if (luaH_strmatch (L, "^%/+%[(.-)%](%:?)(%d*)$"))
 	{
-		if (luaH_strequal (L, -2, ":"))
-			addr->sin6_port = htons ((uint16_t) atoi (lua_tostring (L, -1)));
-		lua_pop (L, 2);
-		lua_pushstring (L, "::FFFF:");
-		lua_insert (L, -2);
-		lua_concat (L, 2);
+		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		{
+			lua_pop (L, 1);
+			lua_pushnil (L);
+		}
+		lua_remove (L, -2);
 	}
 
-	else if (luaH_strmatch (L, "^%/+%[(.-)%]%(%:?)(%d*)$"))
+	else if (luaH_strmatch (L, "^%/+([^%:]*)(%:?)(%d*)$"))
 	{
-		if (luaH_strequal (L, -2, ":"))
-			addr->sin6_port = htons ((uint16_t) atoi (lua_tostring (L, -1)));
-		lua_pop (L, 2);
+		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		{
+			lua_pop (L, 1);
+			lua_pushnil (L);
+		}
+		lua_remove (L, -2);
 	}
 
-	else if (luaH_strmatch (L, "^%/+(.*)$")) { }
+	else if (luaH_strmatch (L, "^%/+(.*)$"))
+		lua_pushnil (L);
 
 	else
 	{
-		lua_pop (L, 2);
+		lua_pop (L, 1);
 		lua_pushnil (L);
 		return 1;
 	}
 
-	if (1 != inet_pton (AF_INET6, lua_tostring (L, -1), &addr->sin6_addr))
-	{
-		lua_pop (L, 3);
-		lua_pushnil (L);
-		return 1;
-	}
-	lua_pop (L, 2);
+	luaopen_luah_ratchet_dns (L);
+	lua_getfield (L, -1, "getaddrinfo");
+	lua_remove (L, -2);
+	lua_insert (L, -3);
+	lua_call (L, 2, 1);
+
+	/* Initialize named parameter table for socket class constructor. */
+	lua_newtable (L);
+	lua_insert (L, -2);
+	lua_setfield (L, -2, "sockaddr");
 
 	return 1;
 }

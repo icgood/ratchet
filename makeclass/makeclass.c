@@ -14,12 +14,12 @@ static int luaH_callinitmethod (lua_State *L, int nargs)
 
 	lua_getfield (L, 1, "init");
 	lua_pushvalue (L, 1);
-	mytop = lua_gettop (L) - nargs;
+	mytop = lua_gettop (L) - nargs - 1;
 	if (!lua_isnil (L, -2))
 	{
 		lua_insert (L, mytop);
 		lua_insert (L, mytop);
-		lua_call (L, nargs, LUA_MULTRET);
+		lua_call (L, nargs+1, LUA_MULTRET);
 		return lua_gettop (L) - mytop + 1;
 	}
 	else
@@ -65,7 +65,7 @@ static int luaH_isinstance (lua_State *L)
 static int luaH_newclass_new (lua_State *L)
 {
 	int initrets;
-	int nargs = lua_gettop (L);
+	int nargs = lua_gettop (L) - 1;
 
 	lua_newtable (L);
 	lua_getfield (L, 1, "prototype");
@@ -98,10 +98,11 @@ void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths)
 		meths = nomeths;
 	if (!name)
 		lua_newtable (L);
-	luaL_register (L, name, meths);
+	luaL_register (L, name, nomeths);
 
 	/* Set up the class prototype object. */
 	lua_newtable (L);
+	luaL_register (L, NULL, meths);
 	lua_pushvalue (L, -1);
 	lua_setfield (L, -2, "__index");
 	lua_pushcfunction (L, luaH_isinstance);

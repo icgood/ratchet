@@ -36,18 +36,19 @@ static int mysocket_init (lua_State *L)
 	/* Grab the named parameters. */
 	for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
 	{
-		const char *key = lua_tostring (L, -2);
-		if (strcmp ("fd", key) == 0 && lua_isnumber (L, -1))
+		if (luaH_strequal (L, -2, "fd") && lua_isnumber (L, -1))
 		{
 			fd = lua_tointeger (L, -1);
+			lua_pushvalue (L, -1);
 			lua_setfield (L, 1, "fd");
 		}
-		else if (strcmp ("sockaddr", key) == 0)
+		else if (luaH_strequal (L, -2, "sockaddr"))
 		{
 			addr = (struct sockaddr *) lua_touserdata (L, -1);
+			lua_pushvalue (L, -1);
 			lua_setfield (L, 1, "sockaddr");
 		}
-		else if (strcmp ("use_udp", key) == 0)
+		else if (luaH_strequal (L, -2, "use_udp"))
 			use_udp = lua_toboolean (L, -1);
 	}
 
@@ -93,8 +94,8 @@ static int mysocket_getfd (lua_State *L)
 }
 /* }}} */
 
-/* {{{ mysocket_bind() */
-static int mysocket_bind (lua_State *L)
+/* {{{ mysocket_listen() */
+static int mysocket_listen (lua_State *L)
 {
 	struct sockaddr *addr;
 	int fd;
@@ -165,7 +166,7 @@ int luaopen_luah_ratchet_socket (lua_State *L)
 		{"init", mysocket_init},
 		{"del", mysocket_del},
 		{"getfd", mysocket_getfd},
-		{"bind", mysocket_bind},
+		{"listen", mysocket_listen},
 		{"connect", mysocket_connect},
 		{"accept", mysocket_accept},
 		{NULL}
