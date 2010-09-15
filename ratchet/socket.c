@@ -11,17 +11,20 @@
 #include "makeclass.h"
 #include "socket.h"
 
-/* {{{ fd_set_nonblocking() */
-static int fd_set_nonblocking (int fd)
+/* {{{ fd_set_blocking_flag() */
+static int fd_set_blocking_flag (int fd, int blocking)
 {
 	int flags;
 
 #ifdef O_NONBLOCK
 	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
 		flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	if (!blocking)
+		return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+	else
+		return fcntl(fd, F_SETFL, flags & (~O_NONBLOCK));
 #else
-	flags = 1;
+	flags = (blocking ? 0 : 1);
 	return ioctl(fd, FIONBIO, &flags);
 #endif
 }
@@ -64,9 +67,6 @@ static int mysocket_init (lua_State *L)
 		lua_setfield (L, 1, "fd");
 	}
 
-	if (fd_set_nonblocking (fd) < 0)
-		return luaH_perror (L);
-
 	return 0;
 }
 /* }}} */
@@ -93,6 +93,24 @@ static int mysocket_close (lua_State *L)
 static int mysocket_getfd (lua_State *L)
 {
 	lua_getfield (L, 1, "fd");
+	return 1;
+}
+/* }}} */
+
+/* {{{ mysocket_set_blocking() */
+static int mysocket_set_blocking (lua_State *L)
+{
+	lua_getfield (L, 1, "fd");
+	fd_set_blocking_flag (lua_tointeger (L, -1), 1);
+	return 1;
+}
+/* }}} */
+
+/* {{{ mysocket_set_nonblocking() */
+static int mysocket_set_nonblocking (lua_State *L)
+{
+	lua_getfield (L, 1, "fd");
+	fd_set_blocking_flag (lua_tointeger (L, -1), 0);
 	return 1;
 }
 /* }}} */
@@ -248,6 +266,8 @@ int luaopen_luah_ratchet_socket (lua_State *L)
 		{"init", mysocket_init},
 		{"getfd", mysocket_getfd},
 		{"listen", mysocket_listen},
+		{"set_blocking", mysocket_set_blocking},
+		{"set_nonblocking", mysocket_set_nonblocking},
 		{"connect", mysocket_connect},
 		{"send", mysocket_send},
 		{"recv", mysocket_recv},
