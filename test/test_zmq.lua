@@ -12,10 +12,12 @@ s2 = zmq:connect('tcp://localhost:12345')
 poll = luah.zmq.poll()
 poll:register(s1)
 
-s2:send('Hello...World!')
+s2:sendsome('Hello...')
+s2:send('World!')
 for i, e, o in poll:wait(0.1) do
     assert(o == s1, "Received event on non-existent object")
     assert(poll.happened(e, poll.IN), "Received unknown event on object")
+    received = received .. s1:recv()
     received = received .. s1:recv()
 end
 
