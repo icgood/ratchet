@@ -21,6 +21,9 @@ int luaopen_luah (lua_State *L)
 	luaopen_luah_ratchet (L);
 	lua_setfield (L, -2, "ratchet");
 
+	luaopen_luah_rlimit (L);
+	lua_setfield (L, -2, "rlimit");
+
 	return 1;
 }
 /* }}} */

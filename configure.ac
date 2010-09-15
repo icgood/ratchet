@@ -30,7 +30,7 @@ AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
 AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
 
 # Checks for header files.
-AC_CHECK_HEADERS([string.h errno.h netdb.h sys/ioctl.h sys/socket.h])
+AC_CHECK_HEADERS([string.h errno.h netdb.h sys/ioctl.h sys/socket.h sys/resource.h])
 AX_LUA_HEADERS
 if test "x${ac_cv_header_lua_h}" != "xyes"; then
 	AC_MSG_ERROR([Lua headers are required for building.])
@@ -38,6 +38,7 @@ fi
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([memset socket])
@@ -46,6 +47,7 @@ AC_FUNC_STRERROR_R
 AC_CONFIG_FILES([Makefile
 		 misc/Makefile
 		 makeclass/Makefile
+		 rlimit/Makefile
 		 ratchet/Makefile
 		 luah/Makefile
 		 test/Makefile])

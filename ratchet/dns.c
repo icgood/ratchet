@@ -22,15 +22,26 @@
 /* {{{ ratchet_dns_getaddrinfo() */
 static int ratchet_dns_getaddrinfo (lua_State *L)
 {
-	const char *host = luaL_checkstring (L, 1);
-	const char *port = NULL;
-	struct addrinfo *results, *it;
+	const char *host = NULL, *port = NULL;
+	struct addrinfo hints, *results, *it;
 	int n = 0;
 
+	memset (&hints, 0, sizeof (struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = (AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICSERV);
+
+	if (lua_isstring (L, 1))
+		host = lua_tostring (L, 1);
 	if (lua_isstring (L, 2))
 		port = lua_tostring (L, 2);
 
-	int error = getaddrinfo (host, port, NULL, &results);
+	if (strcmp ("*", host) == 0)
+	{
+		hints.ai_flags |= AI_PASSIVE;
+		host = NULL;
+	}
+
+	int error = getaddrinfo (host, port, &hints, &results);
 	if (error)
 		return luaL_error (L, "DNS lookup failure: %s", gai_strerror (error));
 
