@@ -2,6 +2,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <sys/epoll.h>
+
 #include "misc.h"
 #include "makeclass.h"
 #include "ratchet.h"
@@ -24,6 +26,10 @@ static void luaH_ratchet_add_types (lua_State *L)
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
 {
+	lua_getfield (L, 1, "epoll");
+	lua_call (L, 0, 1);
+	lua_setfield (L, 1, "epoll");
+
 	return 0;
 }
 /* }}} */
@@ -86,7 +92,7 @@ static int ratchet_instantiate_context (lua_State *L)
 		return 0;
 	lua_insert (L, 4);
 	lua_insert (L, 4);
-	lua_pushvalue (L, 1);
+	lua_getfield (L, 1, "epoll");
 	lua_insert (L, 4);
 
 	return luaH_callfunction (L, 3, 3+extra_args);
@@ -103,6 +109,7 @@ static int ratchet_connect (lua_State *L)
 	lua_getfield (L, -1, "engine");
 	luaH_callmethod (L, -1, "connect", 0);
 	lua_pop (L, 1);
+
 	return 1;
 }
 /* }}} */
@@ -117,13 +124,8 @@ static int ratchet_listen (lua_State *L)
 	lua_getfield (L, -1, "engine");
 	luaH_callmethod (L, -1, "listen", 0);
 	lua_pop (L, 1);
-	return 1;
-}
-/* }}} */
 
-/* {{{ ratchet_close() */
-static int ratchet_close (lua_State *L)
-{
+	return 1;
 }
 /* }}} */
 
@@ -136,10 +138,91 @@ static int ratchet_new_context (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_handle_events() */
+static int ratchet_handle_events (lua_State *L)
+{
+	/* This essentially mimics the "generic for" ability of lua, calling ratchet's
+	 * "handle_one" method with every argument not involved in iteration. */
+	while (1)
+	{
+		luaH_dupvalue (L, 3);
+		int rets = luaH_callfunction (L, 2, 2);
+		lua_settop (L, 3+rets);
+		if (!rets || lua_isnil (L, -rets))
+			break;
+		luaH_callmethod (L, 1, "handle_one", rets-1);
+		lua_settop (L, 4);
+	}
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_handle_one() */
+static int ratchet_handle_one (lua_State *L)
+{
+	lua_getfield (L, 1, "epoll");
+	lua_insert (L, 2);
+	int events = lua_tonumber (L, 3);
+
+	if (events & EPOLLERR)
+	{
+		//printf ("error event\n");
+		//luaH_stackdump (L);
+		luaH_callmethod (L, 4, "on_error", 0);
+	}
+	lua_settop (L, 4);
+	
+	if (events & (EPOLLERR | EPOLLHUP))
+	{
+		//printf ("close event\n");
+		//luaH_stackdump (L);
+		luaH_callmethod (L, 4, "on_close", 0);
+	}
+	lua_settop (L, 4);
+	
+	if (events & EPOLLIN)
+	{
+		//printf ("recv event\n");
+		//luaH_stackdump (L);
+		luaH_callmethod (L, 4, "on_recv", 0);
+	}
+	lua_settop (L, 4);
+	
+	if (events & EPOLLOUT)
+	{
+		//printf ("send event\n");
+		//luaH_stackdump (L);
+		luaH_callmethod (L, 4, "raw_send_one", 0);
+	}
+	lua_settop (L, 4);
+	
+	return 0;
+}
+/* }}} */
+
 /* {{{ ratchet_run_once() */
 static int ratchet_run_once (lua_State *L)
 {
+	lua_settop (L, 5);
+	if (lua_istable (L, 2))
+	{
+		lua_getfield (L, 2, "timeout");
+		lua_replace (L, 4);
+		lua_getfield (L, 2, "maxevents");
+		lua_replace (L, 5);
+	}
+	else if (!lua_isnoneornil (L, 2))
+		luaL_checktype (L, 2, LUA_TTABLE);
 
+	lua_getfield (L, 1, "epoll");
+	lua_replace (L, 3);
+
+	luaH_callmethod (L, 3, "wait", 2);
+	lua_settop (L, 6);	/* The three method rets now reside in indices 4-6. */
+
+	int rets = luaH_callmethod (L, 1, "handle_events", 3);
+	lua_pop (L, rets);
+	
 	return 0;
 }
 /* }}} */
@@ -149,7 +232,6 @@ static int ratchet_run (lua_State *L)
 {
 	int iterations = -1;
 	int i;
-	int args = lua_gettop (L) - 1;
 
 	if (lua_istable (L, 2))
 	{
@@ -163,7 +245,8 @@ static int ratchet_run (lua_State *L)
 
 	for (i=0; i<iterations || iterations<0; i++)
 	{
-		luaH_callmethod (L, 1, "run_once", args);
+		lua_pushvalue (L, 2);
+		luaH_callmethod (L, 1, "run_once", 1);
 		lua_settop (L, 2);
 	}
 
@@ -181,8 +264,9 @@ int luaopen_luah_ratchet (lua_State *L)
 		{"instantiate_context", ratchet_instantiate_context},
 		{"connect", ratchet_connect},
 		{"listen", ratchet_listen},
-		{"close", ratchet_close},
 		{"new_context", ratchet_new_context},
+		{"handle_events", ratchet_handle_events},
+		{"handle_one", ratchet_handle_one},
 		{"run_once", ratchet_run_once},
 		{"run", ratchet_run},
 		{NULL}

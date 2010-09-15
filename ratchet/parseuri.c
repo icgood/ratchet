@@ -83,7 +83,7 @@ int luaH_parseuri (lua_State *L)
 	lua_pushvalue (L, 1);
 	if (!luaH_strmatch (L, "^([%w%+%.%-]+):(.*)$"))
 	{
-		lua_pushstring (L, "tcp");
+		lua_pushliteral (L, "tcp");
 		lua_pushfstring (L, "//%s", url);
 	}
 	lua_remove (L, -3);

@@ -53,6 +53,19 @@ int luaH_callfunction (lua_State *L, int index, int nargs)
 }
 /* }}} */
 
+/* {{{ luaH_callboolfunction() */
+int luaH_callboolfunction (lua_State *L, int index, int nargs)
+{
+	int ret;
+	lua_pushvalue (L, index);
+	lua_insert (L, -nargs-1);
+	lua_call (L, nargs, 1);
+	ret = lua_toboolean (L, -1);
+	lua_pop (L, 1);
+	return ret;
+}
+/* }}} */
+
 /* {{{ luaH_callmethod() */
 int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
 {
@@ -63,6 +76,21 @@ int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
 	lua_insert (L, -nargs-1);
 	lua_call (L, nargs+1, LUA_MULTRET);
 	return lua_gettop (L) - t;
+}
+/* }}} */
+
+/* {{{ luaH_callboolmethod() */
+int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs)
+{
+	int ret;
+	lua_pushvalue (L, index);
+	lua_getfield (L, index, method);
+	lua_insert (L, -nargs-2);
+	lua_insert (L, -nargs-1);
+	lua_call (L, nargs+1, 1);
+	ret = lua_toboolean (L, -1);
+	lua_pop (L, 1);
+	return ret;
 }
 /* }}} */
 
@@ -94,37 +122,79 @@ int luaH_strequal (lua_State *L, int index, const char *cmp)
 }
 /* }}} */
 
-/* {{{ luaH_stackdump() */
-void luaH_stackdump (lua_State *L)
+/* {{{ printf_index() */
+static void printf_index (lua_State *L, int i)
+{
+	int t = lua_type (L, i);
+	int j;
+
+	switch (t)
+	{
+		case LUA_TSTRING: {
+			printf ("'%s'", lua_tostring (L, i));
+			break;
+		}
+		case LUA_TBOOLEAN: {
+			printf (lua_toboolean (L, 1) ? "true" : "false");
+			break;
+		}
+		case LUA_TNUMBER: {
+			printf ("%g", lua_tonumber (L, i));
+			break;
+		}
+		case LUA_TTABLE: {
+			printf ("<{");
+			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
+			{
+				int top = lua_gettop (L);
+				printf_index (L, top-1);
+				printf ("=");
+				if (lua_istable (L, top))
+				{
+					for (j=1; j<=top-2; j++)
+					{
+						if (lua_equal (L, j, top))
+						{
+							printf ("<table:%p>", lua_topointer (L, top));
+							break;
+						}
+					}
+					if (j >= top-1)
+						printf_index (L, top);
+				}
+				else
+					printf_index (L, top);
+				printf (",");
+			}
+			printf ("}:%p>", lua_topointer (L, i));
+			break;
+		}
+		case LUA_TUSERDATA: {
+			printf ("<%s", lua_typename (L, t));
+			printf (":%p>", lua_topointer (L, i));
+			break;
+		}
+		default: {
+			printf ("%s", lua_typename (L, t));
+			break;
+		}
+	}
+}
+/* }}} */
+
+/* {{{ luaH_stackdump_ln() */
+void luaH_stackdump_ln (lua_State *L, const char *file, int line)
 {
 	int i;
 	int top = lua_gettop (L);
 
+	printf ("------ stackdump %s:%d -------\n", file, line);
 	for (i=1; i<=top; i++)
 	{
-		int t = lua_type (L, i);
-		switch (t)
-		{
-			case LUA_TSTRING: {
-				printf ("'%s'", lua_tostring (L, i));
-				break;
-			}
-			case LUA_TBOOLEAN: {
-				printf (lua_toboolean (L, 1) ? "true" : "false");
-				break;
-			}
-			case LUA_TNUMBER: {
-				printf ("%g", lua_tonumber (L, i));
-				break;
-			}
-			default: {
-				printf ("%s", lua_typename (L, t));
-				break;
-			}
-		}
-		printf ("  ");
+		printf ("%d: ", i);
+		printf_index (L, i);
+		printf ("\n");
 	}
-	printf ("\n");
 }
 /* }}} */
 

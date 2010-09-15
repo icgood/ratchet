@@ -3,7 +3,7 @@
 #include <lualib.h>
 
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
