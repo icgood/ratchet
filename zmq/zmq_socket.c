@@ -7,19 +7,82 @@
 
 #include "misc.h"
 #include "makeclass.h"
+#include "zmq_main.h"
 #include "zmq_socket.h"
 
 #define GETSOCKOPT_MAXLEN 256
 
+/* {{{ zmqsock_get_context() */
+static void *zmqsock_get_context (lua_State *L, int index)
+{
+	void *context = NULL;
+	if (!lua_isnoneornil (L, index))
+	{
+		luaL_checktype (L, index, LUA_TTABLE);
+		lua_getfield (L, index, "ctx");
+		if (!lua_isuserdata (L, -1))
+			return NULL;
+		context = lua_touserdata (L, -1);
+		lua_pop (L, 1);
+	}
+	else
+	{
+		luaopen_luah_zmq (L);
+		lua_getfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+		lua_getfield (L, -1, "ctx");
+		context = lua_touserdata (L, -1);
+		lua_pop (L, 3);
+	}
+
+	return context;
+}
+/* }}} */
+
 /* {{{ zmqsock_init() */
 static int zmqsock_init (lua_State *L)
 {
-	void *context = lua_touserdata (L, 2);
-	int type = luaL_checkinteger (L, 3);
+	void *context = zmqsock_get_context (L, 3);
+	int type = -1;
 	int defflags = 0;
+	const char *endpoint = NULL;
 
-	if (lua_isnumber (L, 4))
-		defflags = lua_tointeger (L, 4);
+	if (!context)
+		return luaL_argerror (L, 3, "context required in registry or arg");
+
+	/* Grab the named parameters. */
+	for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
+	{
+		if (luaH_strequal (L, -2, "endpoint"))
+		{
+			lua_pushvalue (L, -1);
+			if (NULL == (endpoint = lua_tostring (L, -1)))
+				return luaL_argerror (L, 2, "named param 'endpoint' must be string");
+			lua_setfield (L, 1, "endpoint");
+		}
+		else if (luaH_strequal (L, -2, "type"))
+		{
+			lua_pushvalue (L, -1);
+			if (!lua_isnumber (L, -1))
+			{
+				lua_gettable (L, 1);
+				if (!lua_isnumber (L, -1))
+					return luaL_argerror (L, 2, "named param 'type' had unknown value");
+			}
+			type = lua_tointeger (L, -1);
+			lua_pop (L, 1);
+		}
+		else if (luaH_strequal (L, -2, "blocking"))
+		{
+			if (!lua_isboolean (L, -1))
+				continue;
+			if (!lua_toboolean (L, -1))
+				defflags = ZMQ_NOBLOCK;
+		}
+	}
+	if (endpoint == NULL)
+		return luaL_argerror (L, 2, "named param 'endpoint' required");
+	else if (type < 0)
+		return luaL_argerror (L, 2, "named param 'type' required");
 
 	void *socket = zmq_socket (context, type);
 	if (socket == NULL)
@@ -55,16 +118,16 @@ static int zmqsock_getfd (lua_State *L)
 }
 /* }}} */
 
-/* {{{ zmqsock_bind() */
-static int zmqsock_bind (lua_State *L)
+/* {{{ zmqsock_listen() */
+static int zmqsock_listen (lua_State *L)
 {
-	const char *endpoint = luaL_checkstring (L, 2);
-
+	lua_getfield (L, 1, "endpoint");
+	const char *endpoint = lua_tostring (L, -1);
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_bind (socket, endpoint) < 0)
 		return luaH_perror (L);
-	lua_pop (L, 1);
+	lua_pop (L, 2);
 
 	return 0;
 }
@@ -73,13 +136,43 @@ static int zmqsock_bind (lua_State *L)
 /* {{{ zmqsock_connect() */
 static int zmqsock_connect (lua_State *L)
 {
-	const char *endpoint = luaL_checkstring (L, 2);
-
+	lua_getfield (L, 1, "endpoint");
+	const char *endpoint = lua_tostring (L, -1);
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_connect (socket, endpoint) < 0)
 		return luaH_perror (L);
+	lua_pop (L, 2);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ zmqsock_set_blocking() */
+static int zmqsock_set_blocking (lua_State *L)
+{
+	lua_getfield (L, 1, "defflags");
+	int defflags = lua_tointeger (L, -1);
 	lua_pop (L, 1);
+
+	defflags &= ~ZMQ_NOBLOCK;
+	lua_pushinteger (L, defflags);
+	lua_setfield (L, 1, "defflags");
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ zmqsock_set_nonblocking() */
+static int zmqsock_set_nonblocking (lua_State *L)
+{
+	lua_getfield (L, 1, "defflags");
+	int defflags = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	defflags |= ZMQ_NOBLOCK;
+	lua_pushinteger (L, defflags);
+	lua_setfield (L, 1, "defflags");
 
 	return 0;
 }
@@ -223,8 +316,10 @@ int luaopen_luah_zmq_socket (lua_State *L)
 		{"init", zmqsock_init},
 		{"del", zmqsock_del},
 		{"getfd", zmqsock_getfd},
-		{"bind", zmqsock_bind},
+		{"listen", zmqsock_listen},
 		{"connect", zmqsock_connect},
+		{"set_blocking", zmqsock_set_blocking},
+		{"set_nonblocking", zmqsock_set_nonblocking},
 		{"getsockopt", zmqsock_getsockopt},
 		{"setsockopt", zmqsock_setsockopt},
 		{"send", zmqsock_send},

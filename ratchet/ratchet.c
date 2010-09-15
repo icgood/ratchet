@@ -10,6 +10,7 @@
 #include "context.h"
 #include "epoll.h"
 #include "parseuri.h"
+#include "zmq_socket.h"
 
 /* {{{ luaH_ratchet_add_types() */
 static void luaH_ratchet_add_types (lua_State *L)
@@ -19,6 +20,9 @@ static void luaH_ratchet_add_types (lua_State *L)
 
 	luaopen_luah_socket (L);
 	lua_setfield (L, -2, "unix");
+
+	luaopen_luah_zmq_socket (L);
+	lua_setfield (L, -2, "zmq");
 }
 /* }}} */
 

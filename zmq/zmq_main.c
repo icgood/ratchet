@@ -9,12 +9,35 @@
 #include "zmq_main.h"
 #include "zmq_socket.h"
 
+#ifndef DEFAULT_ZMQ_IO_THREADS
+#define DEFAULT_ZMQ_IO_THREADS 5
+#endif
+
 /* {{{ zmqctx_init() */
 static int zmqctx_init (lua_State *L)
 {
 	int io_threads = 1;
-	if (lua_isnumber (L, 2))
-		io_threads = lua_tointeger (L, 2);
+	int def = 0;
+
+	/* Grab the named parameters. */
+	if (lua_istable (L, 2))
+	{
+		for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
+		{
+			if (luaH_strequal (L, -2, "io_threads"))
+			{
+				if (!lua_isnumber (L, -1))
+					return luaL_argerror (L, 2, "named param 'io_threads' must be number");
+				io_threads = lua_tointeger (L, -1);
+			}
+			if (luaH_strequal (L, -2, "default"))
+			{
+				if (!lua_isboolean (L, -1))
+					return luaL_argerror (L, 2, "named param 'default' must be boolean");
+				def = lua_toboolean (L, -1);
+			}
+		}
+	}
 
 	void *context = zmq_init (io_threads);
 	if (context == NULL)
@@ -22,6 +45,12 @@ static int zmqctx_init (lua_State *L)
 	
 	lua_pushlightuserdata (L, context);
 	lua_setfield (L, 1, "ctx");
+
+	if (def)
+	{
+		lua_pushvalue (L, 1);
+		lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+	}
 	
 	return 0;
 }
@@ -54,14 +83,17 @@ static int zmqctx_listen (lua_State *L)
 		type = lua_tointeger (L, 3);
 
 	lua_getfield (L, 1, "socket");
-	lua_getfield (L, 1, "ctx");
-	lua_pushinteger (L, type);
-	luaH_callfunction (L, -3, 2);
-	lua_replace (L, 4);
 
+	lua_newtable (L);
+	lua_pushinteger (L, type);
+	lua_setfield (L, -2, "type");
 	lua_pushvalue (L, 2);
-	luaH_callmethod (L, 4, "bind", 1);
-	lua_settop (L, 4);
+	lua_setfield (L, -2, "endpoint");
+
+	lua_pushvalue (L, 1);
+
+	luaH_callfunction (L, 4, 2);
+	luaH_callmethod (L, -1, "listen", 0);
 
 	return 1;
 }
@@ -81,14 +113,17 @@ static int zmqctx_connect (lua_State *L)
 		type = lua_tointeger (L, 3);
 
 	lua_getfield (L, 1, "socket");
-	lua_getfield (L, 1, "ctx");
-	lua_pushinteger (L, type);
-	luaH_callfunction (L, -3, 2);
-	lua_replace (L, 4);
 
+	lua_newtable (L);
+	lua_pushinteger (L, type);
+	lua_setfield (L, -2, "type");
 	lua_pushvalue (L, 2);
-	luaH_callmethod (L, 4, "connect", 1);
-	lua_settop (L, 4);
+	lua_setfield (L, -2, "endpoint");
+
+	lua_pushvalue (L, 1);
+
+	luaH_callfunction (L, 4, 2);
+	luaH_callmethod (L, -1, "connect", 0);
 
 	return 1;
 }
@@ -136,6 +171,11 @@ int luaopen_luah_zmq (lua_State *L)
 	luaH_setclassfield (L, -2, "socket");
 	luaopen_luah_zmq_poll (L);
 	luaH_setclassfield (L, -2, "poll");
+
+	/* Set up a default context in the registry. */
+	lua_pushinteger (L, DEFAULT_ZMQ_IO_THREADS);
+	luaH_callfunction (L, -2, 1);
+	lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
 
 	return 1;
 }

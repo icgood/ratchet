@@ -3,6 +3,5 @@ TESTS = test_luah.lua \
 	test_epoll.lua \
 	test_zmq.lua \
 	test_ratchet.lua \
-	test_ratchet_parseuri.lua \
-	test_ratchet_contexts.lua
+	test_ratchet_parseuri.lua
 

@@ -74,6 +74,31 @@ static int tcp_endpoint (lua_State *L)
 }
 /* }}} */
 
+/* {{{ zmq_endpoint() */
+static int zmq_endpoint (lua_State *L)
+{
+	lua_settop (L, 1);
+	if (luaH_strmatch (L, "^([^%:]*)%:(.*)$"))
+	{
+		luaH_callmethod (L, 2, "upper");
+		lua_replace (L, 2);
+	}
+	else
+	{
+		/* Use the original string as endpoint and nil as type. */
+		lua_pushnil (L);
+		lua_pushvalue (L, 1);
+	}
+
+	lua_newtable (L);
+	lua_insert (L, 2);
+	lua_setfield (L, 2, "endpoint");
+	lua_setfield (L, 2, "type");
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ luaH_parseuri() */
 int luaH_parseuri (lua_State *L)
 {
@@ -106,6 +131,8 @@ void luaH_parseuri_add_builtin (lua_State *L)
 	lua_setfield (L, -2, "unix");
 	lua_pushcfunction (L, tcp_endpoint);
 	lua_setfield (L, -2, "tcp");
+	lua_pushcfunction (L, zmq_endpoint);
+	lua_setfield (L, -2, "zmq");
 }
 /* }}} */
 
