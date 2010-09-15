@@ -7,7 +7,6 @@
 #include "misc.h"
 #include "makeclass.h"
 #include "ratchet.h"
-#include "dns.h"
 #include "context.h"
 #include "epoll.h"
 #include "parseuri.h"
@@ -15,10 +14,10 @@
 /* {{{ luaH_ratchet_add_types() */
 static void luaH_ratchet_add_types (lua_State *L)
 {
-	lua_getfield (L, -2, "socket");
+	luaopen_luah_socket (L);
 	lua_setfield (L, -2, "tcp");
 
-	lua_getfield (L, -2, "socket");
+	luaopen_luah_socket (L);
 	lua_setfield (L, -2, "unix");
 }
 /* }}} */
@@ -26,7 +25,7 @@ static void luaH_ratchet_add_types (lua_State *L)
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
 {
-	lua_getfield (L, 1, "epoll");
+	luaopen_luah_epoll (L);
 	lua_call (L, 0, 1);
 	lua_setfield (L, 1, "epoll");
 
@@ -273,14 +272,6 @@ int luaopen_luah_ratchet (lua_State *L)
 	};
 
 	luaH_newclass (L, "luah.ratchet", meths);
-
-	/* Set up submodules. */
-	luaopen_luah_ratchet_epoll (L);
-	luaH_setclassfield (L, -2, "epoll");
-	luaopen_luah_ratchet_socket (L);
-	luaH_setclassfield (L, -2, "socket");
-	luaopen_luah_ratchet_dns (L);
-	luaH_setclassfield (L, -2, "dns");
 
 	/* Set up URI schema table. */
 	lua_newtable (L);

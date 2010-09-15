@@ -59,7 +59,7 @@ static int tcp_endpoint (lua_State *L)
 		return 1;
 	}
 
-	luaopen_luah_ratchet_dns (L);
+	luaopen_luah_dns (L);
 	lua_getfield (L, -1, "getaddrinfo");
 	lua_remove (L, -2);
 	lua_insert (L, -3);

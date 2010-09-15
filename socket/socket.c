@@ -259,8 +259,8 @@ static int mysocket_recv (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_ratchet_socket() */
-int luaopen_luah_ratchet_socket (lua_State *L)
+/* {{{ luaopen_luah_socket() */
+int luaopen_luah_socket (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", mysocket_init},
@@ -276,7 +276,7 @@ int luaopen_luah_ratchet_socket (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.ratchet.socket", meths);
+	luaH_newclass (L, "luah.socket", meths);
 
 	return 1;
 }

@@ -19,8 +19,8 @@
 #define NI_MAXSERV 32
 #endif
 
-/* {{{ ratchet_dns_getaddrinfo() */
-static int ratchet_dns_getaddrinfo (lua_State *L)
+/* {{{ mydns_getaddrinfo() */
+static int mydns_getaddrinfo (lua_State *L)
 {
 	const char *host = NULL, *port = NULL;
 	struct addrinfo hints, *results, *it;
@@ -60,8 +60,8 @@ static int ratchet_dns_getaddrinfo (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_dns_getnameinfo() */
-static int ratchet_dns_getnameinfo (lua_State *L)
+/* {{{ mydns_getnameinfo() */
+static int mydns_getnameinfo (lua_State *L)
 {
 	luaL_checktype (L, 1, LUA_TUSERDATA);
 	struct sockaddr *sa = (struct sockaddr *) lua_touserdata (L, 1);
@@ -80,16 +80,16 @@ static int ratchet_dns_getnameinfo (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_ratchet_dns() */
-int luaopen_luah_ratchet_dns (lua_State *L)
+/* {{{ luaopen_luah_dns() */
+int luaopen_luah_dns (lua_State *L)
 {
 	const luaL_Reg funcs[] = {
-		{"getaddrinfo", ratchet_dns_getaddrinfo},
-		{"getnameinfo", ratchet_dns_getnameinfo},
+		{"getaddrinfo", mydns_getaddrinfo},
+		{"getnameinfo", mydns_getnameinfo},
 		{NULL}
 	};
 
-	luaL_register (L, "luah.ratchet.dns", funcs);
+	luaL_register (L, "luah.dns", funcs);
 
 	return 1;
 }

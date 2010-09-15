@@ -6,6 +6,7 @@
 #include "makeclass.h"
 #include "epoll.h"
 #include "zmq_main.h"
+#include "dns.h"
 #include "ratchet.h"
 #include "socket.h"
 
@@ -25,6 +26,12 @@ int luaopen_luah (lua_State *L)
 	lua_setfield (L, -2, "rlimit");
 	luaopen_luah_zmq (L);
 	lua_setfield (L, -2, "zmq");
+	luaopen_luah_epoll (L);
+	lua_setfield (L, -2, "epoll");
+	luaopen_luah_dns (L);
+	lua_setfield (L, -2, "dns");
+	luaopen_luah_socket (L);
+	lua_setfield (L, -2, "socket");
 
 	return 1;
 }

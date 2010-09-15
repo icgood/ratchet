@@ -3,7 +3,7 @@
 
 #include <lua.h>
 
-int luaopen_luah_ratchet_epoll (lua_State *L);
+int luaopen_luah_epoll (lua_State *L);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:

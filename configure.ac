@@ -55,6 +55,9 @@ AC_CONFIG_FILES([Makefile
 		 makeclass/Makefile
 		 rlimit/Makefile
 		 zmq/Makefile
+		 epoll/Makefile
+		 socket/Makefile
+		 dns/Makefile
 		 ratchet/Makefile
 		 luah/Makefile
 		 test/Makefile])

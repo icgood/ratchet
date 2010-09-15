@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 
-local epoll = require("luah.ratchet.epoll")
+local epoll = require("luah.epoll")
 
 local eobj = epoll()
 
