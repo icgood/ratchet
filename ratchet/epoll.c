@@ -83,6 +83,14 @@ static int myepoll_getepfd (lua_State *L, int index)
 }
 /* }}} */
 
+/* {{{ myepoll_getmyfd() */
+static int myepoll_getmyfd (lua_State *L)
+{
+	lua_pushinteger (L, myepoll_getepfd (L, 1));
+	return 1;
+}
+/* }}} */
+
 /* {{{ myepoll_del() */
 static int myepoll_del (lua_State *L)
 {
@@ -243,6 +251,7 @@ int luaopen_luah_ratchet_epoll (lua_State *L)
 	luaL_Reg meths[] = {
 		{"init", myepoll_init},
 		{"del", myepoll_del},
+		{"getfd", myepoll_getmyfd},
 		{"register", myepoll_register},
 		{"modify", myepoll_modify},
 		{"unregister", myepoll_unregister},

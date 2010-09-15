@@ -5,6 +5,7 @@
 #include "misc.h"
 #include "makeclass.h"
 #include "epoll.h"
+#include "zmq_main.h"
 #include "ratchet.h"
 #include "socket.h"
 
@@ -20,9 +21,10 @@ int luaopen_luah (lua_State *L)
 
 	luaopen_luah_ratchet (L);
 	lua_setfield (L, -2, "ratchet");
-
 	luaopen_luah_rlimit (L);
 	lua_setfield (L, -2, "rlimit");
+	luaopen_luah_zmq (L);
+	lua_setfield (L, -2, "zmq");
 
 	return 1;
 }

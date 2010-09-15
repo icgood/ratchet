@@ -29,6 +29,12 @@ AC_DEFINE([HAVE_EPOLL_PWAIT], [0], [Define to 1 if you have the epoll_pwait func
 AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
 AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
 
+AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
+AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
+if test "x${have_zmq}" != "xyes"; then
+	AC_MSG_ERROR([ZeroMQ headers and libraries are required for building.])
+fi
+
 # Checks for header files.
 AC_CHECK_HEADERS([string.h errno.h netdb.h sys/ioctl.h sys/socket.h sys/resource.h])
 AX_LUA_HEADERS
@@ -48,6 +54,7 @@ AC_CONFIG_FILES([Makefile
 		 misc/Makefile
 		 makeclass/Makefile
 		 rlimit/Makefile
+		 zmq/Makefile
 		 ratchet/Makefile
 		 luah/Makefile
 		 test/Makefile])
