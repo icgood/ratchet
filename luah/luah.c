@@ -32,6 +32,8 @@ int luaopen_luah (lua_State *L)
 	lua_setfield (L, -2, "dns");
 	luaopen_luah_socket (L);
 	lua_setfield (L, -2, "socket");
+	luaopen_luah_xml (L);
+	lua_setfield (L, -2, "xml");
 
 	return 1;
 }

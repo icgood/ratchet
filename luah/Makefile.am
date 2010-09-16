@@ -8,6 +8,7 @@ luah_la_CFLAGS = -I$(top_srcdir)/misc \
 		 -I$(top_srcdir)/epoll \
 		 -I$(top_srcdir)/dns \
 		 -I$(top_srcdir)/socket \
+		 -I$(top_srcdir)/xml \
 		 -I$(top_srcdir)/ratchet
 luah_la_LIBADD = ../misc/libluahmisc.la \
 		 ../makeclass/libluahmakeclass.la \
@@ -16,6 +17,7 @@ luah_la_LIBADD = ../misc/libluahmisc.la \
 		 ../epoll/libluahepoll.la \
 		 ../dns/libluahdns.la \
 		 ../socket/libluahsocket.la \
+		 ../xml/libluahxml.la \
 		 ../ratchet/libluahratchet.la
 luah_la_LDFLAGS = -module -avoid-version
 luah_la_SOURCES = luah.c

@@ -29,6 +29,12 @@ AC_DEFINE([HAVE_EPOLL_PWAIT], [0], [Define to 1 if you have the epoll_pwait func
 AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
 AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
 
+AC_CHECK_HEADERS([expat.h], [have_expat=yes], [have_expat=no])
+AC_SEARCH_LIBS([XML_ParserCreate], [expat], [], [have_expat=no])
+if test "x${have_expat}" != "xyes"; then
+	AC_MSG_ERROR([Expat headers and libraries are required for building.])
+fi
+
 AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
 AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
 if test "x${have_zmq}" != "xyes"; then
@@ -59,6 +65,7 @@ AC_CONFIG_FILES([Makefile
 		 socket/Makefile
 		 dns/Makefile
 		 ratchet/Makefile
+		 xml/Makefile
 		 luah/Makefile
 		 test/Makefile])
 AC_OUTPUT
