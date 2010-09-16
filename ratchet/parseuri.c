@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
+#include "misc.h"
 #include "parseuri.h"
 #include "dns.h"
 
@@ -80,7 +81,7 @@ static int zmq_endpoint (lua_State *L)
 	lua_settop (L, 1);
 	if (luaH_strmatch (L, "^([^%:]*)%:(.*)$"))
 	{
-		luaH_callmethod (L, 2, "upper");
+		luaH_callmethod (L, 2, "upper", 0);
 		lua_replace (L, 2);
 	}
 	else

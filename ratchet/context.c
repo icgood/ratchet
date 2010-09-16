@@ -2,8 +2,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include <sys/epoll.h>
-
 #include "misc.h"
 #include "makeclass.h"
 #include "context.h"
@@ -13,8 +11,11 @@ static int ctx_init (lua_State *L)
 {
 	int nargs = lua_gettop (L) - 4;
 
+	lua_pushboolean (L, 1);
+	lua_setfield (L, 1, "is_context");
+
 	lua_pushvalue (L, 2);
-	lua_setfield (L, 1, "epoll");
+	lua_setfield (L, 1, "poller");
 	lua_pushvalue (L, 3);
 	lua_setfield (L, 1, "type");
 	lua_pushvalue (L, 4);
@@ -56,11 +57,11 @@ static int ctx_send (lua_State *L)
 
 	lua_settop (L, 2);
 
-	lua_getfield (L, 1, "epoll");
+	lua_getfield (L, 1, "poller");
+	lua_getfield (L, -1, "set_writable");
+	lua_insert (L, -2);
 	lua_pushvalue (L, 1);
-	lua_pushinteger (L, EPOLLIN | EPOLLOUT);
-	luaH_callmethod (L, 3, "modify", 2);
-	lua_pop (L, 1);
+	lua_call (L, 2, 0);
 
 	lua_getfield (L, 1, "send_queue");
 	n = lua_objlen (L, -1);
@@ -90,11 +91,11 @@ static int ctx_raw_send_one (lua_State *L)
 
 	if (n <= 1)
 	{
-		lua_getfield (L, 1, "epoll");
+		lua_getfield (L, 1, "poller");
+		lua_getfield (L, -1, "unset_writable");
+		lua_insert (L, -2);
 		lua_pushvalue (L, 1);
-		lua_pushinteger (L, EPOLLIN);
-		luaH_callmethod (L, 3, "modify", 2);
-		lua_pop (L, 1);
+		lua_call (L, 2, 0);
 	}
 
 	if (!lua_isnil (L, 2))
@@ -123,7 +124,7 @@ static int ctx_accept (lua_State *L)
 {
 	lua_settop (L, 5);
 
-	lua_getfield (L, 1, "epoll");
+	lua_getfield (L, 1, "poller");
 	lua_replace (L, 3);
 
 	lua_getfield (L, 1, "type");
@@ -141,7 +142,7 @@ static int ctx_accept (lua_State *L)
 /* {{{ ctx_close() */
 static int ctx_close (lua_State *L)
 {
-	lua_getfield (L, 1, "epoll");
+	lua_getfield (L, 1, "poller");
 	lua_pushvalue (L, 1);
 	luaH_callmethod (L, 2, "unregister", 1);
 	lua_pop (L, 1);

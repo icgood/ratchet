@@ -7,4 +7,5 @@ libluahratchet_la_CFLAGS = -I$(top_srcdir)/misc \
 			   -I$(top_srcdir)/socket
 libluahratchet_la_SOURCES = ratchet.c ratchet.h \
 			    parseuri.c parseuri.h \
+			    pollall.h pollall.c \
 			    context.c context.h

@@ -35,8 +35,10 @@ static int zmqpoll_wait_iter (lua_State *L)
 		return 0;
 	lua_pushinteger (L, i+1);
 
-	/* Push the triggered events. */
+	/* Push the status of the triggered item. */
+	lua_getfield (L, lua_upvalueindex (1), "status");
 	lua_pushinteger (L, curr->revents);
+	lua_call (L, 1, 1);
 
 	/* Get the associated object, keyed on curr. */
 	lua_getfield (L, lua_upvalueindex (1), "item_ref");
@@ -97,8 +99,9 @@ static int zmqpoll_wait (lua_State *L)
 /* {{{ zmqpoll_getfd() */
 static int zmqpoll_getfd (lua_State *L)
 {
+	lua_pushliteral (L, "zmqpoll");
 	lua_pushnil (L);
-	return 1;
+	return 2;
 }
 /* }}} */
 
@@ -106,6 +109,7 @@ static int zmqpoll_getfd (lua_State *L)
 static int zmqpoll_register (lua_State *L)
 {
 	luaH_callmethod (L, 2, "getfd", 0);
+	lua_remove (L, -2);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushvalue (L, 2);
@@ -153,10 +157,11 @@ static int zmqpoll_modify (lua_State *L)
 	int flags, flag_i;
 
 	luaH_callmethod (L, 2, "getfd", 0);
+	lua_replace (L, -2);
 	lua_insert (L, 3);
 
 	/* Get whatever flags we now want. */
-	if (lua_gettop (L) >= 4)
+	if (lua_gettop (L) < 4)
 		flags = ZMQ_POLLIN;
 	else
 	{
@@ -193,6 +198,26 @@ static int zmqpoll_modify (lua_State *L)
 }
 /* }}} */
 
+/* {{{ zmqpoll_set_writable() */
+static int zmqpoll_set_writable (lua_State *L)
+{
+	lua_settop (L, 2);
+	lua_pushinteger (L, ZMQ_POLLOUT | ZMQ_POLLIN);
+
+	return luaH_callmethod (L, 1, "modify", 2);
+}
+/* }}} */
+
+/* {{{ zmqpoll_unset_writable() */
+static int zmqpoll_unset_writable (lua_State *L)
+{
+	lua_settop (L, 2);
+	lua_pushinteger (L, ZMQ_POLLIN);
+
+	return luaH_callmethod (L, 1, "modify", 2);
+}
+/* }}} */
+
 /* {{{ zmqpoll_unregister() */
 static int zmqpoll_unregister (lua_State *L)
 {
@@ -202,6 +227,7 @@ static int zmqpoll_unregister (lua_State *L)
 	int fd = 0;
 
 	luaH_callmethod (L, 2, "getfd", 0);
+	lua_remove (L, -2);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushnil (L);
@@ -212,9 +238,9 @@ static int zmqpoll_unregister (lua_State *L)
 	/* Get the backing for the item to remove.. */
 	int t = lua_type (L, 3);
 	if (t == LUA_TLIGHTUSERDATA)
-		socket = lua_touserdata (L, 4);
+		socket = lua_touserdata (L, 3);
 	else if (t == LUA_TNUMBER)
-		fd = lua_tointeger (L, 4);
+		fd = lua_tointeger (L, 3);
 
 	/* Get pollitems and remove the requested item. */
 	lua_getfield (L, 1, "pollitems");
@@ -242,13 +268,57 @@ static int zmqpoll_unregister (lua_State *L)
 }
 /* }}} */
 
-/* {{{ zmqpoll_happened() */
-static int zmqpoll_happened (lua_State *L)
+/* {{{ status_init() */
+static int status_init (lua_State *L)
 {
-	int events = luaL_checkint (L, 1);
-	int specific = luaL_checkint (L, 2);
+	luaL_checkint (L, 2);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 1, "n");
 
-	lua_pushboolean (L, events & specific);
+	return 0;
+}
+/* }}} */
+
+/* {{{ status_readable() */
+static int status_readable (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & ZMQ_POLLIN);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_writable() */
+static int status_writable (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & ZMQ_POLLOUT);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_hangup() */
+static int status_hangup (lua_State *L)
+{
+	lua_pushboolean (L, 0);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_error() */
+static int status_error (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & ZMQ_POLLERR);
 	return 1;
 }
 /* }}} */
@@ -261,23 +331,25 @@ int luaopen_luah_zmq_poll (lua_State *L)
 		{"getfd", zmqpoll_getfd},
 		{"register", zmqpoll_register},
 		{"modify", zmqpoll_modify},
+		{"set_writable", zmqpoll_set_writable},
+		{"unset_writable", zmqpoll_unset_writable},
 		{"unregister", zmqpoll_unregister},
 		{"wait", zmqpoll_wait},
-		{"happened", zmqpoll_happened},
 		{NULL}
 	};
 
 	luaH_newclass (L, "luah.zmq.poll", meths);
 
-	/* Poll options. */
-	lua_pushinteger (L, ZMQ_POLLIN);
-	lua_setfield (L, -2, "IN");
-	lua_pushinteger (L, ZMQ_POLLOUT);
-	lua_setfield (L, -2, "OUT");
-	lua_pushinteger (L, ZMQ_POLLERR);
-	lua_setfield (L, -2, "ERR");
-	lua_pushnil (L);
-	lua_setfield (L, -2, "HUP");
+	luaL_Reg status_meths[] = {
+		{"init", status_init},
+		{"readable", status_readable},
+		{"writable", status_writable},
+		{"hangup", status_hangup},
+		{"error", status_error},
+		{NULL}
+	};
+	luaH_newclass (L, NULL, status_meths);
+	lua_setfield (L, -2, "status");
 
 	return 1;
 }

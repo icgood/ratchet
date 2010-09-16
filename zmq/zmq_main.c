@@ -173,9 +173,14 @@ int luaopen_luah_zmq (lua_State *L)
 	luaH_setclassfield (L, -2, "poll");
 
 	/* Set up a default context in the registry. */
-	lua_pushinteger (L, DEFAULT_ZMQ_IO_THREADS);
-	luaH_callfunction (L, -2, 1);
-	lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+	lua_getfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+	if (lua_isnil (L, -1))
+	{
+		lua_pushinteger (L, DEFAULT_ZMQ_IO_THREADS);
+		luaH_callfunction (L, -3, 1);
+		lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+	}
+	lua_pop (L, 1);
 
 	return 1;
 }

@@ -2,14 +2,12 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include <sys/epoll.h>
-
 #include "misc.h"
 #include "makeclass.h"
 #include "ratchet.h"
 #include "context.h"
-#include "epoll.h"
 #include "parseuri.h"
+#include "pollall.h"
 #include "zmq_socket.h"
 
 /* {{{ luaH_ratchet_add_types() */
@@ -29,9 +27,9 @@ static void luaH_ratchet_add_types (lua_State *L)
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
 {
-	luaopen_luah_epoll (L);
+	lua_getfield (L, 1, "pollall");
 	lua_call (L, 0, 1);
-	lua_setfield (L, 1, "epoll");
+	lua_setfield (L, 1, "poller");
 
 	return 0;
 }
@@ -95,7 +93,7 @@ static int ratchet_instantiate_context (lua_State *L)
 		return 0;
 	lua_insert (L, 4);
 	lua_insert (L, 4);
-	lua_getfield (L, 1, "epoll");
+	lua_getfield (L, 1, "poller");
 	lua_insert (L, 4);
 
 	return luaH_callfunction (L, 3, 3+extra_args);
@@ -163,41 +161,26 @@ static int ratchet_handle_events (lua_State *L)
 /* {{{ ratchet_handle_one() */
 static int ratchet_handle_one (lua_State *L)
 {
-	lua_getfield (L, 1, "epoll");
-	lua_insert (L, 2);
-	int events = lua_tonumber (L, 3);
+	lua_getfield (L, 3, "is_context");
+	if (!lua_isboolean (L, -1) || !lua_toboolean (L, -1))
+		return 0;
+	lua_pop (L, 1);
 
-	if (events & EPOLLERR)
-	{
-		//printf ("error event\n");
-		//luaH_stackdump (L);
-		luaH_callmethod (L, 4, "on_error", 0);
-	}
-	lua_settop (L, 4);
+	if (luaH_callboolmethod (L, 2, "error", 0))
+		luaH_callmethod (L, 3, "on_error", 0);
+	lua_settop (L, 3);
 	
-	if (events & (EPOLLERR | EPOLLHUP))
-	{
-		//printf ("close event\n");
-		//luaH_stackdump (L);
-		luaH_callmethod (L, 4, "on_close", 0);
-	}
-	lua_settop (L, 4);
+	if (luaH_callboolmethod (L, 2, "hangup", 0))
+		luaH_callmethod (L, 3, "on_close", 0);
+	lua_settop (L, 3);
 	
-	if (events & EPOLLIN)
-	{
-		//printf ("recv event\n");
-		//luaH_stackdump (L);
-		luaH_callmethod (L, 4, "on_recv", 0);
-	}
-	lua_settop (L, 4);
+	if (luaH_callboolmethod (L, 2, "readable", 0))
+		luaH_callmethod (L, 3, "on_recv", 0);
+	lua_settop (L, 3);
 	
-	if (events & EPOLLOUT)
-	{
-		//printf ("send event\n");
-		//luaH_stackdump (L);
-		luaH_callmethod (L, 4, "raw_send_one", 0);
-	}
-	lua_settop (L, 4);
+	if (luaH_callboolmethod (L, 2, "writable", 0))
+		luaH_callmethod (L, 3, "raw_send_one", 0);
+	lua_settop (L, 3);
 	
 	return 0;
 }
@@ -217,13 +200,16 @@ static int ratchet_run_once (lua_State *L)
 	else if (!lua_isnoneornil (L, 2))
 		luaL_checktype (L, 2, LUA_TTABLE);
 
-	lua_getfield (L, 1, "epoll");
+	lua_getfield (L, 1, "poller");
 	lua_replace (L, 3);
 
 	luaH_callmethod (L, 3, "wait", 2);
-	lua_settop (L, 6);	/* The three method rets now reside in indices 4-6. */
+	lua_settop (L, 9);	/* The six method rets now reside in indices 4-9. */
 
-	int rets = luaH_callmethod (L, 1, "handle_events", 3);
+	int rets;
+	rets = luaH_callmethod (L, 1, "handle_events", 3);
+	lua_pop (L, rets);
+	rets = luaH_callmethod (L, 1, "handle_events", 3);
 	lua_pop (L, rets);
 	
 	return 0;
@@ -276,6 +262,10 @@ int luaopen_luah_ratchet (lua_State *L)
 	};
 
 	luaH_newclass (L, "luah.ratchet", meths);
+
+	/* Set up submodules. */
+	luaopen_luah_ratchet_pollall (L);
+	luaH_setclassfield (L, -2, "pollall");
 
 	/* Set up URI schema table. */
 	lua_newtable (L);

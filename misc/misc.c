@@ -94,6 +94,17 @@ int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 }
 /* }}} */
 
+/* {{{ luaH_unpack() */
+int luaH_unpack (lua_State *L, int index)
+{
+	int i;
+	int j = lua_objlen (L, index);
+	for (i=1; i<=j; i++)
+		lua_rawgeti (L, index, i);
+	return j;
+}
+/* }}} */
+
 /* {{{ luaH_strmatch() */
 int luaH_strmatch (lua_State *L, const char *match)
 {

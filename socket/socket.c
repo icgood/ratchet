@@ -92,8 +92,9 @@ static int mysocket_close (lua_State *L)
 /* {{{ mysocket_getfd() */
 static int mysocket_getfd (lua_State *L)
 {
+	lua_pushliteral (L, "fd");
 	lua_getfield (L, 1, "fd");
-	return 1;
+	return 2;
 }
 /* }}} */
 

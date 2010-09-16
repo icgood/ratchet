@@ -24,8 +24,10 @@ static int myepoll_event_iter (lua_State *L)
 		return 0;
 	lua_pushinteger (L, i+1);
 
-	/* Push the triggered events. */
+	/* Push the status of the triggered item. */
+	lua_getfield (L, lua_upvalueindex (1), "status");
 	lua_pushinteger (L, events[i-1].events);
+	lua_call (L, 1, 1);
 
 	/* Get the associated object, keyed on current fd. */
 	lua_getfield (L, lua_upvalueindex (1), "fd_ref");
@@ -42,7 +44,7 @@ static int myepoll_init (lua_State *L)
 	int fd_est, epfd;
 
 	/* Grab the "fd_est" attribute from parameter. */
-	if (lua_gettop (L) > 1)
+	if (!lua_isnoneornil (L, 2))
 		fd_est = luaL_checkint (L, 2);
 	else
 		fd_est = 100;
@@ -86,8 +88,9 @@ static int myepoll_getepfd (lua_State *L, int index)
 /* {{{ myepoll_getmyfd() */
 static int myepoll_getmyfd (lua_State *L)
 {
+	lua_pushliteral (L, "fd");
 	lua_pushinteger (L, myepoll_getepfd (L, 1));
-	return 1;
+	return 2;
 }
 /* }}} */
 
@@ -117,9 +120,11 @@ static int myepoll_getfd (lua_State *L, int index)
 		if (!lua_isfunction (L, -1))
 			return luaL_argerror (L, index, "table must have getfd()");
 		lua_pushvalue (L, index);
-		lua_call (L, 1, 1);
-		ret = luaL_checkint (L, -1);
-		lua_pop (L, 1);
+		lua_call (L, 1, 2);
+		if (!luaH_strequal (L, -2, "fd") || !lua_isnumber (L, -1))
+			return luaL_argerror (L, index, "epoll cannot manage this object type");
+		ret = lua_tointeger (L, -1);
+		lua_pop (L, 2);
 	}
 	
 	else
@@ -182,6 +187,26 @@ static int myepoll_modify (lua_State *L)
 }
 /* }}} */
 
+/* {{{ myepoll_set_writable() */
+static int myepoll_set_writable (lua_State *L)
+{
+	lua_settop (L, 2);
+	lua_pushinteger (L, EPOLLOUT | EPOLLIN);
+
+	return luaH_callmethod (L, 1, "modify", 2);
+}
+/* }}} */
+
+/* {{{ myepoll_unset_writable() */
+static int myepoll_unset_writable (lua_State *L)
+{
+	lua_settop (L, 2);
+	lua_pushinteger (L, EPOLLIN);
+
+	return luaH_callmethod (L, 1, "modify", 2);
+}
+/* }}} */
+
 /* {{{ myepoll_unregister() */
 static int myepoll_unregister (lua_State *L)
 {
@@ -234,13 +259,61 @@ static int myepoll_wait (lua_State *L)
 }
 /* }}} */
 
-/* {{{ myepoll_happened() */
-static int myepoll_happened (lua_State *L)
+/* {{{ status_init() */
+static int status_init (lua_State *L)
 {
-	int events = luaL_checkint (L, 1);
-	int specific = luaL_checkint (L, 2);
+	luaL_checkint (L, 2);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 1, "n");
 
-	lua_pushboolean (L, events & specific);
+	return 0;
+}
+/* }}} */
+
+/* {{{ status_readable() */
+static int status_readable (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & EPOLLIN);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_writable() */
+static int status_writable (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & EPOLLOUT);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_hangup() */
+static int status_hangup (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & EPOLLHUP);
+	return 1;
+}
+/* }}} */
+
+/* {{{ status_error() */
+static int status_error (lua_State *L)
+{
+	lua_getfield (L, 1, "n");
+	int n = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	lua_pushboolean (L, n & EPOLLERR);
 	return 1;
 }
 /* }}} */
@@ -254,22 +327,25 @@ int luaopen_luah_epoll (lua_State *L)
 		{"getfd", myepoll_getmyfd},
 		{"register", myepoll_register},
 		{"modify", myepoll_modify},
+		{"set_writable", myepoll_set_writable},
+		{"unset_writable", myepoll_unset_writable},
 		{"unregister", myepoll_unregister},
 		{"wait", myepoll_wait},
-		{"happened", myepoll_happened},
 		{NULL}
 	};
 
 	luaH_newclass (L, "luah.epoll", meths);
 
-	luaH_setfieldint (L, -1, "poll_err", EPOLLERR);
-	luaH_setfieldint (L, -1, "poll_edge", EPOLLET);
-	luaH_setfieldint (L, -1, "poll_hup", EPOLLHUP);
-	luaH_setfieldint (L, -1, "poll_rdhup", EPOLLRDHUP);
-	luaH_setfieldint (L, -1, "poll_read", EPOLLIN);
-	luaH_setfieldint (L, -1, "poll_write", EPOLLOUT);
-	luaH_setfieldint (L, -1, "poll_oneshot", EPOLLONESHOT);
-	luaH_setfieldint (L, -1, "poll_pri", EPOLLPRI);
+	luaL_Reg status_meths[] = {
+		{"init", status_init},
+		{"readable", status_readable},
+		{"writable", status_writable},
+		{"hangup", status_hangup},
+		{"error", status_error},
+		{NULL}
+	};
+	luaH_newclass (L, NULL, status_meths);
+	lua_setfield (L, -2, "status");
 
 	return 1;
 }

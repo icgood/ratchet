@@ -102,9 +102,11 @@ static int zmqsock_del (lua_State *L)
 {
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
-	if (zmq_close (socket) < 0)
+	if (socket && zmq_close (socket) < 0)
 		return luaH_perror (L);
 	lua_pop (L, 1);
+	lua_pushlightuserdata (L, NULL);
+	lua_setfield (L, 1, "socket");
 
 	return 0;
 }
@@ -113,8 +115,9 @@ static int zmqsock_del (lua_State *L)
 /* {{{ zmqsock_getfd() */
 static int zmqsock_getfd (lua_State *L)
 {
+	lua_pushliteral (L, "zmq");
 	lua_getfield (L, 1, "socket");
-	return 1;
+	return 2;
 }
 /* }}} */
 
@@ -315,6 +318,7 @@ int luaopen_luah_zmq_socket (lua_State *L)
 	const luaL_Reg meths[] = {
 		{"init", zmqsock_init},
 		{"del", zmqsock_del},
+		{"close", zmqsock_del},
 		{"getfd", zmqsock_getfd},
 		{"listen", zmqsock_listen},
 		{"connect", zmqsock_connect},

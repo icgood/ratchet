@@ -14,9 +14,9 @@ poll:register(s1)
 
 s2:sendsome('Hello...')
 s2:send('World!')
-for i, e, o in poll:wait(0.1) do
-    assert(o == s1, "Received event on non-existent object")
-    assert(poll.happened(e, poll.IN), "Received unknown event on object")
+for i, st, obj in poll:wait(0.1) do
+    assert(obj == s1, "Received event on non-existent object")
+    assert(st:readable(), "Received unknown event on object")
     received = received .. s1:recv()
     received = received .. s1:recv()
 end
