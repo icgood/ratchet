@@ -236,23 +236,16 @@ static int mysocket_recv (lua_State *L)
 
 	luaL_buffinit (L, &buffer);
 	
-	for (prepped = luaL_prepbuffer (&buffer); ret > 0; luaL_addsize (&buffer, (size_t) ret))
+	prepped = luaL_prepbuffer (&buffer);
+	ret = recv (fd, prepped, LUAL_BUFFERSIZE, 0);
+	if (ret < 0)
 	{
-		prepped = luaL_prepbuffer (&buffer);
-		ret = recv (fd, prepped, LUAL_BUFFERSIZE, 0);
-		if (ret == 0)
-			continue;
-		if (ret < 0)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-			{
-				ret = 0;
-				continue;
-			}
-			else
-				return luaH_perror (L);
-		}
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			ret = 0;
+		else
+			return luaH_perror (L);
 	}
+	luaL_addsize (&buffer, (size_t) ret);
 
 	luaL_pushresult (&buffer);
 

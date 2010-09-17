@@ -24,13 +24,6 @@ static int ctx_init (lua_State *L)
 	lua_pushvalue (L, 1);
 	luaH_callmethod (L, 2, "register", 1);
 
-	/* If engine has set_nonblocking method, call it. */
-	lua_pushvalue (L, 4);
-	lua_getfield (L, -1, "set_nonblocking");
-	if (!lua_isnoneornil (L, -1))
-		luaH_callmethod (L, 4, "set_nonblocking", 0);
-	lua_pop (L, 2);
-
 	/* Set up send_queue with table library function. */
 	lua_newtable (L);
 	lua_setfield (L, 1, "send_queue");

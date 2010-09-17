@@ -81,7 +81,6 @@ static int ratchet_instantiate_context (lua_State *L)
 {
 	int args = lua_gettop (L);
 	int extra_args = (args > 3 ? args-3 : 0);
-	luaL_checkstring (L, 2);
 
 	if (args < 3)
 	{
@@ -90,9 +89,19 @@ static int ratchet_instantiate_context (lua_State *L)
 	}
 
 	lua_pushvalue (L, 2);
-	int rets = luaH_callmethod (L, 1, "urifactory", 1);
-	if (rets != 2 || lua_isnil (L, -1))
-		return 0;
+	if (lua_isstring (L, -1)) /* Use URI to construct engine. */
+	{
+		int rets = luaH_callmethod (L, 1, "urifactory", 1);
+		if (rets != 2 || lua_isnil (L, -1))
+			return 0;
+	}
+	else /* Engine was given, extract type and position in stack. */
+	{
+		lua_getfield (L, -1, "getfd");
+		lua_pushvalue (L, -2);
+		lua_call (L, 1, 1);
+		lua_insert (L, -2);
+	}
 	lua_insert (L, 4);
 	lua_insert (L, 4);
 	lua_getfield (L, 1, "poller");

@@ -16,7 +16,7 @@
 /* {{{ zmqctx_init() */
 static int zmqctx_init (lua_State *L)
 {
-	int io_threads = 1;
+	int io_threads = DEFAULT_ZMQ_IO_THREADS;
 	int def = 0;
 
 	/* Grab the named parameters. */

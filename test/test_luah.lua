@@ -9,4 +9,5 @@ assert(luah.socket, "Socket library not available as submodule!")
 assert(luah.dns, "Dns library not available as submodule!")
 assert(luah.rlimit, "Rlimit library not available as submodule!")
 assert(luah.zmq, "ZMQ library not available as submodule!")
+assert(luah.xml, "XML library not available as submodule!")
 
