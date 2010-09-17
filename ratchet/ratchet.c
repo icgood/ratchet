@@ -17,6 +17,9 @@ static void luaH_ratchet_add_types (lua_State *L)
 	lua_setfield (L, -2, "tcp");
 
 	luaopen_luah_socket (L);
+	lua_setfield (L, -2, "rawfd");
+
+	luaopen_luah_socket (L);
 	lua_setfield (L, -2, "unix");
 
 	luaopen_luah_zmq_socket (L);
@@ -97,6 +100,18 @@ static int ratchet_instantiate_context (lua_State *L)
 	lua_insert (L, 4);
 
 	return luaH_callfunction (L, 3, 3+extra_args);
+}
+/* }}} */
+
+/* {{{ ratchet_attach() */
+static int ratchet_attach (lua_State *L)
+{
+	int args = lua_gettop (L) - 1;
+	int rets = luaH_callmethod (L, 1, "instantiate_context", args);
+	if (rets != 1)
+		return 0;
+
+	return 1;
 }
 /* }}} */
 
@@ -243,6 +258,31 @@ static int ratchet_run (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_run_until() */
+static int ratchet_run_until (lua_State *L)
+{
+	int iterations = -1;
+	int i;
+
+	luaL_checktype (L, 3, LUA_TFUNCTION);
+
+	while (1)
+	{
+		lua_pushvalue (L, 3);
+		lua_call (L, 0, 1);
+		if (lua_toboolean (L, -1))
+			break;
+		lua_pop (L, 1);
+
+		lua_pushvalue (L, 2);
+		luaH_callmethod (L, 1, "run_once", 1);
+		lua_settop (L, 3);
+	}
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ luaopen_luah_ratchet() */
 int luaopen_luah_ratchet (lua_State *L)
 {
@@ -251,6 +291,7 @@ int luaopen_luah_ratchet (lua_State *L)
 		{"parseuri", luaH_parseuri},
 		{"urifactory", ratchet_urifactory},
 		{"instantiate_context", ratchet_instantiate_context},
+		{"attach", ratchet_attach},
 		{"connect", ratchet_connect},
 		{"listen", ratchet_listen},
 		{"new_context", ratchet_new_context},
@@ -258,6 +299,7 @@ int luaopen_luah_ratchet (lua_State *L)
 		{"handle_one", ratchet_handle_one},
 		{"run_once", ratchet_run_once},
 		{"run", ratchet_run},
+		{"run_until", ratchet_run_until},
 		{NULL}
 	};
 

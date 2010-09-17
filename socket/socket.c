@@ -55,11 +55,11 @@ static int mysocket_init (lua_State *L)
 			use_udp = lua_toboolean (L, -1);
 	}
 
-	if (!addr)
-		luaL_error (L, "Sockets must be initialized with address information!");
-
 	if (fd < 0)
 	{
+		if (!addr)
+			luaL_error (L, "New sockets must be initialized with address information!");
+
 		fd = socket ((int) addr->sa_family, (use_udp ? SOCK_DGRAM : SOCK_STREAM), 0);
 		if (fd < 0)
 			return luaH_perror (L);

@@ -41,6 +41,12 @@ if test "x${have_zmq}" != "xyes"; then
 	AC_MSG_ERROR([ZeroMQ headers and libraries are required for building.])
 fi
 
+# Configure options: --enable-devel[=no].
+AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],
+	                               [install developer headers and libraries (default no)])],
+	      [enable_devel=yes], [enable_devel=no])
+AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
+
 # Checks for header files.
 AC_CHECK_HEADERS([string.h errno.h netdb.h sys/ioctl.h sys/socket.h sys/resource.h])
 AX_LUA_HEADERS

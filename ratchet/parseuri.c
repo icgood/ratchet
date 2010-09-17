@@ -12,14 +12,30 @@
 #include "parseuri.h"
 #include "dns.h"
 
+/* {{{ rawfd_endpoint() */
+static int fd_endpoint (lua_State *L)
+{
+	int fd = luaL_checkint (L, 1);
+	lua_newtable (L);
+	lua_pushinteger (L, fd);
+	lua_setfield (L, -2, "fd");
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ unix_endpoint() */
 static int unix_endpoint (lua_State *L)
 {
+	lua_newtable (L);
+
 	struct sockaddr_un *addr = (struct sockaddr_un *) lua_newuserdata (L, sizeof (struct sockaddr_un));
 	memset (addr, 0, sizeof (struct sockaddr_un));
 
 	addr->sun_family = AF_UNIX;
 	strncpy (addr->sun_path, lua_tostring (L, 1), sizeof (addr->sun_path) - 1);
+
+	lua_setfield (L, -2, "sockaddr");
 
 	return 1;
 }
@@ -129,6 +145,8 @@ int luaH_parseuri (lua_State *L)
 void luaH_parseuri_add_builtin (lua_State *L)
 {
 	lua_pushcfunction (L, unix_endpoint);
+	lua_setfield (L, -2, "rawfd");
+	lua_pushcfunction (L, fd_endpoint);
 	lua_setfield (L, -2, "unix");
 	lua_pushcfunction (L, tcp_endpoint);
 	lua_setfield (L, -2, "tcp");
