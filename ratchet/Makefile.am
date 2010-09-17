@@ -8,3 +8,7 @@ libluahratchet_la_CFLAGS = -I$(top_srcdir)/misc \
 libluahratchet_la_SOURCES = ratchet.c ratchet.h \
 			    parseuri.c parseuri.h \
 			    context.c context.h
+
+if ENABLE_DEVEL
+pkginclude_HEADERS = ratchet.h parseuri.h context.h
+endif
