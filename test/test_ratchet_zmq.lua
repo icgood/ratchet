@@ -1,19 +1,22 @@
 #!/usr/bin/env lua
 
 require("luah.ratchet")
+require("luah.zmq")
 
 expected = "Hello...Hello..."
 received = ""
 
-r = luah.ratchet()
+r = luah.ratchet(luah.zmq.poll())
+done = 0
 
 -- {{{ user_context: Handles the connection from the "outside world"
 user_context = r:new_context()
 function user_context:on_init()
-    self:send('Hello...')
+    self:send("Hello...")
 end
 function user_context:on_send(data)
     self:close()
+    done = done + 1
 end
 -- }}}
 
@@ -23,6 +26,7 @@ function client_context:on_recv()
     local data = self:recv()
     received = received .. data
     self:close()
+    done = done + 1
 end
 -- }}}
 
@@ -43,7 +47,7 @@ assert(s2:isinstance(user_context))
 assert(s3:isinstance(server_context))
 assert(s4:isinstance(user_context))
 
-r:run{iterations=4, timeout=0.1, maxevents=1}
+r:run_until({timeout=0.1}, function () return done >= 4 end)
 
 assert(expected == received, "Expected: [" .. expected .. "] Received: [" .. received .. "]")
 

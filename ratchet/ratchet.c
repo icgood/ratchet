@@ -7,7 +7,6 @@
 #include "ratchet.h"
 #include "context.h"
 #include "parseuri.h"
-#include "pollall.h"
 #include "zmq_socket.h"
 
 /* {{{ luaH_ratchet_add_types() */
@@ -30,8 +29,8 @@ static void luaH_ratchet_add_types (lua_State *L)
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
 {
-	lua_getfield (L, 1, "pollall");
-	lua_call (L, 0, 1);
+	luaL_argcheck (L, !lua_isnoneornil (L, 2), 2, "poller argument required");
+	lua_pushvalue (L, 2);
 	lua_setfield (L, 1, "poller");
 
 	return 0;
@@ -219,12 +218,9 @@ static int ratchet_run_once (lua_State *L)
 	lua_replace (L, 3);
 
 	luaH_callmethod (L, 3, "wait", 2);
-	lua_settop (L, 9);	/* The six method rets now reside in indices 4-9. */
+	lua_settop (L, 6);	/* The three method rets now reside in indices 4-6. */
 
-	int rets;
-	rets = luaH_callmethod (L, 1, "handle_events", 3);
-	lua_pop (L, rets);
-	rets = luaH_callmethod (L, 1, "handle_events", 3);
+	int rets = luaH_callmethod (L, 1, "handle_events", 3);
 	lua_pop (L, rets);
 	
 	return 0;
@@ -304,10 +300,6 @@ int luaopen_luah_ratchet (lua_State *L)
 	};
 
 	luaH_newclass (L, "luah.ratchet", meths);
-
-	/* Set up submodules. */
-	luaopen_luah_ratchet_pollall (L);
-	luaH_setclassfield (L, -2, "pollall");
 
 	/* Set up URI schema table. */
 	lua_newtable (L);
