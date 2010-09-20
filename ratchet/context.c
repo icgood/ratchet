@@ -87,6 +87,49 @@ static int ctx_send (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ctx_raw_send() */
+static int ctx_raw_send (lua_State *L)
+{
+	int i, n, rets, has_sendmany;
+
+	lua_getfield (L, 1, "engine");
+	lua_getfield (L, -1, "sendmany");
+	has_sendmany = (lua_isnil (L, -1) ? 0 : 1);
+	lua_pop (L, 2);
+
+	if (!has_sendmany)
+		return luaH_callmethod (L, 1, "raw_send_one", 0);
+
+	lua_settop (L, 3);
+	lua_getfield (L, 1, "engine");
+	lua_replace (L, 2);
+
+	lua_getfield (L, 1, "send_queue");
+	lua_replace (L, 3);
+
+	lua_pushvalue (L, 3);
+	rets = luaH_callmethod (L, 2, "sendmany", 1);
+	n = lua_tointeger (L, -1);
+	lua_pop (L, rets);
+	if (n >= (int) lua_objlen (L, 3))
+	{
+		lua_getfield (L, 1, "poller");
+		lua_getfield (L, -1, "unset_writable");
+		lua_insert (L, -2);
+		lua_pushvalue (L, 1);
+		lua_call (L, 2, 0);
+	}
+	for (i=1; i<=n; i++)
+	{
+		lua_rawgeti (L, 3, i);
+		luaH_callmethod (L, 1, "on_send", 1);
+	}
+	luaH_tableremoven (L, 3, n);
+	
+	return 0;
+}
+/* }}} */
+
 /* {{{ ctx_raw_send_one() */
 static int ctx_raw_send_one (lua_State *L)
 {
@@ -119,9 +162,8 @@ static int ctx_raw_send_one (lua_State *L)
 		luaH_dupvalue (L, 3);
 		luaH_callmethod (L, 2, "send", 1);
 		luaH_callmethod (L, 1, "on_send", 1);
-
-		return 0;
 	}
+	return 0;
 }
 /* }}} */
 
@@ -180,6 +222,7 @@ int luaH_ratchet_new_context (lua_State *L)
 		{"init", ctx_init},
 		{"getfd", ctx_getfd},
 		{"send", ctx_send},
+		{"raw_send", ctx_raw_send},
 		{"raw_send_one", ctx_raw_send_one},
 		{"recv", ctx_recv},
 		{"accept", ctx_accept},

@@ -48,7 +48,8 @@ AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],
 AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
 
 # Checks for header files.
-AC_CHECK_HEADERS([string.h errno.h netdb.h sys/ioctl.h sys/socket.h sys/resource.h])
+AC_CHECK_HEADERS([string.h errno.h limits.h])
+AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
 AX_LUA_HEADERS
 if test "x${ac_cv_header_lua_h}" != "xyes"; then
 	AC_MSG_ERROR([Lua headers are required for building.])
@@ -59,7 +60,7 @@ AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 
 # Checks for library functions.
-AC_CHECK_FUNCS([memset socket])
+AC_CHECK_FUNCS([memset socket writev])
 AC_FUNC_STRERROR_R
 
 AC_CONFIG_FILES([Makefile

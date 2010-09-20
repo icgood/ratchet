@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -112,6 +114,29 @@ int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 	ret = lua_toboolean (L, -1);
 	lua_pop (L, 1);
 	return ret;
+}
+/* }}} */
+
+/* {{{ luaH_tableremoven() */
+void luaH_tableremoven (lua_State *L, int index, int n)
+{
+	int i;
+	lua_pushvalue (L, index);
+	for (i=1; i<=n; i++)
+	{
+		lua_rawgeti (L, -1, n+i);
+		lua_rawseti (L, -2, i);
+	}
+	for (i=n+1; ; i++)
+	{
+		lua_rawgeti (L, -1, i);
+		if (lua_isnil (L, -1))
+			break;
+		lua_pop (L, 1);
+		lua_pushnil (L);
+		lua_rawseti (L, -2, i);
+	}
+	lua_pop (L, 2);
 }
 /* }}} */
 

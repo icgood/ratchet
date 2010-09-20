@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -223,7 +225,7 @@ static int ratchet_handle_one (lua_State *L)
 	lua_settop (L, 3);
 	
 	if (luaH_callboolmethod (L, 2, "writable", 0))
-		luaH_callmethod (L, 3, "raw_send_one", 0);
+		luaH_callmethod (L, 3, "raw_send", 0);
 	lua_settop (L, 3);
 	
 	return 0;

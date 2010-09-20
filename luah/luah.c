@@ -19,6 +19,8 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>

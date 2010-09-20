@@ -19,10 +19,19 @@
  * THE SOFTWARE.
  */
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <string.h>
 #include <errno.h>
+#if HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#if HAVE_LIMITS_H
+#include <limits.h>
+#endif
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -243,6 +252,46 @@ static int mysocket_send (lua_State *L)
 }
 /* }}} */
 
+#if HAVE_WRITEV
+/* {{{ mysocket_sendmany() */
+static int mysocket_sendmany (lua_State *L)
+{
+	int fd;
+	size_t len, argn, i;
+	ssize_t ret;
+
+	lua_getfield (L, 1, "fd");
+	fd = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	luaL_checktype (L, 2, LUA_TTABLE);
+	argn = lua_objlen (L, 2);
+
+#if IOV_MAX
+	if (argn > IOV_MAX)
+		argn = IOV_MAX;
+#endif
+
+	struct iovec iov[argn];
+	memset (iov, 0, sizeof (iov));
+	for (i=0; i<argn; i++)
+	{
+		lua_rawgeti (L, 2, (int) (i+1));
+		iov[i].iov_base = lua_tolstring (L, -1, &len);
+		iov[i].iov_len = len;
+		lua_pop (L, 1);
+	}
+
+	ret = writev (fd, iov, (int) argn);
+	if (ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
+		return luaH_perror (L);
+	lua_pushinteger (L, (int) argn);
+
+	return 1;
+}
+/* }}} */
+#endif
+
 /* {{{ mysocket_recv() */
 static int mysocket_recv (lua_State *L)
 {
@@ -285,6 +334,9 @@ int luaopen_luah_socket (lua_State *L)
 		{"set_nonblocking", mysocket_set_nonblocking},
 		{"connect", mysocket_connect},
 		{"send", mysocket_send},
+#if HAVE_WRITEV
+		{"sendmany", mysocket_sendmany},
+#endif
 		{"recv", mysocket_recv},
 		{"accept", mysocket_accept},
 		{"close", mysocket_close},

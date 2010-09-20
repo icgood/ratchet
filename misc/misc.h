@@ -23,6 +23,7 @@ int luaH_callfunction (lua_State *L, int index, int nargs);
 int luaH_callboolfunction (lua_State *L, int index, int nargs);
 int luaH_callmethod (lua_State *L, int index, const char *method, int nargs);
 int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs);
+void luaH_tableremoven (lua_State *L, int index, int n);
 int luaH_unpack (lua_State *L, int index);
 int luaH_strmatch (lua_State *L, const char *match);
 int luaH_strequal (lua_State *L, int index, const char *cmp);
