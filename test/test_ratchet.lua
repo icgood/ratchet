@@ -11,7 +11,8 @@ r = luah.ratchet(luah.epoll())
 -- {{{ user_context: Handles the connection from the "outside world"
 user_context = r:new_context()
 function user_context:on_init()
-    self:send('Hello...')
+    self:send('Hello')
+    self:send('...')
 end
 function user_context:on_recv()
     local data = self:recv()
