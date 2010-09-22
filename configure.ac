@@ -55,7 +55,7 @@ AM_CONDITIONAL([ENABLE_MODULE], [test "x${enable_module}" != "xno"])
 AC_SUBST([LUA_CPATH], ["$enable_module"])
 
 # Checks for header files.
-AC_CHECK_HEADERS([string.h errno.h limits.h])
+AC_CHECK_HEADERS([stdint.h stdlib.h string.h strings.h errno.h limits.h])
 AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
 AX_LUA_HEADERS
 if test "x${ac_cv_header_lua_h}" != "xyes"; then
