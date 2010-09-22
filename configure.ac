@@ -47,6 +47,13 @@ AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],
 	      [enable_devel=yes], [enable_devel=no])
 AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
 
+# Configure options: --disable-module[=yes].
+AC_ARG_ENABLE([module], [AS_HELP_STRING([--enable-module@<:@=CPATH@:>@],
+					[install Lua interpreter module to CPATH (use default)])],
+	      [enable_module="$enableval"], [enable_module="`pkg-config lua --variable=INSTALL_CMOD`"])
+AM_CONDITIONAL([ENABLE_MODULE], [test "x${enable_module}" != "xno"])
+AC_SUBST([LUA_CPATH], ["$enable_module"])
+
 # Checks for header files.
 AC_CHECK_HEADERS([string.h errno.h limits.h])
 AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
