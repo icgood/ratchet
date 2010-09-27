@@ -30,7 +30,7 @@
 /* {{{ ctx_init() */
 static int ctx_init (lua_State *L)
 {
-	int nargs = lua_gettop (L) - 4;
+	int nargs = lua_gettop (L) - 3;
 
 	lua_pushboolean (L, 1);
 	lua_setfield (L, 1, "is_context");
@@ -38,8 +38,6 @@ static int ctx_init (lua_State *L)
 	lua_pushvalue (L, 2);
 	lua_setfield (L, 1, "poller");
 	lua_pushvalue (L, 3);
-	lua_setfield (L, 1, "type");
-	lua_pushvalue (L, 4);
 	lua_setfield (L, 1, "engine");
 
 	lua_pushvalue (L, 1);
@@ -178,20 +176,17 @@ static int ctx_recv (lua_State *L)
 /* {{{ ctx_accept() */
 static int ctx_accept (lua_State *L)
 {
-	lua_settop (L, 5);
+	lua_settop (L, 4);
 
 	lua_getfield (L, 1, "poller");
 	lua_replace (L, 3);
 
-	lua_getfield (L, 1, "type");
-	lua_replace (L, 4);
-
 	lua_getfield (L, 1, "engine");
 	luaH_callmethod (L, -1, "accept", 0);
-	lua_replace (L, 5);
+	lua_replace (L, 4);
 	lua_pop (L, 1);
 
-	return luaH_callfunction (L, 2, 3);
+	return luaH_callfunction (L, 2, 2);
 }
 /* }}} */
 
@@ -235,7 +230,7 @@ int luaH_ratchet_new_context (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, NULL, meths);
+	luaH_newclass (L, NULL, meths, NULL);
 
 	return 1;
 }

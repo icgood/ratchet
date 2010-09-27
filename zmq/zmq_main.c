@@ -175,6 +175,31 @@ static int zmqctx_version (lua_State *L)
 }
 /* }}} */
 
+/* {{{ zmqctx_parse_uri() */
+static int zmqctx_parse_uri (lua_State *L)
+{
+	lua_settop (L, 1);
+	if (luaH_strmatch (L, "^([^%:]*)%:(.*)$"))
+	{
+		luaH_callmethod (L, 2, "upper", 0);
+		lua_replace (L, 2);
+	}
+	else
+	{
+		/* Use the original string as endpoint and nil as type. */
+		lua_pushnil (L);
+		lua_pushvalue (L, 1);
+	}
+
+	lua_newtable (L);
+	lua_insert (L, 2);
+	lua_setfield (L, 2, "endpoint");
+	lua_setfield (L, 2, "type");
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ luaopen_luah_zmq() */
 int luaopen_luah_zmq (lua_State *L)
 {
@@ -186,8 +211,12 @@ int luaopen_luah_zmq (lua_State *L)
 		{"version", zmqctx_version},
 		{NULL}
 	};
+	const luaL_Reg funcs[] = {
+		{"parse_uri", zmqctx_parse_uri},
+		{NULL}
+	};
 
-	luaH_newclass (L, "luah.zmq", meths);
+	luaH_newclass (L, "luah.zmq", meths, funcs);
 
 	/* Set up submodules. */
 	luaopen_luah_zmq_socket (L);

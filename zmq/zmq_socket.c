@@ -138,9 +138,8 @@ static int zmqsock_del (lua_State *L)
 /* {{{ zmqsock_getfd() */
 static int zmqsock_getfd (lua_State *L)
 {
-	lua_pushliteral (L, "zmq");
 	lua_getfield (L, 1, "socket");
-	return 2;
+	return 1;
 }
 /* }}} */
 
@@ -355,7 +354,7 @@ int luaopen_luah_zmq_socket (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.zmq.socket", meths);
+	luaH_newclass (L, "luah.zmq.socket", meths, NULL);
 
 	/* Socket types. */
 	lua_pushinteger (L, ZMQ_PAIR);

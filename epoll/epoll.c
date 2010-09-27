@@ -111,9 +111,8 @@ static int myepoll_getepfd (lua_State *L, int index)
 /* {{{ myepoll_getmyfd() */
 static int myepoll_getmyfd (lua_State *L)
 {
-	lua_pushliteral (L, "fd");
 	lua_pushinteger (L, myepoll_getepfd (L, 1));
-	return 2;
+	return 1;
 }
 /* }}} */
 
@@ -143,11 +142,11 @@ static int myepoll_getfd (lua_State *L, int index)
 		if (!lua_isfunction (L, -1))
 			return luaL_argerror (L, index, "table must have getfd()");
 		lua_pushvalue (L, index);
-		lua_call (L, 1, 2);
-		if (!luaH_strequal (L, -2, "fd") || !lua_isnumber (L, -1))
+		lua_call (L, 1, 1);
+		if (!lua_isnumber (L, -1))
 			return luaL_argerror (L, index, "epoll cannot manage this object type");
 		ret = lua_tointeger (L, -1);
-		lua_pop (L, 2);
+		lua_pop (L, 1);
 	}
 	
 	else
@@ -357,7 +356,7 @@ int luaopen_luah_epoll (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.epoll", meths);
+	luaH_newclass (L, "luah.epoll", meths, NULL);
 
 	luaL_Reg status_meths[] = {
 		{"init", status_init},
@@ -367,7 +366,7 @@ int luaopen_luah_epoll (lua_State *L)
 		{"error", status_error},
 		{NULL}
 	};
-	luaH_newclass (L, NULL, status_meths);
+	luaH_newclass (L, NULL, status_meths, NULL);
 	lua_setfield (L, -2, "status");
 
 	return 1;

@@ -113,15 +113,17 @@ static int luaH_newclass_newindex (lua_State *L)
 /* }}} */
 
 /* {{{ luaH_newclass() */
-void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths)
+void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const luaL_Reg *funcs)
 {
 	static const luaL_Reg nomeths[] = {{NULL}};
 
 	if (!meths)
 		meths = nomeths;
+	if (!funcs)
+		funcs = nomeths;
 	if (!name)
 		lua_newtable (L);
-	luaL_register (L, name, nomeths);
+	luaL_register (L, name, funcs);
 
 	/* Set up the class prototype object. */
 	lua_newtable (L);
@@ -148,7 +150,7 @@ void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths)
 int luaH_makeclass (lua_State *L)
 {
 	const char *name = lua_tostring (L, -1);
-	luaH_newclass (L, name, NULL);
+	luaH_newclass (L, name, NULL, NULL);
 	return 1;
 }
 /* }}} */

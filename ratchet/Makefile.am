@@ -6,9 +6,8 @@ libluahratchet_la_CFLAGS = -I$(top_srcdir)/misc \
 			   -I$(top_srcdir)/zmq \
 			   -I$(top_srcdir)/socket
 libluahratchet_la_SOURCES = ratchet.c ratchet.h \
-			    parseuri.c parseuri.h \
 			    context.c context.h
 
 if ENABLE_DEVEL
-pkginclude_HEADERS = ratchet.h parseuri.h context.h
+pkginclude_HEADERS = ratchet.h context.h
 endif

@@ -23,6 +23,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/ioctl.h>
 #include <string.h>
 #include <errno.h>
@@ -40,6 +41,73 @@
 #include "misc.h"
 #include "makeclass.h"
 #include "socket.h"
+
+/* {{{ mysocket_parse_unix_uri() */
+static int mysocket_parse_unix_uri (lua_State *L)
+{
+	lua_newtable (L);
+
+	struct sockaddr_un *addr = (struct sockaddr_un *) lua_newuserdata (L, sizeof (struct sockaddr_un));
+	memset (addr, 0, sizeof (struct sockaddr_un));
+
+	addr->sun_family = AF_UNIX;
+	strncpy (addr->sun_path, lua_tostring (L, 1), sizeof (addr->sun_path) - 1);
+
+	lua_setfield (L, -2, "sockaddr");
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ mysocket_parse_tcp_uri() */
+static int mysocket_parse_tcp_uri (lua_State *L)
+{
+	lua_pushvalue (L, 1);
+
+	if (luaH_strmatch (L, "^%/+%[(.-)%](%:?)(%d*)$"))
+	{
+		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		{
+			lua_pop (L, 1);
+			lua_pushnil (L);
+		}
+		lua_remove (L, -2);
+	}
+
+	else if (luaH_strmatch (L, "^%/+([^%:]*)(%:?)(%d*)$"))
+	{
+		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		{
+			lua_pop (L, 1);
+			lua_pushnil (L);
+		}
+		lua_remove (L, -2);
+	}
+
+	else if (luaH_strmatch (L, "^%/+(.*)$"))
+		lua_pushnil (L);
+
+	else
+	{
+		lua_pop (L, 1);
+		lua_pushnil (L);
+		return 1;
+	}
+
+	luaopen_luah_dns (L);
+	lua_getfield (L, -1, "getaddrinfo");
+	lua_remove (L, -2);
+	lua_insert (L, -3);
+	lua_call (L, 2, 1);
+
+	/* Initialize named parameter table for socket class constructor. */
+	lua_newtable (L);
+	lua_insert (L, -2);
+	lua_setfield (L, -2, "sockaddr");
+
+	return 1;
+}
+/* }}} */
 
 /* {{{ fd_set_blocking_flag() */
 static int fd_set_blocking_flag (int fd, int blocking)
@@ -122,9 +190,8 @@ static int mysocket_close (lua_State *L)
 /* {{{ mysocket_getfd() */
 static int mysocket_getfd (lua_State *L)
 {
-	lua_pushliteral (L, "fd");
 	lua_getfield (L, 1, "fd");
-	return 2;
+	return 1;
 }
 /* }}} */
 
@@ -347,8 +414,13 @@ int luaopen_luah_socket (lua_State *L)
 		{"close", mysocket_close},
 		{NULL}
 	};
+	luaL_Reg funcs[] = {
+		{"parse_unix_uri", mysocket_parse_unix_uri},
+		{"parse_tcp_uri", mysocket_parse_tcp_uri},
+		{NULL}
+	};
 
-	luaH_newclass (L, "luah.socket", meths);
+	luaH_newclass (L, "luah.socket", meths, funcs);
 
 	return 1;
 }

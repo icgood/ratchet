@@ -1,12 +1,14 @@
 #!/usr/bin/env lua
 
-require("luah.ratchet")
-require("luah.zmq")
+require "luah"
 
 expected = "Hello...Hello..."
 received = ""
 
 r = luah.ratchet(luah.zmq.poll())
+r:register("zmq", luah.zmq.socket, luah.zmq.parse_uri)
+r:register("tcp", luah.socket, luah.socket.parse_tcp_uri)
+
 done = 0
 
 -- {{{ user_context: Handles the connection from the "outside world"

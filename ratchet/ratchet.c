@@ -29,25 +29,7 @@
 #include "makeclass.h"
 #include "ratchet.h"
 #include "context.h"
-#include "parseuri.h"
 #include "zmq_socket.h"
-
-/* {{{ luaH_ratchet_add_types() */
-static void luaH_ratchet_add_types (lua_State *L)
-{
-	luaopen_luah_socket (L);
-	lua_setfield (L, -2, "tcp");
-
-	luaopen_luah_socket (L);
-	lua_setfield (L, -2, "rawfd");
-
-	luaopen_luah_socket (L);
-	lua_setfield (L, -2, "unix");
-
-	luaopen_luah_zmq_socket (L);
-	lua_setfield (L, -2, "zmq");
-}
-/* }}} */
 
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
@@ -56,44 +38,76 @@ static int ratchet_init (lua_State *L)
 	lua_pushvalue (L, 2);
 	lua_setfield (L, 1, "poller");
 
+	/* Set up the ratchet type table. */
+	lua_newtable (L);
+	lua_setfield (L, 1, "ratchet_factories");
+
 	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_filter_uri() */
+static int ratchet_filter_uri (lua_State *L)
+{
+	int args, uvi;
+
+	/* Pull the filter up-value and call it with all args. */
+	for (uvi = 2; ; uvi++)
+	{
+		args = lua_gettop (L);
+		lua_pushvalue (L, lua_upvalueindex (uvi));
+		if (lua_isnil (L, -1))
+		{
+			lua_pop (L, 1);
+			break;
+		}
+		lua_insert (L, 1);
+		lua_call (L, args, LUA_MULTRET);
+	}
+
+	/* Now run the factory with all results from the filter. */
+	args = lua_gettop (L);
+	lua_pushvalue (L, lua_upvalueindex (1));
+	lua_insert (L, 1);
+	lua_call (L, args, 1);
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ ratchet_parseuri() */
+static int ratchet_parseuri (lua_State *L)
+{
+	const char *uri = luaL_checkstring (L, 1);
+	luaL_checktype (L, 2, LUA_TTABLE);
+
+	lua_pushvalue (L, 1);
+	if (!luaH_strmatch (L, "^([%w%+%.%-]+):(.*)$"))
+	{
+		lua_pushliteral (L, "tcp");
+		lua_pushfstring (L, "//%s", uri);
+	}
+	lua_remove (L, -3);
+
+	lua_pushvalue (L, -2);
+	lua_gettable (L, 2);
+	if (lua_isnil (L, -1))
+		return luaL_error (L, "Unknown URI scheme: <%s>", uri);
+	lua_insert (L, -2);
+
+	lua_call (L, 1, 1);
+	return 2;
 }
 /* }}} */
 
 /* {{{ ratchet_urifactory() */
 static int ratchet_urifactory (lua_State *L)
 {
-	int rets;
-
 	/* Process the URI based on known schemas. */
 	lua_getfield (L, 1, "parseuri");
 	lua_pushvalue (L, 2);
-	lua_getfield (L, 1, "uri_schemas");
-	rets = luaH_callfunction (L, -3, 2);
-	if (rets != 2 || lua_isnil (L, -1))
-	{
-		lua_pop (L, rets+1);
-		lua_pushnil (L);
-		return 1;
-	}
-	lua_remove (L, -3);
-
-	/* Get the ratchet type handler for the URI schema. */
-	lua_getfield (L, 1, "ratchet_types");
-	lua_pushvalue (L, -3);
-	lua_gettable (L, -2);
-	if (lua_isnil (L, -1))
-	{
-		lua_pop (L, 4);
-		lua_pushnil (L);
-		return 1;
-	}
-	lua_remove (L, -2);
-
-	/* Get the ratchet object from the handler, given the data. */
-	lua_pushvalue (L, -2);
-	lua_call (L, 1, 1);
-	lua_remove (L, -2);
+	lua_getfield (L, 1, "ratchet_factories");
+	lua_call (L, 2, 2);
 
 	return 2;
 }
@@ -117,20 +131,28 @@ static int ratchet_instantiate_context (lua_State *L)
 		int rets = luaH_callmethod (L, 1, "urifactory", 1);
 		if (rets != 2 || lua_isnil (L, -1))
 			return 0;
+		lua_remove (L, -2);
 	}
-	else /* Engine was given, extract type and position in stack. */
-	{
-		lua_getfield (L, -1, "getfd");
-		lua_pushvalue (L, -2);
-		lua_call (L, 1, 1);
-		lua_insert (L, -2);
-	}
-	lua_insert (L, 4);
 	lua_insert (L, 4);
 	lua_getfield (L, 1, "poller");
 	lua_insert (L, 4);
 
-	return luaH_callfunction (L, 3, 3+extra_args);
+	return luaH_callfunction (L, 3, 2+extra_args);
+}
+/* }}} */
+
+/* {{{ ratchet_register() */
+static int ratchet_register (lua_State *L)
+{
+	int args = lua_gettop (L);
+
+	if (args > 3)
+		lua_pushcclosure (L, ratchet_filter_uri, args-2);
+	lua_getfield (L, 1, "ratchet_factories");
+	lua_insert (L, 2);
+	lua_rawset (L, 2);
+
+	return 0;
 }
 /* }}} */
 
@@ -316,9 +338,10 @@ int luaopen_luah_ratchet (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", ratchet_init},
-		{"parseuri", luaH_parseuri},
+		{"parseuri", ratchet_parseuri},
 		{"urifactory", ratchet_urifactory},
 		{"instantiate_context", ratchet_instantiate_context},
+		{"register", ratchet_register},
 		{"attach", ratchet_attach},
 		{"connect", ratchet_connect},
 		{"listen", ratchet_listen},
@@ -331,17 +354,7 @@ int luaopen_luah_ratchet (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.ratchet", meths);
-
-	/* Set up URI schema table. */
-	lua_newtable (L);
-	luaH_parseuri_add_builtin (L);
-	lua_setfield (L, -2, "uri_schemas");
-
-	/* Set up the ratchet type table. */
-	lua_newtable (L);
-	luaH_ratchet_add_types (L);
-	lua_setfield (L, -2, "ratchet_types");
+	luaH_newclass (L, "luah.ratchet", meths, NULL);
 
 	return 1;
 }

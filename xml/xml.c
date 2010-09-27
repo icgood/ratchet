@@ -210,7 +210,7 @@ int luaopen_luah_xml (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.xml", meths);
+	luaH_newclass (L, "luah.xml", meths, NULL);
 
 	return 1;
 }

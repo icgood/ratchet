@@ -1,12 +1,12 @@
 #!/usr/bin/env lua
 
-require("luah.ratchet")
-require("luah.epoll")
+require "luah"
 
 expected = "Hello...World!"
 received = ""
 
 r = luah.ratchet(luah.epoll())
+r:register('tcp', luah.socket, luah.socket.parse_tcp_uri)
 
 -- {{{ user_context: Handles the connection from the "outside world"
 user_context = r:new_context()

@@ -122,9 +122,8 @@ static int zmqpoll_wait (lua_State *L)
 /* {{{ zmqpoll_getfd() */
 static int zmqpoll_getfd (lua_State *L)
 {
-	lua_pushliteral (L, "zmqpoll");
 	lua_pushnil (L);
-	return 2;
+	return 1;
 }
 /* }}} */
 
@@ -132,7 +131,6 @@ static int zmqpoll_getfd (lua_State *L)
 static int zmqpoll_register (lua_State *L)
 {
 	luaH_callmethod (L, 2, "getfd", 0);
-	lua_remove (L, -2);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushvalue (L, 2);
@@ -180,7 +178,6 @@ static int zmqpoll_modify (lua_State *L)
 	int flags, flag_i;
 
 	luaH_callmethod (L, 2, "getfd", 0);
-	lua_replace (L, -2);
 	lua_insert (L, 3);
 
 	/* Get whatever flags we now want. */
@@ -250,7 +247,6 @@ static int zmqpoll_unregister (lua_State *L)
 	int fd = 0;
 
 	luaH_callmethod (L, 2, "getfd", 0);
-	lua_remove (L, -2);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushnil (L);
@@ -361,7 +357,7 @@ int luaopen_luah_zmq_poll (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.zmq.poll", meths);
+	luaH_newclass (L, "luah.zmq.poll", meths, NULL);
 
 	luaL_Reg status_meths[] = {
 		{"init", status_init},
@@ -371,7 +367,7 @@ int luaopen_luah_zmq_poll (lua_State *L)
 		{"error", status_error},
 		{NULL}
 	};
-	luaH_newclass (L, NULL, status_meths);
+	luaH_newclass (L, NULL, status_meths, NULL);
 	lua_setfield (L, -2, "status");
 
 	return 1;
