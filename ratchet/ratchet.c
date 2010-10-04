@@ -46,6 +46,14 @@ static int ratchet_init (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_getfd() */
+static int ratchet_getfd (lua_State *L)
+{
+	lua_getfield (L, 1, "poller");
+	return luaH_callmethod (L, -1, "getfd", 0);
+}
+/* }}} */
+
 /* {{{ ratchet_filter_uri() */
 static int ratchet_filter_uri (lua_State *L)
 {
@@ -338,6 +346,7 @@ int luaopen_luah_ratchet (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", ratchet_init},
+		{"getfd", ratchet_getfd},
 		{"parseuri", ratchet_parseuri},
 		{"urifactory", ratchet_urifactory},
 		{"instantiate_context", ratchet_instantiate_context},

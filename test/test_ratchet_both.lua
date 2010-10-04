@@ -48,7 +48,7 @@ function server_context:on_recv()
 end
 -- }}}
 
-s1 = zmqr:attach(epr.poller, epoll_context)
+s1 = zmqr:attach(epr, epoll_context)
 s2 = zmqr:listen('zmq:pull:tcp://*:12345', client_context)
 s3 = zmqr:connect('zmq:push:tcp://localhost:12345', user_context)
 s4 = epr:listen('tcp://*:1234', server_context)
