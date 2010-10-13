@@ -340,8 +340,8 @@ static int status_error (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_epoll() */
-int luaopen_luah_epoll (lua_State *L)
+/* {{{ luaopen_ratchet_epoll() */
+int luaopen_ratchet_epoll (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", myepoll_init},
@@ -356,7 +356,7 @@ int luaopen_luah_epoll (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.epoll", meths, NULL);
+	ratchet_newclass (L, "ratchet.epoll", meths, NULL);
 
 	luaL_Reg status_meths[] = {
 		{"init", status_init},
@@ -366,7 +366,7 @@ int luaopen_luah_epoll (lua_State *L)
 		{"error", status_error},
 		{NULL}
 	};
-	luaH_newclass (L, NULL, status_meths, NULL);
+	ratchet_newclass (L, NULL, status_meths, NULL);
 	lua_setfield (L, -2, "status");
 
 	return 1;

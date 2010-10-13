@@ -1,9 +1,9 @@
-#ifndef __LUAH_EPOLL_H
-#define __LUAH_EPOLL_H
+#ifndef __RATCHET_EPOLL_H
+#define __RATCHET_EPOLL_H
 
 #include <lua.h>
 
-int luaopen_luah_epoll (lua_State *L);
+int luaopen_ratchet_epoll (lua_State *L);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:
