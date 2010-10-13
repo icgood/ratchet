@@ -47,13 +47,13 @@ static int zmqctx_init (lua_State *L)
 	{
 		for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
 		{
-			if (luaH_strequal (L, -2, "io_threads"))
+			if (rhelp_strequal (L, -2, "io_threads"))
 			{
 				if (!lua_isnumber (L, -1))
 					return luaL_argerror (L, 2, "named param 'io_threads' must be number");
 				io_threads = lua_tointeger (L, -1);
 			}
-			if (luaH_strequal (L, -2, "default"))
+			if (rhelp_strequal (L, -2, "default"))
 			{
 				if (!lua_isboolean (L, -1))
 					return luaL_argerror (L, 2, "named param 'default' must be boolean");
@@ -64,7 +64,7 @@ static int zmqctx_init (lua_State *L)
 
 	void *context = zmq_init (io_threads);
 	if (context == NULL)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	
 	lua_pushlightuserdata (L, context);
 	lua_setfield (L, 1, "ctx");
@@ -72,7 +72,7 @@ static int zmqctx_init (lua_State *L)
 	if (def)
 	{
 		lua_pushvalue (L, 1);
-		lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+		lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
 	}
 	
 	return 0;
@@ -85,7 +85,7 @@ static int zmqctx_del (lua_State *L)
 	lua_getfield (L, 1, "ctx");
 	void *context = lua_touserdata (L, -1);
 	if (zmq_term (context) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 
 	return 0;
@@ -115,8 +115,8 @@ static int zmqctx_listen (lua_State *L)
 
 	lua_pushvalue (L, 1);
 
-	luaH_callfunction (L, 4, 2);
-	luaH_callmethod (L, -1, "listen", 0);
+	rhelp_callfunction (L, 4, 2);
+	rhelp_callmethod (L, -1, "listen", 0);
 
 	return 1;
 }
@@ -145,8 +145,8 @@ static int zmqctx_connect (lua_State *L)
 
 	lua_pushvalue (L, 1);
 
-	luaH_callfunction (L, 4, 2);
-	luaH_callmethod (L, -1, "connect", 0);
+	rhelp_callfunction (L, 4, 2);
+	rhelp_callmethod (L, -1, "connect", 0);
 
 	return 1;
 }
@@ -179,9 +179,9 @@ static int zmqctx_version (lua_State *L)
 static int zmqctx_parse_uri (lua_State *L)
 {
 	lua_settop (L, 1);
-	if (luaH_strmatch (L, "^([^%:]*)%:(.*)$"))
+	if (rhelp_strmatch (L, "^([^%:]*)%:(.*)$"))
 	{
-		luaH_callmethod (L, 2, "upper", 0);
+		rhelp_callmethod (L, 2, "upper", 0);
 		lua_replace (L, 2);
 	}
 	else
@@ -200,8 +200,8 @@ static int zmqctx_parse_uri (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_zmq() */
-int luaopen_luah_zmq (lua_State *L)
+/* {{{ luaopen_ratchet_zmq() */
+int luaopen_ratchet_zmq (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", zmqctx_init},
@@ -216,21 +216,21 @@ int luaopen_luah_zmq (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.zmq", meths, funcs);
+	rhelp_newclass (L, "ratchet.zmq", meths, funcs);
 
 	/* Set up submodules. */
-	luaopen_luah_zmq_socket (L);
-	luaH_setclassfield (L, -2, "socket");
-	luaopen_luah_zmq_poll (L);
-	luaH_setclassfield (L, -2, "poll");
+	luaopen_ratchet_zmq_socket (L);
+	rhelp_setclassfield (L, -2, "socket");
+	luaopen_ratchet_zmq_poll (L);
+	rhelp_setclassfield (L, -2, "poll");
 
 	/* Set up a default context in the registry. */
-	lua_getfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
 	if (lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, DEFAULT_ZMQ_IO_THREADS);
-		luaH_callfunction (L, -3, 1);
-		lua_setfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+		rhelp_callfunction (L, -3, 1);
+		lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
 	}
 	lua_pop (L, 1);
 

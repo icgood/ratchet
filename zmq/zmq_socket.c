@@ -50,8 +50,8 @@ static void *zmqsock_get_context (lua_State *L, int index)
 	}
 	else
 	{
-		luaopen_luah_zmq (L);
-		lua_getfield (L, LUA_REGISTRYINDEX, "luah_zmq_default_context");
+		luaopen_ratchet_zmq (L);
+		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
 		lua_getfield (L, -1, "ctx");
 		context = lua_touserdata (L, -1);
 		lua_pop (L, 3);
@@ -75,14 +75,14 @@ static int zmqsock_init (lua_State *L)
 	/* Grab the named parameters. */
 	for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
 	{
-		if (luaH_strequal (L, -2, "endpoint"))
+		if (rhelp_strequal (L, -2, "endpoint"))
 		{
 			lua_pushvalue (L, -1);
 			if (NULL == (endpoint = lua_tostring (L, -1)))
 				return luaL_argerror (L, 2, "named param 'endpoint' must be string");
 			lua_setfield (L, 1, "endpoint");
 		}
-		else if (luaH_strequal (L, -2, "type"))
+		else if (rhelp_strequal (L, -2, "type"))
 		{
 			lua_pushvalue (L, -1);
 			if (!lua_isnumber (L, -1))
@@ -94,7 +94,7 @@ static int zmqsock_init (lua_State *L)
 			type = lua_tointeger (L, -1);
 			lua_pop (L, 1);
 		}
-		else if (luaH_strequal (L, -2, "blocking"))
+		else if (rhelp_strequal (L, -2, "blocking"))
 		{
 			if (!lua_isboolean (L, -1))
 				continue;
@@ -109,7 +109,7 @@ static int zmqsock_init (lua_State *L)
 
 	void *socket = zmq_socket (context, type);
 	if (socket == NULL)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	
 	lua_pushlightuserdata (L, socket);
 	lua_setfield (L, 1, "socket");
@@ -126,7 +126,7 @@ static int zmqsock_del (lua_State *L)
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (socket && zmq_close (socket) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 	lua_pushlightuserdata (L, NULL);
 	lua_setfield (L, 1, "socket");
@@ -151,7 +151,7 @@ static int zmqsock_listen (lua_State *L)
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_bind (socket, endpoint) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 2);
 
 	return 0;
@@ -166,7 +166,7 @@ static int zmqsock_connect (lua_State *L)
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_connect (socket, endpoint) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 2);
 
 	return 0;
@@ -214,7 +214,7 @@ static int zmqsock_getsockopt (lua_State *L)
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_getsockopt (socket, option, buffer, &len) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 
 	void *ret = lua_newuserdata (L, len);
@@ -234,7 +234,7 @@ static int zmqsock_setsockopt (lua_State *L)
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_setsockopt (socket, option, setto, settolen) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 
 	return 0;
@@ -257,18 +257,18 @@ static int zmqsock_recv (lua_State *L)
 		flags |= lua_tointeger (L, 2);
 
 	if (zmq_msg_init (&msg) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_recv (socket, &msg, flags) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 
 	lua_pushlstring (L, (const char *) zmq_msg_data (&msg), zmq_msg_size (&msg));
 
 	if (zmq_msg_close (&msg) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	return 1;
 }
@@ -303,17 +303,17 @@ static int zmqsock_send (lua_State *L)
 		return luaL_argerror (L, 2, "string or heavy userdata required");
 
 	if (zmq_msg_init_size (&msg, datalen) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	memcpy (zmq_msg_data (&msg), data, datalen);
 
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
 	if (zmq_send (socket, &msg, flags) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pop (L, 1);
 
 	if (zmq_msg_close (&msg) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	return 0;
 }
@@ -330,12 +330,12 @@ static int zmqsock_sendsome (lua_State *L)
 	lua_pushinteger (L, flags);
 	lua_replace (L, 3);
 
-	return luaH_callmethod (L, 1, "send", 2);
+	return rhelp_callmethod (L, 1, "send", 2);
 }
 /* }}} */
 
-/* {{{ luaopen_luah_zmq_socket() */
-int luaopen_luah_zmq_socket (lua_State *L)
+/* {{{ luaopen_ratchet_zmq_socket() */
+int luaopen_ratchet_zmq_socket (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", zmqsock_init},
@@ -354,7 +354,7 @@ int luaopen_luah_zmq_socket (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.zmq.socket", meths, NULL);
+	rhelp_newclass (L, "ratchet.zmq.socket", meths, NULL);
 
 	/* Socket types. */
 	lua_pushinteger (L, ZMQ_PAIR);

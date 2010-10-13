@@ -108,7 +108,7 @@ static int zmqpoll_wait (lua_State *L)
 	pollitems = (zmq_pollitem_t *) lua_touserdata (L, -1);
 	nitems = (int) (lua_objlen (L, -1) / sizeof_zmq_pollitem_t);
 	if (zmq_poll (pollitems, nitems, timeout) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	/* Organize the iterator function, invariant data, and control variable. */
 	lua_getfield (L, 1, "wait_iter");
@@ -130,7 +130,7 @@ static int zmqpoll_getfd (lua_State *L)
 /* {{{ zmqpoll_register() */
 static int zmqpoll_register (lua_State *L)
 {
-	luaH_callmethod (L, 2, "getfd", 0);
+	rhelp_callmethod (L, 2, "getfd", 0);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushvalue (L, 2);
@@ -177,7 +177,7 @@ static int zmqpoll_modify (lua_State *L)
 	int fd = 0;
 	int flags, flag_i;
 
-	luaH_callmethod (L, 2, "getfd", 0);
+	rhelp_callmethod (L, 2, "getfd", 0);
 	lua_insert (L, 3);
 
 	/* Get whatever flags we now want. */
@@ -224,7 +224,7 @@ static int zmqpoll_set_writable (lua_State *L)
 	lua_settop (L, 2);
 	lua_pushinteger (L, ZMQ_POLLOUT | ZMQ_POLLIN);
 
-	return luaH_callmethod (L, 1, "modify", 2);
+	return rhelp_callmethod (L, 1, "modify", 2);
 }
 /* }}} */
 
@@ -234,7 +234,7 @@ static int zmqpoll_unset_writable (lua_State *L)
 	lua_settop (L, 2);
 	lua_pushinteger (L, ZMQ_POLLIN);
 
-	return luaH_callmethod (L, 1, "modify", 2);
+	return rhelp_callmethod (L, 1, "modify", 2);
 }
 /* }}} */
 
@@ -246,7 +246,7 @@ static int zmqpoll_unregister (lua_State *L)
 	void *socket = NULL;
 	int fd = 0;
 
-	luaH_callmethod (L, 2, "getfd", 0);
+	rhelp_callmethod (L, 2, "getfd", 0);
 	lua_getfield (L, 1, "item_ref");
 	lua_pushvalue (L, -2);
 	lua_pushnil (L);
@@ -342,8 +342,8 @@ static int status_error (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_zmq_poll() */
-int luaopen_luah_zmq_poll (lua_State *L)
+/* {{{ luaopen_ratchet_zmq_poll() */
+int luaopen_ratchet_zmq_poll (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", zmqpoll_init},
@@ -357,7 +357,7 @@ int luaopen_luah_zmq_poll (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.zmq.poll", meths, NULL);
+	rhelp_newclass (L, "ratchet.zmq.poll", meths, NULL);
 
 	luaL_Reg status_meths[] = {
 		{"init", status_init},
@@ -367,7 +367,7 @@ int luaopen_luah_zmq_poll (lua_State *L)
 		{"error", status_error},
 		{NULL}
 	};
-	luaH_newclass (L, NULL, status_meths, NULL);
+	rhelp_newclass (L, NULL, status_meths, NULL);
 	lua_setfield (L, -2, "status");
 
 	return 1;
