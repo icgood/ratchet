@@ -7,3 +7,11 @@ TESTS = test_submodules.lua \
 	test_ratchet_both.lua \
 	test_parseuri.lua
 
+EXTRA_DIST = $(TESTS)
+check_DATA = ratchet.so
+
+ratchet.so:
+	ln -sf ../ratchet/.libs/ratchet.so .
+
+CLEANFILES = ratchet.so
+

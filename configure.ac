@@ -2,12 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([luah], [0.0], [Ian Good <icgood@gmail.com>])
+AC_INIT([ratchet], [0.1], [Ian Good <icgood@gmail.com>])
 AM_INIT_AUTOMAKE
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([luah/luah.c])
+AC_CONFIG_SRCDIR([ratchet/ratchet.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -28,12 +28,6 @@ AC_DEFINE([HAVE_EPOLL], [0], [Define to 1 if you have the Linux epoll(7) interfa
 AC_DEFINE([HAVE_EPOLL_PWAIT], [0], [Define to 1 if you have the epoll_pwait function.])
 AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
 AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
-
-AC_CHECK_HEADERS([expat.h], [have_expat=yes], [have_expat=no])
-AC_SEARCH_LIBS([XML_ParserCreate], [expat], [], [have_expat=no])
-if test "x${have_expat}" != "xyes"; then
-	AC_MSG_ERROR([Expat headers and libraries are required for building.])
-fi
 
 AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
 AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
@@ -76,13 +70,10 @@ AC_FUNC_STRERROR_R
 AC_CONFIG_FILES([Makefile
 		 misc/Makefile
 		 makeclass/Makefile
-		 rlimit/Makefile
 		 zmq/Makefile
 		 epoll/Makefile
 		 socket/Makefile
 		 dns/Makefile
 		 ratchet/Makefile
-		 xml/Makefile
-		 luah/Makefile
 		 test/Makefile])
 AC_OUTPUT
