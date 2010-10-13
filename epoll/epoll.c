@@ -79,7 +79,7 @@ static int myepoll_init (lua_State *L)
 	/* Create the epoll object. */
 	epfd = epoll_create (fd_est);
 	if (epfd == -1)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	/* Save the epfd attribute. */
 	lua_pushinteger (L, epfd);
@@ -122,7 +122,7 @@ static int myepoll_del (lua_State *L)
 	int epfd = myepoll_getepfd (L, 1);
 
 	if (close (epfd) == -1)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	return 0;
 }
@@ -177,7 +177,7 @@ static int myepoll_ctl (lua_State *L, int op, int fd)
 	event.data.fd = fd;
 	event.events = flags;
 	if (epoll_ctl (epfd, op, fd, &event) == -1)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	return 0;
 }
@@ -215,7 +215,7 @@ static int myepoll_set_writable (lua_State *L)
 	lua_settop (L, 2);
 	lua_pushinteger (L, EPOLLOUT | EPOLLIN);
 
-	return luaH_callmethod (L, 1, "modify", 2);
+	return rhelp_callmethod (L, 1, "modify", 2);
 }
 /* }}} */
 
@@ -225,7 +225,7 @@ static int myepoll_unset_writable (lua_State *L)
 	lua_settop (L, 2);
 	lua_pushinteger (L, EPOLLIN);
 
-	return luaH_callmethod (L, 1, "modify", 2);
+	return rhelp_callmethod (L, 1, "modify", 2);
 }
 /* }}} */
 
@@ -269,7 +269,7 @@ static int myepoll_wait (lua_State *L)
 	struct epoll_event allevents[maxevents];
 	n_events = epoll_wait (epfd, allevents, maxevents, timeout);
 	if (n_events == -1)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	/* Gather the iterator function, invariant data, and control variable. */
 	lua_getfield (L, 1, "wait_iter");
@@ -356,7 +356,7 @@ int luaopen_ratchet_epoll (lua_State *L)
 		{NULL}
 	};
 
-	ratchet_newclass (L, "ratchet.epoll", meths, NULL);
+	rhelp_newclass (L, "ratchet.epoll", meths, NULL);
 
 	luaL_Reg status_meths[] = {
 		{"init", status_init},
@@ -366,7 +366,7 @@ int luaopen_ratchet_epoll (lua_State *L)
 		{"error", status_error},
 		{NULL}
 	};
-	ratchet_newclass (L, NULL, status_meths, NULL);
+	rhelp_newclass (L, NULL, status_meths, NULL);
 	lua_setfield (L, -2, "status");
 
 	return 1;
