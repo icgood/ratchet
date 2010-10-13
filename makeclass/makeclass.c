@@ -30,8 +30,8 @@
 #include "misc.h"
 #include "makeclass.h"
 
-/* {{{ luaH_callinitmethod() */
-static int luaH_callinitmethod (lua_State *L, int nargs)
+/* {{{ ratchet_callinitmethod() */
+static int ratchet_callinitmethod (lua_State *L, int nargs)
 {
 	int mytop;
 
@@ -53,8 +53,8 @@ static int luaH_callinitmethod (lua_State *L, int nargs)
 }
 /* }}} */
 
-/* {{{ luaH_setgcmethod() */
-static void luaH_setgcmethod (lua_State *L)
+/* {{{ ratchet_setgcmethod() */
+static void ratchet_setgcmethod (lua_State *L)
 {
 	lua_getfield (L, 1, "del");
 	if (!lua_isnil (L, -1))
@@ -72,8 +72,8 @@ static void luaH_setgcmethod (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaH_isinstance() */
-static int luaH_isinstance (lua_State *L)
+/* {{{ ratchet_isinstance() */
+static int ratchet_isinstance (lua_State *L)
 {
 	lua_getfield (L, 2, "prototype");
 	lua_getmetatable (L, 1);
@@ -84,8 +84,8 @@ static int luaH_isinstance (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaH_newclass_new() */
-static int luaH_newclass_new (lua_State *L)
+/* {{{ ratchet_newclass_new() */
+static int ratchet_newclass_new (lua_State *L)
 {
 	int initrets;
 	int nargs = lua_gettop (L) - 1;
@@ -95,15 +95,15 @@ static int luaH_newclass_new (lua_State *L)
 	lua_setmetatable (L, -2);
 	lua_replace (L, 1);
 
-	luaH_setgcmethod (L);
-	initrets = luaH_callinitmethod (L, nargs);
+	ratchet_setgcmethod (L);
+	initrets = ratchet_callinitmethod (L, nargs);
 
 	return 1 + initrets;
 }
 /* }}} */
 
-/* {{{ luaH_newclass_newindex() */
-static int luaH_newclass_newindex (lua_State *L)
+/* {{{ ratchet_newclass_newindex() */
+static int ratchet_newclass_newindex (lua_State *L)
 {
 	lua_getfield (L, 1, "prototype");
 	lua_insert (L, -3);
@@ -112,8 +112,8 @@ static int luaH_newclass_newindex (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaH_newclass() */
-void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const luaL_Reg *funcs)
+/* {{{ ratchet_newclass() */
+void ratchet_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const luaL_Reg *funcs)
 {
 	static const luaL_Reg nomeths[] = {{NULL}};
 
@@ -130,7 +130,7 @@ void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const
 	luaL_register (L, NULL, meths);
 	lua_pushvalue (L, -1);
 	lua_setfield (L, -2, "__index");
-	lua_pushcfunction (L, luaH_isinstance);
+	lua_pushcfunction (L, ratchet_isinstance);
 	lua_setfield (L, -2, "isinstance");
 	lua_pushvalue (L, -2);
 	lua_setfield (L, -2, "class");
@@ -138,19 +138,19 @@ void luaH_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const
 
 	/* Set up the class object metatable. */
 	lua_newtable (L);
-	lua_pushcfunction (L, luaH_newclass_new);
+	lua_pushcfunction (L, ratchet_newclass_new);
 	lua_setfield (L, -2, "__call");
-	lua_pushcfunction (L, luaH_newclass_newindex);
+	lua_pushcfunction (L, ratchet_newclass_newindex);
 	lua_setfield (L, -2, "__newindex");
 	lua_setmetatable (L, -2);
 }
 /* }}} */
 
-/* {{{ luaH_makeclass() */
-int luaH_makeclass (lua_State *L)
+/* {{{ ratchet_makeclass() */
+int ratchet_makeclass (lua_State *L)
 {
 	const char *name = lua_tostring (L, -1);
-	luaH_newclass (L, name, NULL, NULL);
+	ratchet_newclass (L, name, NULL, NULL);
 	return 1;
 }
 /* }}} */
