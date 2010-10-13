@@ -27,8 +27,8 @@
 
 #include "misc.h"
 
-/* {{{ luaH_perror_ln() */
-int luaH_perror_ln (lua_State *L, const char *file, int line)
+/* {{{ rhelp_perror_ln() */
+int rhelp_perror_ln (lua_State *L, const char *file, int line)
 {
 	char errorbuf[512];
 
@@ -46,16 +46,16 @@ int luaH_perror_ln (lua_State *L, const char *file, int line)
 }
 /* }}} */
 
-/* {{{ luaH_setfieldint() */
-void luaH_setfieldint (lua_State *L, int index, const char *name, int value)
+/* {{{ rhelp_setfieldint() */
+void rhelp_setfieldint (lua_State *L, int index, const char *name, int value)
 {
 	lua_pushinteger (L, value);
 	lua_setfield (L, index-1, name);
 }
 /* }}} */
 
-/* {{{ luaH_rawsetfield() */
-void luaH_rawsetfield (lua_State *L, int index, const char *key)
+/* {{{ rhelp_rawsetfield() */
+void rhelp_rawsetfield (lua_State *L, int index, const char *key)
 {
 	lua_pushvalue (L, index);
 	lua_pushstring (L, key);
@@ -65,8 +65,8 @@ void luaH_rawsetfield (lua_State *L, int index, const char *key)
 }
 /* }}} */
 
-/* {{{ luaH_callfunction() */
-int luaH_callfunction (lua_State *L, int index, int nargs)
+/* {{{ rhelp_callfunction() */
+int rhelp_callfunction (lua_State *L, int index, int nargs)
 {
 	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
@@ -76,8 +76,8 @@ int luaH_callfunction (lua_State *L, int index, int nargs)
 }
 /* }}} */
 
-/* {{{ luaH_callboolfunction() */
-int luaH_callboolfunction (lua_State *L, int index, int nargs)
+/* {{{ rhelp_callboolfunction() */
+int rhelp_callboolfunction (lua_State *L, int index, int nargs)
 {
 	int ret;
 	lua_pushvalue (L, index);
@@ -89,8 +89,8 @@ int luaH_callboolfunction (lua_State *L, int index, int nargs)
 }
 /* }}} */
 
-/* {{{ luaH_callmethod() */
-int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
+/* {{{ rhelp_callmethod() */
+int rhelp_callmethod (lua_State *L, int index, const char *method, int nargs)
 {
 	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
@@ -102,8 +102,8 @@ int luaH_callmethod (lua_State *L, int index, const char *method, int nargs)
 }
 /* }}} */
 
-/* {{{ luaH_callboolmethod() */
-int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs)
+/* {{{ rhelp_callboolmethod() */
+int rhelp_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 {
 	int ret;
 	lua_pushvalue (L, index);
@@ -117,8 +117,8 @@ int luaH_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 }
 /* }}} */
 
-/* {{{ luaH_tableremoven() */
-void luaH_tableremoven (lua_State *L, int index, int n)
+/* {{{ rhelp_tableremoven() */
+void rhelp_tableremoven (lua_State *L, int index, int n)
 {
 	int i;
 	lua_pushvalue (L, index);
@@ -140,8 +140,8 @@ void luaH_tableremoven (lua_State *L, int index, int n)
 }
 /* }}} */
 
-/* {{{ luaH_unpack() */
-int luaH_unpack (lua_State *L, int index)
+/* {{{ rhelp_unpack() */
+int rhelp_unpack (lua_State *L, int index)
 {
 	int i;
 	int j = lua_objlen (L, index);
@@ -151,11 +151,11 @@ int luaH_unpack (lua_State *L, int index)
 }
 /* }}} */
 
-/* {{{ luaH_strmatch() */
-int luaH_strmatch (lua_State *L, const char *match)
+/* {{{ rhelp_strmatch() */
+int rhelp_strmatch (lua_State *L, const char *match)
 {
 	lua_pushstring (L, match);
-	int rets = luaH_callmethod (L, -2, "match", 1);
+	int rets = rhelp_callmethod (L, -2, "match", 1);
 	if (lua_isnil (L, -1))
 	{
 		lua_pop (L, rets);
@@ -165,8 +165,8 @@ int luaH_strmatch (lua_State *L, const char *match)
 }
 /* }}} */
 
-/* {{{ luaH_strequal() */
-int luaH_strequal (lua_State *L, int index, const char *cmp)
+/* {{{ rhelp_strequal() */
+int rhelp_strequal (lua_State *L, int index, const char *cmp)
 {
 	int ret;
 
@@ -240,8 +240,8 @@ static void printf_index (lua_State *L, int i)
 }
 /* }}} */
 
-/* {{{ luaH_stackdump_ln() */
-void luaH_stackdump_ln (lua_State *L, const char *file, int line)
+/* {{{ rhelp_stackdump_ln() */
+void rhelp_stackdump_ln (lua_State *L, const char *file, int line)
 {
 	int i;
 	int top = lua_gettop (L);
