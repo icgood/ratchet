@@ -334,6 +334,8 @@ static int zmqsock_sendsome (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_zmq_socket() */
 int luaopen_ratchet_zmq_socket (lua_State *L)
 {

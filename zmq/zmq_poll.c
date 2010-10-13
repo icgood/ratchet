@@ -342,6 +342,8 @@ static int status_error (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_zmq_poll() */
 int luaopen_ratchet_zmq_poll (lua_State *L)
 {

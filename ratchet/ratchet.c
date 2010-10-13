@@ -331,6 +331,8 @@ static int ratchet_run_until (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet() */
 int luaopen_ratchet (lua_State *L)
 {
@@ -370,6 +372,13 @@ int luaopen_ratchet (lua_State *L)
 	rhelp_setclassfield (L, -2, "socket");
 
 	return 1;
+}
+/* }}} */
+
+/* {{{ ratchet_version() */
+const char *ratchet_version (void)
+{
+	return PACKAGE_VERSION;
 }
 /* }}} */
 

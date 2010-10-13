@@ -103,6 +103,8 @@ static int mydns_getnameinfo (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_dns() */
 int luaopen_ratchet_dns (lua_State *L)
 {

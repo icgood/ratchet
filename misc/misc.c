@@ -27,6 +27,8 @@
 
 #include "misc.h"
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ rhelp_perror_ln() */
 int rhelp_perror_ln (lua_State *L, const char *file, int line)
 {

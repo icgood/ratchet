@@ -210,6 +210,8 @@ static int ctx_default_on_any (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ ratchet_new_context() */
 int ratchet_new_context (lua_State *L)
 {

@@ -395,6 +395,8 @@ static int mysocket_recv (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_socket() */
 int luaopen_ratchet_socket (lua_State *L)
 {

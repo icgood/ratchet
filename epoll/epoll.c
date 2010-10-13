@@ -340,6 +340,8 @@ static int status_error (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_epoll() */
 int luaopen_ratchet_epoll (lua_State *L)
 {

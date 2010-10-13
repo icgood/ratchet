@@ -200,6 +200,8 @@ static int zmqctx_parse_uri (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ luaopen_ratchet_zmq() */
 int luaopen_ratchet_zmq (lua_State *L)
 {

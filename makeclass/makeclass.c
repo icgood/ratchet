@@ -112,6 +112,8 @@ static int rhelp_newclass_newindex (lua_State *L)
 }
 /* }}} */
 
+/* ---- Public Functions ---------------------------------------------------- */
+
 /* {{{ rhelp_newclass() */
 void rhelp_newclass (lua_State *L, const char *name, const luaL_Reg *meths, const luaL_Reg *funcs)
 {
