@@ -41,7 +41,7 @@ static int ctx_init (lua_State *L)
 	lua_setfield (L, 1, "engine");
 
 	lua_pushvalue (L, 1);
-	luaH_callmethod (L, 2, "register", 1);
+	rhelp_callmethod (L, 2, "register", 1);
 
 	/* Set up send_queue with table library function. */
 	lua_newtable (L);
@@ -49,7 +49,7 @@ static int ctx_init (lua_State *L)
 	luaopen_table (L);
 	lua_setfield (L, 1, "tablelib");
 
-	return luaH_callmethod (L, 1, "on_init", nargs);
+	return rhelp_callmethod (L, 1, "on_init", nargs);
 }
 /* }}} */
 
@@ -57,7 +57,7 @@ static int ctx_init (lua_State *L)
 static int ctx_getfd (lua_State *L)
 {
 	lua_getfield (L, 1, "engine");
-	int rets = luaH_callmethod (L, -1, "getfd", 0);
+	int rets = rhelp_callmethod (L, -1, "getfd", 0);
 	return rets;
 }
 /* }}} */
@@ -96,7 +96,7 @@ static int ctx_raw_send (lua_State *L)
 	lua_pop (L, 2);
 
 	if (!has_sendmany)
-		return luaH_callmethod (L, 1, "raw_send_one", 0);
+		return rhelp_callmethod (L, 1, "raw_send_one", 0);
 
 	lua_settop (L, 3);
 	lua_getfield (L, 1, "engine");
@@ -106,7 +106,7 @@ static int ctx_raw_send (lua_State *L)
 	lua_replace (L, 3);
 
 	lua_pushvalue (L, 3);
-	rets = luaH_callmethod (L, 2, "sendmany", 1);
+	rets = rhelp_callmethod (L, 2, "sendmany", 1);
 	n = lua_tointeger (L, -1);
 	lua_pop (L, rets);
 	if (n >= (int) lua_objlen (L, 3))
@@ -120,9 +120,9 @@ static int ctx_raw_send (lua_State *L)
 	for (i=1; i<=n; i++)
 	{
 		lua_rawgeti (L, 3, i);
-		luaH_callmethod (L, 1, "on_send", 1);
+		rhelp_callmethod (L, 1, "on_send", 1);
 	}
-	luaH_tableremoven (L, 3, n);
+	rhelp_tableremoven (L, 3, n);
 	
 	return 0;
 }
@@ -140,7 +140,7 @@ static int ctx_raw_send_one (lua_State *L)
 	lua_getfield (L, 1, "send_queue");
 	n = (int) lua_objlen (L, -1);
 	lua_pushinteger (L, 1);
-	luaH_callfunction (L, -3, 2);
+	rhelp_callfunction (L, -3, 2);
 	lua_replace (L, 2);
 	lua_pop (L, 1);
 
@@ -157,9 +157,9 @@ static int ctx_raw_send_one (lua_State *L)
 	{
 		lua_getfield (L, 1, "engine");
 		lua_insert (L, 2);
-		luaH_dupvalue (L, 3);
-		luaH_callmethod (L, 2, "send", 1);
-		luaH_callmethod (L, 1, "on_send", 1);
+		rhelp_dupvalue (L, 3);
+		rhelp_callmethod (L, 2, "send", 1);
+		rhelp_callmethod (L, 1, "on_send", 1);
 	}
 	return 0;
 }
@@ -169,7 +169,7 @@ static int ctx_raw_send_one (lua_State *L)
 static int ctx_recv (lua_State *L)
 {
 	lua_getfield (L, 1, "engine");
-	return luaH_callmethod (L, 2, "recv", 0);
+	return rhelp_callmethod (L, 2, "recv", 0);
 }
 /* }}} */
 
@@ -182,11 +182,11 @@ static int ctx_accept (lua_State *L)
 	lua_replace (L, 3);
 
 	lua_getfield (L, 1, "engine");
-	luaH_callmethod (L, -1, "accept", 0);
+	rhelp_callmethod (L, -1, "accept", 0);
 	lua_replace (L, 4);
 	lua_pop (L, 1);
 
-	return luaH_callfunction (L, 2, 2);
+	return rhelp_callfunction (L, 2, 2);
 }
 /* }}} */
 
@@ -195,11 +195,11 @@ static int ctx_close (lua_State *L)
 {
 	lua_getfield (L, 1, "poller");
 	lua_pushvalue (L, 1);
-	luaH_callmethod (L, 2, "unregister", 1);
+	rhelp_callmethod (L, 2, "unregister", 1);
 	lua_pop (L, 1);
 	
 	lua_getfield (L, 1, "engine");
-	return luaH_callmethod (L, -1, "close", 0);
+	return rhelp_callmethod (L, -1, "close", 0);
 }
 /* }}} */
 
@@ -210,8 +210,8 @@ static int ctx_default_on_any (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaH_ratchet_new_context() */
-int luaH_ratchet_new_context (lua_State *L)
+/* {{{ ratchet_new_context() */
+int ratchet_new_context (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", ctx_init},
@@ -230,7 +230,7 @@ int luaH_ratchet_new_context (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, NULL, meths, NULL);
+	rhelp_newclass (L, NULL, meths, NULL);
 
 	return 1;
 }

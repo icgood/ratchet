@@ -27,7 +27,6 @@
 
 #include "misc.h"
 #include "makeclass.h"
-#include "ratchet.h"
 #include "context.h"
 #include "zmq_socket.h"
 
@@ -50,7 +49,7 @@ static int ratchet_init (lua_State *L)
 static int ratchet_getfd (lua_State *L)
 {
 	lua_getfield (L, 1, "poller");
-	return luaH_callmethod (L, -1, "getfd", 0);
+	return rhelp_callmethod (L, -1, "getfd", 0);
 }
 /* }}} */
 
@@ -90,7 +89,7 @@ static int ratchet_parseuri (lua_State *L)
 	luaL_checktype (L, 2, LUA_TTABLE);
 
 	lua_pushvalue (L, 1);
-	if (!luaH_strmatch (L, "^([%w%+%.%-]+):(.*)$"))
+	if (!rhelp_strmatch (L, "^([%w%+%.%-]+):(.*)$"))
 	{
 		lua_pushliteral (L, "tcp");
 		lua_pushfstring (L, "//%s", uri);
@@ -129,14 +128,14 @@ static int ratchet_instantiate_context (lua_State *L)
 
 	if (args < 3)
 	{
-		luaH_callmethod (L, 1, "new_context", 0);
+		rhelp_callmethod (L, 1, "new_context", 0);
 		lua_insert (L, 3);
 	}
 
 	lua_pushvalue (L, 2);
 	if (lua_isstring (L, -1)) /* Use URI to construct engine. */
 	{
-		int rets = luaH_callmethod (L, 1, "urifactory", 1);
+		int rets = rhelp_callmethod (L, 1, "urifactory", 1);
 		if (rets != 2 || lua_isnil (L, -1))
 			return 0;
 		lua_remove (L, -2);
@@ -145,12 +144,12 @@ static int ratchet_instantiate_context (lua_State *L)
 	lua_getfield (L, 1, "poller");
 	lua_insert (L, 4);
 
-	return luaH_callfunction (L, 3, 2+extra_args);
+	return rhelp_callfunction (L, 3, 2+extra_args);
 }
 /* }}} */
 
-/* {{{ ratchet_register() */
-static int ratchet_register (lua_State *L)
+/* {{{ ratchet_register_uri() */
+static int ratchet_register_uri (lua_State *L)
 {
 	int args = lua_gettop (L);
 
@@ -168,7 +167,7 @@ static int ratchet_register (lua_State *L)
 static int ratchet_attach (lua_State *L)
 {
 	int args = lua_gettop (L) - 1;
-	int rets = luaH_callmethod (L, 1, "instantiate_context", args);
+	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
 	if (rets != 1)
 		return 0;
 
@@ -180,11 +179,11 @@ static int ratchet_attach (lua_State *L)
 static int ratchet_connect (lua_State *L)
 {
 	int args = lua_gettop (L) - 1;
-	int rets = luaH_callmethod (L, 1, "instantiate_context", args);
+	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
 	if (rets != 1)
 		return 0;
 	lua_getfield (L, -1, "engine");
-	luaH_callmethod (L, -1, "connect", 0);
+	rhelp_callmethod (L, -1, "connect", 0);
 	lua_pop (L, 1);
 
 	return 1;
@@ -195,22 +194,13 @@ static int ratchet_connect (lua_State *L)
 static int ratchet_listen (lua_State *L)
 {
 	int args = lua_gettop (L) - 1;
-	int rets = luaH_callmethod (L, 1, "instantiate_context", args);
+	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
 	if (rets != 1)
 		return 0;
 	lua_getfield (L, -1, "engine");
-	luaH_callmethod (L, -1, "listen", 0);
+	rhelp_callmethod (L, -1, "listen", 0);
 	lua_pop (L, 1);
 
-	return 1;
-}
-/* }}} */
-
-/* {{{ ratchet_new_context() */
-static int ratchet_new_context (lua_State *L)
-{
-	lua_pushcfunction (L, luaH_ratchet_new_context);
-	lua_call (L, 0, 1);
 	return 1;
 }
 /* }}} */
@@ -222,12 +212,12 @@ static int ratchet_handle_events (lua_State *L)
 	 * "handle_one" method with every argument not involved in iteration. */
 	while (1)
 	{
-		luaH_dupvalue (L, 3);
-		int rets = luaH_callfunction (L, 2, 2);
+		rhelp_dupvalue (L, 3);
+		int rets = rhelp_callfunction (L, 2, 2);
 		lua_settop (L, 3+rets);
 		if (!rets || lua_isnil (L, -rets))
 			break;
-		luaH_callmethod (L, 1, "handle_one", rets-1);
+		rhelp_callmethod (L, 1, "handle_one", rets-1);
 		lua_settop (L, 4);
 	}
 	return 0;
@@ -242,20 +232,20 @@ static int ratchet_handle_one (lua_State *L)
 		return 0;
 	lua_pop (L, 1);
 
-	if (luaH_callboolmethod (L, 2, "error", 0))
-		luaH_callmethod (L, 3, "on_error", 0);
+	if (rhelp_callboolmethod (L, 2, "error", 0))
+		rhelp_callmethod (L, 3, "on_error", 0);
 	lua_settop (L, 3);
 	
-	if (luaH_callboolmethod (L, 2, "hangup", 0))
-		luaH_callmethod (L, 3, "on_close", 0);
+	if (rhelp_callboolmethod (L, 2, "hangup", 0))
+		rhelp_callmethod (L, 3, "on_close", 0);
 	lua_settop (L, 3);
 	
-	if (luaH_callboolmethod (L, 2, "readable", 0))
-		luaH_callmethod (L, 3, "on_recv", 0);
+	if (rhelp_callboolmethod (L, 2, "readable", 0))
+		rhelp_callmethod (L, 3, "on_recv", 0);
 	lua_settop (L, 3);
 	
-	if (luaH_callboolmethod (L, 2, "writable", 0))
-		luaH_callmethod (L, 3, "raw_send", 0);
+	if (rhelp_callboolmethod (L, 2, "writable", 0))
+		rhelp_callmethod (L, 3, "raw_send", 0);
 	lua_settop (L, 3);
 	
 	return 0;
@@ -279,10 +269,10 @@ static int ratchet_run_once (lua_State *L)
 	lua_getfield (L, 1, "poller");
 	lua_replace (L, 3);
 
-	luaH_callmethod (L, 3, "wait", 2);
+	rhelp_callmethod (L, 3, "wait", 2);
 	lua_settop (L, 6);	/* The three method rets now reside in indices 4-6. */
 
-	int rets = luaH_callmethod (L, 1, "handle_events", 3);
+	int rets = rhelp_callmethod (L, 1, "handle_events", 3);
 	lua_pop (L, rets);
 	
 	return 0;
@@ -308,7 +298,7 @@ static int ratchet_run (lua_State *L)
 	for (i=0; i<iterations || iterations<0; i++)
 	{
 		lua_pushvalue (L, 2);
-		luaH_callmethod (L, 1, "run_once", 1);
+		rhelp_callmethod (L, 1, "run_once", 1);
 		lua_settop (L, 2);
 	}
 
@@ -333,7 +323,7 @@ static int ratchet_run_until (lua_State *L)
 		lua_pop (L, 1);
 
 		lua_pushvalue (L, 2);
-		luaH_callmethod (L, 1, "run_once", 1);
+		rhelp_callmethod (L, 1, "run_once", 1);
 		lua_settop (L, 3);
 	}
 
@@ -341,8 +331,8 @@ static int ratchet_run_until (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_ratchet() */
-int luaopen_luah_ratchet (lua_State *L)
+/* {{{ luaopen_ratchet() */
+int luaopen_ratchet (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", ratchet_init},
@@ -350,7 +340,7 @@ int luaopen_luah_ratchet (lua_State *L)
 		{"parseuri", ratchet_parseuri},
 		{"urifactory", ratchet_urifactory},
 		{"instantiate_context", ratchet_instantiate_context},
-		{"register", ratchet_register},
+		{"register_uri", ratchet_register_uri},
 		{"attach", ratchet_attach},
 		{"connect", ratchet_connect},
 		{"listen", ratchet_listen},
@@ -363,7 +353,21 @@ int luaopen_luah_ratchet (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.ratchet", meths, NULL);
+	const luaL_Reg funcs[] = {
+		{"makeclass", rhelp_makeclass},
+		{NULL}
+	};
+
+	rhelp_newclass (L, "ratchet", meths, funcs);
+
+	luaopen_ratchet_zmq (L);
+	rhelp_setclassfield (L, -2, "zmq");
+	luaopen_ratchet_epoll (L);
+	rhelp_setclassfield (L, -2, "epoll");
+	luaopen_ratchet_dns (L);
+	rhelp_setclassfield (L, -2, "dns");
+	luaopen_ratchet_socket (L);
+	rhelp_setclassfield (L, -2, "socket");
 
 	return 1;
 }
