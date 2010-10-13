@@ -103,8 +103,8 @@ static int mydns_getnameinfo (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_dns() */
-int luaopen_luah_dns (lua_State *L)
+/* {{{ luaopen_ratchet_dns() */
+int luaopen_ratchet_dns (lua_State *L)
 {
 	const luaL_Reg funcs[] = {
 		{"getaddrinfo", mydns_getaddrinfo},
@@ -112,7 +112,7 @@ int luaopen_luah_dns (lua_State *L)
 		{NULL}
 	};
 
-	luaL_register (L, "luah.dns", funcs);
+	luaL_register (L, "ratchet.dns", funcs);
 
 	return 1;
 }
