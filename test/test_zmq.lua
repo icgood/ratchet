@@ -1,15 +1,15 @@
 #!/usr/bin/env lua
 
-require("luah.zmq")
+require("ratchet.zmq")
 
-zmq = luah.zmq()
+zmq = ratchet.zmq()
 
 expected = "Hello...World!"
 received = ""
 
 s1 = zmq:listen('tcp://*:12345')
 s2 = zmq:connect('tcp://localhost:12345')
-poll = luah.zmq.poll()
+poll = ratchet.zmq.poll()
 poll:register(s1)
 
 s2:sendsome('Hello...')

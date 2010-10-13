@@ -1,9 +1,9 @@
 #!/usr/bin/env lua
 
-require "luah"
+require "ratchet"
 
 remaining = 0
-testing = luah.makeclass()
+testing = ratchet.makeclass()
 
 function testing:init(m1, m2)
 	self.data = m1

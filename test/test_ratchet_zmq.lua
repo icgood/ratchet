@@ -1,13 +1,13 @@
 #!/usr/bin/env lua
 
-require "luah"
+require "ratchet"
 
 expected = "Hello...Hello..."
 received = ""
 
-r = luah.ratchet(luah.zmq.poll())
-r:register("zmq", luah.zmq.socket, luah.zmq.parse_uri)
-r:register("tcp", luah.socket, luah.socket.parse_tcp_uri)
+r = ratchet(ratchet.zmq.poll())
+r:register_uri("zmq", ratchet.zmq.socket, ratchet.zmq.parse_uri)
+r:register_uri("tcp", ratchet.socket, ratchet.socket.parse_tcp_uri)
 
 done = 0
 
