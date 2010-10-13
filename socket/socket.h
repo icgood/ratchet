@@ -1,9 +1,9 @@
-#ifndef __LUAH_SOCKET_H
-#define __LUAH_SOCKET_H
+#ifndef __RATCHET_SOCKET_H
+#define __RATCHET_SOCKET_H
 
 #include <lua.h>
 
-int luaopen_luah_socket (lua_State *L);
+int luaopen_ratchet_socket (lua_State *L);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:

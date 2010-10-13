@@ -64,9 +64,9 @@ static int mysocket_parse_tcp_uri (lua_State *L)
 {
 	lua_pushvalue (L, 1);
 
-	if (luaH_strmatch (L, "^%/+%[(.-)%](%:?)(%d*)$"))
+	if (rhelp_strmatch (L, "^%/+%[(.-)%](%:?)(%d*)$"))
 	{
-		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		if (!rhelp_strequal (L, -2, ":") || rhelp_strequal (L, -1, ""))
 		{
 			lua_pop (L, 1);
 			lua_pushnil (L);
@@ -74,9 +74,9 @@ static int mysocket_parse_tcp_uri (lua_State *L)
 		lua_remove (L, -2);
 	}
 
-	else if (luaH_strmatch (L, "^%/+([^%:]*)(%:?)(%d*)$"))
+	else if (rhelp_strmatch (L, "^%/+([^%:]*)(%:?)(%d*)$"))
 	{
-		if (!luaH_strequal (L, -2, ":") || luaH_strequal (L, -1, ""))
+		if (!rhelp_strequal (L, -2, ":") || rhelp_strequal (L, -1, ""))
 		{
 			lua_pop (L, 1);
 			lua_pushnil (L);
@@ -84,7 +84,7 @@ static int mysocket_parse_tcp_uri (lua_State *L)
 		lua_remove (L, -2);
 	}
 
-	else if (luaH_strmatch (L, "^%/+(.*)$"))
+	else if (rhelp_strmatch (L, "^%/+(.*)$"))
 		lua_pushnil (L);
 
 	else
@@ -94,7 +94,7 @@ static int mysocket_parse_tcp_uri (lua_State *L)
 		return 1;
 	}
 
-	luaopen_luah_dns (L);
+	luaopen_ratchet_dns (L);
 	lua_getfield (L, -1, "getaddrinfo");
 	lua_remove (L, -2);
 	lua_insert (L, -3);
@@ -137,19 +137,19 @@ static int mysocket_init (lua_State *L)
 	/* Grab the named parameters. */
 	for (lua_pushnil (L); lua_next (L, 2) != 0; lua_pop (L, 1))
 	{
-		if (luaH_strequal (L, -2, "fd") && lua_isnumber (L, -1))
+		if (rhelp_strequal (L, -2, "fd") && lua_isnumber (L, -1))
 		{
 			fd = lua_tointeger (L, -1);
 			lua_pushvalue (L, -1);
 			lua_setfield (L, 1, "fd");
 		}
-		else if (luaH_strequal (L, -2, "sockaddr"))
+		else if (rhelp_strequal (L, -2, "sockaddr"))
 		{
 			addr = (struct sockaddr *) lua_touserdata (L, -1);
 			lua_pushvalue (L, -1);
 			lua_setfield (L, 1, "sockaddr");
 		}
-		else if (luaH_strequal (L, -2, "use_udp"))
+		else if (rhelp_strequal (L, -2, "use_udp"))
 			use_udp = lua_toboolean (L, -1);
 	}
 
@@ -160,7 +160,7 @@ static int mysocket_init (lua_State *L)
 
 		fd = socket ((int) addr->sa_family, (use_udp ? SOCK_DGRAM : SOCK_STREAM), 0);
 		if (fd < 0)
-			return luaH_perror (L);
+			return rhelp_perror (L);
 		lua_pushinteger (L, fd);
 		lua_setfield (L, 1, "fd");
 	}
@@ -234,10 +234,10 @@ static int mysocket_listen (lua_State *L)
 	setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof (one));
 
 	if (bind (fd, addr, len) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	if (listen (fd, backlog) < 0)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	lua_pop (L, 2);
 
@@ -261,7 +261,7 @@ static int mysocket_connect (lua_State *L)
 
 	errno = 0;
 	if (connect (fd, addr, len) < 0 && errno != EINPROGRESS)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	lua_pop (L, 2);
 
@@ -287,13 +287,13 @@ static int mysocket_accept (lua_State *L)
 
 	addr = (struct sockaddr *) lua_newuserdata (L, (size_t) addrlen);
 	if ((newfd = accept (fd, addr, &addrlen)) < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_setfield (L, -2, "sockaddr");
 
 	lua_pushinteger (L, newfd);
 	lua_setfield (L, -2, "fd");
 
-	return luaH_callfunction (L, -2, 1);
+	return rhelp_callfunction (L, -2, 1);
 }
 /* }}} */
 
@@ -313,7 +313,7 @@ static int mysocket_send (lua_State *L)
 
 	ret = send (fd, str, strlen, 0);
 	if (ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 
 	return 0;
 }
@@ -356,7 +356,7 @@ static int mysocket_sendmany (lua_State *L)
 
 	ret = writev (fd, iov, (int) argn);
 	if (ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
-		return luaH_perror (L);
+		return rhelp_perror (L);
 	lua_pushinteger (L, (int) argn);
 
 	return 1;
@@ -385,7 +385,7 @@ static int mysocket_recv (lua_State *L)
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			ret = 0;
 		else
-			return luaH_perror (L);
+			return rhelp_perror (L);
 	}
 	luaL_addsize (&buffer, (size_t) ret);
 
@@ -395,8 +395,8 @@ static int mysocket_recv (lua_State *L)
 }
 /* }}} */
 
-/* {{{ luaopen_luah_socket() */
-int luaopen_luah_socket (lua_State *L)
+/* {{{ luaopen_ratchet_socket() */
+int luaopen_ratchet_socket (lua_State *L)
 {
 	luaL_Reg meths[] = {
 		{"init", mysocket_init},
@@ -420,7 +420,7 @@ int luaopen_luah_socket (lua_State *L)
 		{NULL}
 	};
 
-	luaH_newclass (L, "luah.socket", meths, funcs);
+	rhelp_newclass (L, "ratchet.socket", meths, funcs);
 
 	return 1;
 }
