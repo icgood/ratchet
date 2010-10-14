@@ -311,7 +311,7 @@ static int mysocket_send (lua_State *L)
 
 	str = lua_tolstring (L, 2, &strlen);
 
-	ret = send (fd, str, strlen, 0);
+	ret = write (fd, str, strlen);
 	if (ret < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
 		return rhelp_perror (L);
 
