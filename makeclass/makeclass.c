@@ -144,6 +144,8 @@ void rhelp_newclass (lua_State *L, const char *name, const luaL_Reg *meths, cons
 	lua_setfield (L, -2, "__call");
 	lua_pushcfunction (L, rhelp_newclass_newindex);
 	lua_setfield (L, -2, "__newindex");
+	lua_getfield (L, -2, "prototype");
+	lua_setfield (L, -2, "__index");
 	lua_setmetatable (L, -2);
 }
 /* }}} */

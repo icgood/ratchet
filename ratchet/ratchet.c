@@ -363,13 +363,13 @@ int luaopen_ratchet (lua_State *L)
 	rhelp_newclass (L, "ratchet", meths, funcs);
 
 	luaopen_ratchet_zmq (L);
-	rhelp_setclassfield (L, -2, "zmq");
+	lua_setfield (L, -2, "zmq");
 	luaopen_ratchet_epoll (L);
-	rhelp_setclassfield (L, -2, "epoll");
+	lua_setfield (L, -2, "epoll");
 	luaopen_ratchet_dns (L);
-	rhelp_setclassfield (L, -2, "dns");
+	lua_setfield (L, -2, "dns");
 	luaopen_ratchet_socket (L);
-	rhelp_setclassfield (L, -2, "socket");
+	lua_setfield (L, -2, "socket");
 
 	return 1;
 }

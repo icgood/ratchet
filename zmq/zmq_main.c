@@ -222,9 +222,9 @@ int luaopen_ratchet_zmq (lua_State *L)
 
 	/* Set up submodules. */
 	luaopen_ratchet_zmq_socket (L);
-	rhelp_setclassfield (L, -2, "socket");
+	lua_setfield (L, -2, "socket");
 	luaopen_ratchet_zmq_poll (L);
-	rhelp_setclassfield (L, -2, "poll");
+	lua_setfield (L, -2, "poll");
 
 	/* Set up a default context in the registry. */
 	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
