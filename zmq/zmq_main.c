@@ -72,7 +72,7 @@ static int zmqctx_init (lua_State *L)
 	if (def)
 	{
 		lua_pushvalue (L, 1);
-		lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
+		lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_ZMQ_CONTEXT_REGISTRY);
 	}
 	
 	return 0;
@@ -227,14 +227,15 @@ int luaopen_ratchet_zmq (lua_State *L)
 	lua_setfield (L, -2, "poll");
 
 	/* Set up a default context in the registry. */
-	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
+	lua_getfield (L, LUA_REGISTRYINDEX, RATCHET_ZMQ_CONTEXT_REGISTRY);
 	if (lua_isnil (L, -1))
 	{
-		lua_pushinteger (L, DEFAULT_ZMQ_IO_THREADS);
+		lua_newtable (L);
+		lua_pushboolean (L, 1);
+		lua_setfield (L, -2, "default");
 		rhelp_callfunction (L, -3, 1);
-		lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
 	}
-	lua_pop (L, 1);
+	lua_pop (L, 2);
 
 	return 1;
 }

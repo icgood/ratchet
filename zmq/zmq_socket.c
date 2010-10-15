@@ -50,13 +50,11 @@ static void *zmqsock_get_context (lua_State *L, int index)
 	}
 	else
 	{
-		luaopen_ratchet_zmq (L);
-		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_default_context");
-		lua_getfield (L, -1, "ctx");
+		lua_getfield (L, LUA_REGISTRYINDEX, RATCHET_ZMQ_CONTEXT_REGISTRY);
+		lua_getfield (L, index, "ctx");
 		context = lua_touserdata (L, -1);
-		lua_pop (L, 3);
+		lua_pop (L, 2);
 	}
-
 	return context;
 }
 /* }}} */
