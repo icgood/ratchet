@@ -1,0 +1,72 @@
+
+--- The ratchet library provides a generic, event-based socket
+--  control mechanism for large numbers of connections. The implementation is
+--  generic in that sockets and pollers can be any objects that provide certain
+--  methods.
+module "ratchet"
+
+--- Initializes a new ratchet object with the given poller. The poller object
+--  must support any socket types attached to the ratchet. New ratchet objects
+--  do not support any URI schemas.
+--  @param poller Poller object to watch for socket events.
+function init (poller)
+
+--- Directly calls the getfd() method of the poller object passed in to the
+--  constructor, so that object may be attached to another ratchet if desired.
+function getfd ()
+
+--- Registers the given string as a URI schema for a socket object. Extra
+--  functions may (and probably should) be given to convert the rest of the
+--  URI into parameters to the socket object constructor.
+--  @param schema String to use as URI schema, e.g. "tcp".
+--  @param socket_class Class to use on socket instantiation.
+--  @param filter First of optional filters to convert URI into socket_class constructor parameters.
+function register_uri (schema, socket_class, filter, ...)
+
+--- Attaches the given socket object to the ratchet, managed by the given
+--  context. This method allows you to add sockets without using the URI
+--  system. Extra parameters are passed to the context's <code>on_init()</code>.
+--  @param socket The socket object to start managing with the ratchet.
+--  @param context The context class to instantiate to manage the socket.
+function attach (socket, context, ...)
+
+--- Constructs a new socket from the given URI and connect it to its endpoint.
+--  The given context is a class that is instantiated to manage the socket.
+--  Extra parameters are passed to the context's <code>on_init()</code>.
+--  @param uri A URI string defining how to build and connect the socket.
+--  @param context The context class to instantiate to manage the socket.
+function connect (uri, context, ...)
+
+--- Constructs a new socket from the given URI and listens on it.
+--  The given context is a class that is instantiated to manage the socket.
+--  Extra parameters are passed to the context's <code>on_init()</code>.
+--  @param uri A URI string defining how to build and listen on the socket.
+--  @param context The context class to instantiate to manage the socket.
+function listen (uri, context, ...)
+
+--- Runs one iteration of the polling mechanism, calling events in the socket
+--  contexts as necessary. If there are optional named parameters given, the
+--  parameters <code>timeout</code> and <code>maxevents</code> will be pulled
+--  and passed to the poller's wait function, respectively.
+--  @param named_params Table specifying named parameters.
+function run_once (named_params)
+
+--- Runs many iterations of the polling mechanism, calling events in the socket
+--  contexts as necessary. If there are optional named parameters given, the
+--  parameters <code>timeout</code> and <code>maxevents</code> will be pulled
+--  and passed to the poller's wait function, respectively. If the named
+--  parameter <code>iterations</code> is given, it sets the number of poll
+--  iterations to run, otherwise it will run indefinitely.
+--  @param named_params Table specifying named parameters.
+function run (named_params)
+
+--- Runs many iterations of the polling mechanism, calling events in the socket
+--  contexts as necessary. If there are optional named parameters given, the
+--  parameters <code>timeout</code> and <code>maxevents</code> will be pulled
+--  and passed to the poller's wait function, respectively. It will loop until
+--  a call to <code>until_func</code> returns true.
+--  @param named_params Table specifying named parameters.
+--  @param until_func Keep polling until a call to this function returns true.
+function run_until (named_params, until_func)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

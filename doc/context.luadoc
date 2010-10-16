@@ -1,0 +1,62 @@
+
+--- Directly calls the <code>getfd()</code> method of the underlying socket
+--  that the context is managing.
+function getfd ()
+
+--- Queues up a message to be sent on the socket. This message is not sent
+--  immediately, instead the socket is marked in the poller as ready to send
+--  data, and the poller will decide when to send it.
+--  @param data The data to send on the socket.
+--  @see The <code>on_send()</code> method.
+function send (data)
+
+--- Returns data received from the socket. This funcion will most likely block
+--  the entire thread unless called within the <code>on_recv()</code> method.
+--  @see The <code>on_recv()</code> method.
+function recv ()
+
+--- Waits for and accepts a connection on the underlying socket. This method
+--  assumes the socket is in listen mode. This method will most likely block the
+--  entire thread unless called within the <code>on_recv()</code> method, which
+--  also signifies an incoming connection on the socket.
+--  @param context The context to instantiate for the new socket connection.
+--  @see The <code>on_recv()</code> method.
+function accept (context)
+
+--- Closes the socket and removes it from the poller, This function works best
+--  from within <code>on_*()</code> methods. For example, if you <code>close()</code>
+--  a socket immediately after you <code>send()</code> some data, the data will
+--  not flushed from the queue before the close happens, you should instead call
+--  <code>close()</code> from <code>on_send()</code>.
+function close ()
+
+--- Called after the context is initialized. The underlying socket is accessible
+--  from the current object's <code>engine</code> attribute. The optional parameters
+--  are any extras passed in to the constructor, which was probably called from
+--  a ratchet object method. <b>This method is meant to be overriden.</b>
+--  @see The ratchet methods <code>attach()</code>, <code>connect()</code>, and <code>listen()</code>.
+function on_init (...)
+
+--- Called upon successful sending of one item from the send queue, populated by
+--  the <code>send()</code> method. <b>This method is meant to be overriden.</b>
+--  @param data The data sent item across the underlying socket.
+function on_send (data)
+
+--- Called when an incoming item is ready on the underlying socket engine. The
+--  item is not necessarily data ready to <code>recv()</code>, it may also be an
+--  incoming connection to <code>accept()</code> or a polling signal, depending
+--  on the type of socket being watched. <b>This method is meant to be overriden.</b>
+--  @see The methods <code>recv()</code> and <code>accept()</code>.
+function on_recv ()
+
+--- Called when the underlying socket triggers a close event in the poller.
+--  <b>This method is meant to be overriden.</b> The default implementation
+--  does nothing, which may be desired in most cases.
+function on_close ()
+
+--- Called when the underlying socket triggers an error event in the poller.
+--  <b>This method is meant to be overriden.</b> The default implementation
+--  does nothing, which may be desired in most cases.
+function on_error ()
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
