@@ -21,27 +21,29 @@ function getfd ()
 --  @param schema String to use as URI schema, e.g. "tcp".
 --  @param socket_class Class to use on socket instantiation.
 --  @param filter First of optional filters to convert URI into socket_class constructor parameters.
+--  @param ... Extra filters, in order of execution.
 function register_uri (schema, socket_class, filter, ...)
 
 --- Attaches the given socket object to the ratchet, managed by the given
 --  context. This method allows you to add sockets without using the URI
---  system. Extra parameters are passed to the context's <code>on_init()</code>.
+--  system.
 --  @param socket The socket object to start managing with the ratchet.
 --  @param context The context class to instantiate to manage the socket.
+--  @param ... Extra parameters to pass in to <code>on_init()</code>.
 function attach (socket, context, ...)
 
 --- Constructs a new socket from the given URI and connect it to its endpoint.
 --  The given context is a class that is instantiated to manage the socket.
---  Extra parameters are passed to the context's <code>on_init()</code>.
 --  @param uri A URI string defining how to build and connect the socket.
 --  @param context The context class to instantiate to manage the socket.
+--  @param ... Extra parameters to pass in to <code>on_init()</code>.
 function connect (uri, context, ...)
 
 --- Constructs a new socket from the given URI and listens on it.
 --  The given context is a class that is instantiated to manage the socket.
---  Extra parameters are passed to the context's <code>on_init()</code>.
 --  @param uri A URI string defining how to build and listen on the socket.
 --  @param context The context class to instantiate to manage the socket.
+--  @param ... Extra parameters to pass in to <code>on_init()</code>.
 function listen (uri, context, ...)
 
 --- Runs one iteration of the polling mechanism, calling events in the socket

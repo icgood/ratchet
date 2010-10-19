@@ -1,4 +1,11 @@
 
+--- Manages all actions taken on events on a socket and all data local to it.
+--  The <code>on_*()</code> methods do nothing by default and are meant to be
+--  overriden with actions to take when the corresponding event is triggered on
+--  the underlying socket. Other methods generally just pass down or wrap
+--  the calls directly to the underlying socket.
+module "ratchet.context"
+
 --- Directly calls the <code>getfd()</code> method of the underlying socket
 --  that the context is managing.
 function getfd ()
@@ -7,12 +14,12 @@ function getfd ()
 --  immediately, instead the socket is marked in the poller as ready to send
 --  data, and the poller will decide when to send it.
 --  @param data The data to send on the socket.
---  @see The <code>on_send()</code> method.
+--  @see <code>on_send()</code>
 function send (data)
 
 --- Returns data received from the socket. This funcion will most likely block
 --  the entire thread unless called within the <code>on_recv()</code> method.
---  @see The <code>on_recv()</code> method.
+--  @see <code>on_recv()</code>
 function recv ()
 
 --- Waits for and accepts a connection on the underlying socket. This method
@@ -20,7 +27,7 @@ function recv ()
 --  entire thread unless called within the <code>on_recv()</code> method, which
 --  also signifies an incoming connection on the socket.
 --  @param context The context to instantiate for the new socket connection.
---  @see The <code>on_recv()</code> method.
+--  @see <code>on_recv()</code>
 function accept (context)
 
 --- Closes the socket and removes it from the poller, This function works best
@@ -34,7 +41,8 @@ function close ()
 --  from the current object's <code>engine</code> attribute. The optional parameters
 --  are any extras passed in to the constructor, which was probably called from
 --  a ratchet object method. <b>This method is meant to be overriden.</b>
---  @see The ratchet methods <code>attach()</code>, <code>connect()</code>, and <code>listen()</code>.
+--  @param ... The extra arguments from the constructor.
+--  @see <code>ratchet.attach()</code>, <code>ratchet.connect()</code>, <code>ratchet.listen()</code>
 function on_init (...)
 
 --- Called upon successful sending of one item from the send queue, populated by
@@ -46,7 +54,7 @@ function on_send (data)
 --  item is not necessarily data ready to <code>recv()</code>, it may also be an
 --  incoming connection to <code>accept()</code> or a polling signal, depending
 --  on the type of socket being watched. <b>This method is meant to be overriden.</b>
---  @see The methods <code>recv()</code> and <code>accept()</code>.
+--  @see <code>recv()</code>, <code>accept()</code>
 function on_recv ()
 
 --- Called when the underlying socket triggers a close event in the poller.
