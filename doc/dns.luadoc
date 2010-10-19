@@ -1,0 +1,27 @@
+
+--- Contains DNS functions only useful for direct usage of the <code>socket
+--  </code> class. For the most part, these functions are wrappers for the
+--  system calls of the same name.
+module "ratchet.dns"
+
+--- Looks up a host and port/service and returns userdata objects containing
+--  <code>struct sockaddr</code> data that can be used with the <code>bind
+--  </code> or <code>connect</code> system calls or the constructor for the
+--  <code>socket</code> class.
+--  @param host A string containing the hostname or IP (v4/v6) to look up. Can
+--      be the string "*" to <code>bind</code> to all interfaces, or nil to use
+--      the loopback address.
+--  @param port The port or service to use in the result objects. Services are
+--      looked up from <em>/etc/services</em>.
+--  @return One or more userdata objects, errors on failure.
+function getaddrinfo (host, port)
+
+--- Takes a userdata object containing <code>struct sockaddr</code> data and
+--  returns the host/IP and port that it points to. This is useful for sockets
+--  obtained from the <code>accept</code> system call, to get more useful
+--  information about the remote client.
+--  @param sockaddr The userdata object containing the information.
+--  @return Host/IP and port/service strings, respectively.
+function getnameinfo (sockaddr)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
