@@ -22,6 +22,7 @@ void rhelp_rawsetfield (lua_State *L, int index, const char *key);
 int rhelp_callfunction (lua_State *L, int index, int nargs);
 int rhelp_callboolfunction (lua_State *L, int index, int nargs);
 int rhelp_callmethod (lua_State *L, int index, const char *method, int nargs);
+int rhelp_pcallmethod (lua_State *L, int index, const char *method, int nargs, int errfunc);
 int rhelp_callboolmethod (lua_State *L, int index, const char *method, int nargs);
 void rhelp_tableremoven (lua_State *L, int index, int n);
 int rhelp_unpack (lua_State *L, int index);

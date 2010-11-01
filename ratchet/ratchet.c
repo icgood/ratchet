@@ -207,17 +207,22 @@ static int ratchet_listen (lua_State *L)
 /* {{{ ratchet_handle_events() */
 static int ratchet_handle_events (lua_State *L)
 {
+	int has_errfunc = lua_isfunction (L, 2);
+
 	/* This essentially mimics the "generic for" ability of lua, calling ratchet's
 	 * "handle_one" method with every argument not involved in iteration. */
 	while (1)
 	{
-		rhelp_dupvalue (L, 3);
-		int rets = rhelp_callfunction (L, 2, 2);
-		lua_settop (L, 3+rets);
+		rhelp_dupvalue (L, 4);
+		int rets = rhelp_callfunction (L, 3, 2);
+		lua_settop (L, 4+rets);
 		if (!rets || lua_isnil (L, -rets))
 			break;
-		rhelp_callmethod (L, 1, "handle_one", rets-1);
-		lua_settop (L, 4);
+		if (has_errfunc)
+			rhelp_pcallmethod (L, 1, "handle_one", rets-1, 2);
+		else
+			rhelp_callmethod (L, 1, "handle_one", rets-1);
+		lua_settop (L, 5);
 	}
 	return 0;
 }
@@ -254,25 +259,29 @@ static int ratchet_handle_one (lua_State *L)
 /* {{{ ratchet_run_once() */
 static int ratchet_run_once (lua_State *L)
 {
-	lua_settop (L, 5);
-	if (lua_istable (L, 2))
+	lua_settop (L, 2);
+	if (!lua_istable (L, 2))
 	{
-		lua_getfield (L, 2, "timeout");
-		lua_replace (L, 4);
-		lua_getfield (L, 2, "maxevents");
-		lua_replace (L, 5);
+		if (!lua_isnoneornil (L, 2))
+			luaL_checktype (L, 2, LUA_TTABLE);
+		lua_newtable (L);
+		lua_replace (L, 2);
 	}
-	else if (!lua_isnoneornil (L, 2))
-		luaL_checktype (L, 2, LUA_TTABLE);
 
 	lua_getfield (L, 1, "poller");
-	lua_replace (L, 3);
+	lua_getfield (L, 2, "timeout");
+	lua_getfield (L, 2, "maxevents");
 
 	rhelp_callmethod (L, 3, "wait", 2);
 	lua_settop (L, 6);	/* The three method rets now reside in indices 4-6. */
 
-	int rets = rhelp_callmethod (L, 1, "handle_events", 3);
-	lua_pop (L, rets);
+	lua_getfield (L, 1, "handle_events");
+	lua_replace (L, 3);
+	lua_pushvalue (L, 1);
+	lua_insert (L, 4);
+	lua_getfield (L, 2, "panicf");
+	lua_insert (L, 5);
+	lua_call (L, 5, 0);
 	
 	return 0;
 }

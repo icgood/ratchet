@@ -104,6 +104,19 @@ int rhelp_callmethod (lua_State *L, int index, const char *method, int nargs)
 }
 /* }}} */
 
+/* {{{ rhelp_pcallmethod() */
+int rhelp_pcallmethod (lua_State *L, int index, const char *method, int nargs, int errfunc)
+{
+	int t = lua_gettop (L) - nargs;
+	lua_pushvalue (L, index);
+	lua_getfield (L, index, method);
+	lua_insert (L, -nargs-2);
+	lua_insert (L, -nargs-1);
+	lua_pcall (L, nargs+1, LUA_MULTRET, errfunc);
+	return lua_gettop (L) - t;
+}
+/* }}} */
+
 /* {{{ rhelp_callboolmethod() */
 int rhelp_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 {
