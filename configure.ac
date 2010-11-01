@@ -28,12 +28,28 @@ AC_DEFINE([HAVE_EPOLL], [0], [Define to 1 if you have the Linux epoll(7) interfa
 AC_DEFINE([HAVE_EPOLL_PWAIT], [0], [Define to 1 if you have the epoll_pwait function.])
 AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
 AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
+if test "x${ax_cv_have_epoll}" != "xyes"; then
+	AC_MSG_NOTICE([Epoll will not be included in the ratchet library.])
+fi
+AM_CONDITIONAL([HAVE_EPOLL], [test "x${ax_cv_have_epoll}" = "xyes"])
 
+AC_DEFINE([HAVE_ZMQ], [0], [Define to 1 if you have the ZeroMQ library.])
 AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
 AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
 if test "x${have_zmq}" != "xyes"; then
-	AC_MSG_ERROR([ZeroMQ headers and libraries are required for building.])
+	AC_MSG_NOTICE([ZeroMQ will not be included in the ratchet library.])
+else
+	AC_DEFINE([HAVE_ZMQ], [1])
 fi
+AM_CONDITIONAL([HAVE_ZMQ], [test "x${have_zmq}" = "xyes"])
+
+AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
+#AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
+#AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])
+#if test "x${have_libevent}" != "xyes"; then
+#	AC_MSG_NOTICE([Libevent will not be included in the ratchet library.])
+#fi
+AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
 
 # Configure options: --enable-devel[=no].
 AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],

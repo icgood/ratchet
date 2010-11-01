@@ -28,7 +28,6 @@
 #include "misc.h"
 #include "makeclass.h"
 #include "context.h"
-#include "zmq_socket.h"
 
 /* {{{ ratchet_init() */
 static int ratchet_init (lua_State *L)
@@ -362,10 +361,18 @@ int luaopen_ratchet (lua_State *L)
 
 	rhelp_newclass (L, "ratchet", meths, funcs);
 
+#if HAVE_ZMQ
 	luaopen_ratchet_zmq (L);
 	lua_setfield (L, -2, "zmq");
+#endif
+#if HAVE_EPOLL
 	luaopen_ratchet_epoll (L);
 	lua_setfield (L, -2, "epoll");
+#endif
+#if HAVE_LIBEVENT
+	luaopen_ratchet_libevent (L);
+	lua_setfield (L, -2, "libevent");
+#endif
 	luaopen_ratchet_dns (L);
 	lua_setfield (L, -2, "dns");
 	luaopen_ratchet_socket (L);
