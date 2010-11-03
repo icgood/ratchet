@@ -118,8 +118,8 @@ static int zmqsock_init (lua_State *L)
 }
 /* }}} */
 
-/* {{{ zmqsock_del() */
-static int zmqsock_del (lua_State *L)
+/* {{{ zmqsock_close() */
+static int zmqsock_close (lua_State *L)
 {
 	lua_getfield (L, 1, "socket");
 	void *socket = lua_touserdata (L, -1);
@@ -339,8 +339,8 @@ int luaopen_ratchet_zmq_socket (lua_State *L)
 {
 	const luaL_Reg meths[] = {
 		{"init", zmqsock_init},
-		{"del", zmqsock_del},
-		{"close", zmqsock_del},
+		{"del", zmqsock_close},
+		{"close", zmqsock_close},
 		{"getfd", zmqsock_getfd},
 		{"listen", zmqsock_listen},
 		{"connect", zmqsock_connect},
