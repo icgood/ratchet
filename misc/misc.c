@@ -96,9 +96,9 @@ int rhelp_callmethod (lua_State *L, int index, const char *method, int nargs)
 {
 	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
-	lua_getfield (L, index, method);
-	lua_insert (L, -nargs-2);
-	lua_insert (L, -nargs-1);
+	lua_getfield (L, -1, method);
+	lua_insert (L, t+1);
+	lua_insert (L, t+2);
 	lua_call (L, nargs+1, LUA_MULTRET);
 	return lua_gettop (L) - t;
 }
@@ -109,9 +109,9 @@ int rhelp_pcallmethod (lua_State *L, int index, const char *method, int nargs, i
 {
 	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
-	lua_getfield (L, index, method);
-	lua_insert (L, -nargs-2);
-	lua_insert (L, -nargs-1);
+	lua_getfield (L, -1, method);
+	lua_insert (L, t+1);
+	lua_insert (L, t+2);
 	lua_pcall (L, nargs+1, LUA_MULTRET, errfunc);
 	return lua_gettop (L) - t;
 }
@@ -121,10 +121,11 @@ int rhelp_pcallmethod (lua_State *L, int index, const char *method, int nargs, i
 int rhelp_callboolmethod (lua_State *L, int index, const char *method, int nargs)
 {
 	int ret;
+	int t = lua_gettop (L) - nargs;
 	lua_pushvalue (L, index);
-	lua_getfield (L, index, method);
-	lua_insert (L, -nargs-2);
-	lua_insert (L, -nargs-1);
+	lua_getfield (L, -1, method);
+	lua_insert (L, t+1);
+	lua_insert (L, t+2);
 	lua_call (L, nargs+1, 1);
 	ret = lua_toboolean (L, -1);
 	lua_pop (L, 1);
