@@ -60,7 +60,7 @@ static void rhelp_setgcmethod (lua_State *L)
 	if (lua_isfunction (L, -1))
 	{
 		lua_newuserdata (L, sizeof (int));
-		lua_newtable (L);
+		lua_createtable (L, 0, 3);
 		lua_pushvalue (L, -3);
 		lua_setfield (L, -2, "__gc");
 		lua_pushvalue (L, 1);
@@ -141,13 +141,13 @@ void rhelp_newclass (lua_State *L, const char *name, const luaL_Reg *meths, cons
 	lua_setfield (L, -2, "prototype");
 
 	/* Set up the class object metatable. */
-	lua_newtable (L);
+	lua_createtable (L, 0, 3);
 	lua_pushcfunction (L, rhelp_newclass_new);
 	lua_setfield (L, -2, "__call");
-	lua_pushcfunction (L, rhelp_newclass_newindex);
-	lua_setfield (L, -2, "__newindex");
 	lua_getfield (L, -2, "prototype");
 	lua_setfield (L, -2, "__index");
+	lua_pushcfunction (L, rhelp_newclass_newindex);
+	lua_setfield (L, -2, "__newindex");
 	lua_setmetatable (L, -2);
 }
 /* }}} */

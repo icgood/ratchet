@@ -107,7 +107,7 @@ static int zmqctx_listen (lua_State *L)
 
 	lua_getfield (L, 1, "socket");
 
-	lua_newtable (L);
+	lua_createtable (L, 0, 2);
 	lua_pushinteger (L, type);
 	lua_setfield (L, -2, "type");
 	lua_pushvalue (L, 2);
@@ -137,7 +137,7 @@ static int zmqctx_connect (lua_State *L)
 
 	lua_getfield (L, 1, "socket");
 
-	lua_newtable (L);
+	lua_createtable (L, 0, 2);
 	lua_pushinteger (L, type);
 	lua_setfield (L, -2, "type");
 	lua_pushvalue (L, 2);
@@ -191,7 +191,7 @@ static int zmqctx_parse_uri (lua_State *L)
 		lua_pushvalue (L, 1);
 	}
 
-	lua_newtable (L);
+	lua_createtable (L, 0, 2);
 	lua_insert (L, 2);
 	lua_setfield (L, 2, "endpoint");
 	lua_setfield (L, 2, "type");
@@ -230,7 +230,7 @@ int luaopen_ratchet_zmq (lua_State *L)
 	lua_getfield (L, LUA_REGISTRYINDEX, RATCHET_ZMQ_CONTEXT_REGISTRY);
 	if (lua_isnil (L, -1))
 	{
-		lua_newtable (L);
+		lua_createtable (L, 0, 1);
 		lua_pushboolean (L, 1);
 		lua_setfield (L, -2, "default");
 		rhelp_callfunction (L, -3, 1);

@@ -45,7 +45,7 @@
 /* {{{ mysocket_parse_unix_uri() */
 static int mysocket_parse_unix_uri (lua_State *L)
 {
-	lua_newtable (L);
+	lua_createtable (L, 0, 1);
 
 	struct sockaddr_un *addr = (struct sockaddr_un *) lua_newuserdata (L, sizeof (struct sockaddr_un));
 	memset (addr, 0, sizeof (struct sockaddr_un));
@@ -101,7 +101,7 @@ static int mysocket_parse_tcp_uri (lua_State *L)
 	lua_call (L, 2, 1);
 
 	/* Initialize named parameter table for socket class constructor. */
-	lua_newtable (L);
+	lua_createtable (L, 0, 1);
 	lua_insert (L, -2);
 	lua_setfield (L, -2, "sockaddr");
 
@@ -283,7 +283,7 @@ static int mysocket_accept (lua_State *L)
 	lua_pop (L, 2);
 
 	lua_getfield (L, 1, "class");
-	lua_newtable (L);
+	lua_createtable (L, 0, 2);
 
 	addr = (struct sockaddr *) lua_newuserdata (L, (size_t) addrlen);
 	if ((newfd = accept (fd, addr, &addrlen)) < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
