@@ -51,6 +51,12 @@ AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
 #fi
 AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
 
+# Configure options: BUFSIZ=nnn
+AC_ARG_VAR([BUFSIZ], [The size of the intermediate buffers used when building large Lua strings.])
+if test -n "$BUFSIZ"; then
+	AC_DEFINE_UNQUOTED([BUFSIZ], [$BUFSIZ], [The size of the intermediate buffers used when building large Lua strings.])
+fi
+
 # Configure options: --enable-devel[=no].
 AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],
 	                               [install developer headers and libraries (default no)])],
