@@ -81,6 +81,21 @@ static int ratchet_filter_uri (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_register_uri() */
+static int ratchet_register_uri (lua_State *L)
+{
+	int args = lua_gettop (L);
+
+	if (args > 3)
+		lua_pushcclosure (L, ratchet_filter_uri, args-2);
+	lua_getfield (L, 1, "ratchet_factories");
+	lua_insert (L, 2);
+	lua_rawset (L, 2);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ ratchet_parseuri() */
 static int ratchet_parseuri (lua_State *L)
 {
@@ -106,98 +121,65 @@ static int ratchet_parseuri (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_urifactory() */
-static int ratchet_urifactory (lua_State *L)
+/* {{{ ratchet_uri() */
+static int ratchet_uri (lua_State *L)
 {
 	/* Process the URI based on known schemas. */
 	lua_getfield (L, 1, "parseuri");
 	lua_pushvalue (L, 2);
 	lua_getfield (L, 1, "ratchet_factories");
 	lua_call (L, 2, 2);
+	lua_replace (L, -2);
 
-	return 2;
+	return 1;
 }
 /* }}} */
 
-/* {{{ ratchet_instantiate_context() */
-static int ratchet_instantiate_context (lua_State *L)
+/* {{{ ratchet_listen_uri() */
+static int ratchet_listen_uri (lua_State *L)
 {
-	int args = lua_gettop (L);
-	int extra_args = (args > 3 ? args-3 : 0);
+	int args = lua_gettop (L) - 1;
+	rhelp_callmethod (L, 1, "uri", args);
+	rhelp_callmethod (L, -1, "listen", 0);
 
-	if (args < 3)
-	{
-		rhelp_callmethod (L, 1, "new_context", 0);
-		lua_insert (L, 3);
-	}
-
-	lua_pushvalue (L, 2);
-	if (lua_isstring (L, -1)) /* Use URI to construct engine. */
-	{
-		int rets = rhelp_callmethod (L, 1, "urifactory", 1);
-		if (rets != 2 || lua_isnil (L, -1))
-			return 0;
-		lua_remove (L, -2);
-	}
-	lua_insert (L, 4);
-	lua_getfield (L, 1, "poller");
-	lua_insert (L, 4);
-
-	return rhelp_callfunction (L, 3, 2+extra_args);
+	return 1;
 }
 /* }}} */
 
-/* {{{ ratchet_register_uri() */
-static int ratchet_register_uri (lua_State *L)
+/* {{{ ratchet_connect_uri() */
+static int ratchet_connect_uri (lua_State *L)
 {
-	int args = lua_gettop (L);
+	int args = lua_gettop (L) - 1;
+	rhelp_callmethod (L, 1, "uri", args);
+	rhelp_callmethod (L, -1, "connect", 0);
 
-	if (args > 3)
-		lua_pushcclosure (L, ratchet_filter_uri, args-2);
-	lua_getfield (L, 1, "ratchet_factories");
-	lua_insert (L, 2);
-	lua_rawset (L, 2);
-
-	return 0;
+	return 1;
 }
 /* }}} */
 
 /* {{{ ratchet_attach() */
 static int ratchet_attach (lua_State *L)
 {
-	int args = lua_gettop (L) - 1;
-	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
-	if (rets != 1)
-		return 0;
+	int args = lua_gettop (L) - 2;
 
-	return 1;
-}
-/* }}} */
+	/* Create a default context if none is given. */
+	if (lua_isnoneornil (L, 2))
+	{
+		int rets = rhelp_callmethod (L, 1, "new_context", 0);
+		if (rets > 1)
+			lua_pop (L, rets-1);
+		lua_replace (L, 3);
+	}
 
-/* {{{ ratchet_connect() */
-static int ratchet_connect (lua_State *L)
-{
-	int args = lua_gettop (L) - 1;
-	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
-	if (rets != 1)
-		return 0;
-	lua_getfield (L, -1, "engine");
-	rhelp_callmethod (L, -1, "connect", 0);
-	lua_pop (L, 1);
+	/* Add the ratchet's poller as first argument to context constructor. */
+	lua_getfield (L, 1, "poller");
+	lua_insert (L, 3);
 
-	return 1;
-}
-/* }}} */
-
-/* {{{ ratchet_listen() */
-static int ratchet_listen (lua_State *L)
-{
-	int args = lua_gettop (L) - 1;
-	int rets = rhelp_callmethod (L, 1, "instantiate_context", args);
-	if (rets != 1)
-		return 0;
-	lua_getfield (L, -1, "engine");
-	rhelp_callmethod (L, -1, "listen", 0);
+	/* Call the context constructor. */
+	lua_call (L, args+1, 1);
+	lua_getfield (L, -1, "is_context");
+	if (!lua_toboolean (L, -1))
+		return luaL_typerror (L, 2, "context class table");
 	lua_pop (L, 1);
 
 	return 1;
@@ -348,12 +330,11 @@ int luaopen_ratchet (lua_State *L)
 		{"init", ratchet_init},
 		{"getfd", ratchet_getfd},
 		{"parseuri", ratchet_parseuri},
-		{"urifactory", ratchet_urifactory},
-		{"instantiate_context", ratchet_instantiate_context},
 		{"register_uri", ratchet_register_uri},
 		{"attach", ratchet_attach},
-		{"connect", ratchet_connect},
-		{"listen", ratchet_listen},
+		{"uri", ratchet_uri},
+		{"connect_uri", ratchet_connect_uri},
+		{"listen_uri", ratchet_listen_uri},
 		{"new_context", ratchet_new_context},
 		{"handle_events", ratchet_handle_events},
 		{"handle_one", ratchet_handle_one},
@@ -386,6 +367,10 @@ int luaopen_ratchet (lua_State *L)
 	lua_setfield (L, -2, "dns");
 	luaopen_ratchet_socket (L);
 	lua_setfield (L, -2, "socket");
+#if HAVE_TIMERFD
+	luaopen_ratchet_timer (L);
+	lua_setfield (L, -2, "timer");
+#endif
 
 	return 1;
 }

@@ -40,8 +40,8 @@ function server_context:on_recv()
 end
 -- }}}
 
-s1 = r:listen('tcp://localhost:1234', server_context)
-s2 = r:connect('tcp://localhost:1234', user_context)
+s1 = r:attach(server_context, r:listen_uri('tcp://localhost:1234'))
+s2 = r:attach(user_context, r:connect_uri('tcp://localhost:1234'))
 
 assert(s1:isinstance(server_context))
 assert(s2:isinstance(user_context))

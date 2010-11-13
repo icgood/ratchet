@@ -48,11 +48,11 @@ function server_context:on_recv()
 end
 -- }}}
 
-s1 = zmqr:attach(epr, epoll_context)
-s2 = zmqr:listen('zmq:pull:tcp://*:12345', client_context)
-s3 = zmqr:connect('zmq:push:tcp://localhost:12345', user_context)
-s4 = epr:listen('tcp://*:1234', server_context)
-s5 = epr:connect('tcp://localhost:1234', user_context)
+s1 = zmqr:attach(epoll_context, epr)
+s2 = zmqr:attach(client_context, zmqr:listen_uri('zmq:pull:tcp://*:12345'))
+s3 = zmqr:attach(user_context, zmqr:connect_uri('zmq:push:tcp://localhost:12345'))
+s4 = epr:attach(server_context, epr:listen_uri('tcp://*:1234'))
+s5 = epr:attach(user_context, epr:connect_uri('tcp://localhost:1234'))
 
 zmqr:run_until({timeout=0.1}, function () return done >= 4 end)
 

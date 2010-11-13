@@ -28,6 +28,10 @@ if HAVE_LIBEVENT
 libratchet_la_CFLAGS += -I$(top_dir)/libevent
 libratchet_la_LIBADD += ../libevent/libratchetlibevent.la
 endif
+if HAVE_TIMERFD
+libratchet_la_CFLAGS += -I$(top_dir)/timer
+libratchet_la_LIBADD += ../timer/libratchettimer.la
+endif
 
 if ENABLE_MODULE
 lualibdir = @LUA_CPATH@

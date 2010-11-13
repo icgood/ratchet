@@ -39,10 +39,10 @@ function server_context:on_recv()
 end
 -- }}}
 
-s1 = r:listen('zmq:pull:tcp://*:12345', client_context)
-s2 = r:connect('zmq:push:tcp://localhost:12345', user_context)
-s3 = r:listen('tcp://*:1234', server_context)
-s4 = r:connect('tcp://localhost:1234', user_context)
+s1 = r:attach(client_context, r:listen_uri('zmq:pull:tcp://*:12345'))
+s2 = r:attach(user_context, r:connect_uri('zmq:push:tcp://localhost:12345'))
+s3 = r:attach(server_context, r:listen_uri('tcp://*:1234'))
+s4 = r:attach(user_context, r:connect_uri('tcp://localhost:1234'))
 
 assert(s1:isinstance(client_context))
 assert(s2:isinstance(user_context))
