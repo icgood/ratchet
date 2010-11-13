@@ -43,6 +43,16 @@ else
 fi
 AM_CONDITIONAL([HAVE_ZMQ], [test "x${have_zmq}" = "xyes"])
 
+AC_DEFINE([HAVE_TIMERFD], [0], [Define to 1 if you have the timerfd function suite.])
+AC_CHECK_HEADERS([sys/timerfd.h], [have_timerfd=yes], [have_timerfd=no])
+AC_CHECK_FUNC([timerfd_create], [], [have_timerfd=no])
+if test "x${have_timerfd}" != "xyes"; then
+	AC_MSG_NOTICE([The timer module will not be included in the ratchet library.])
+else
+	AC_DEFINE([HAVE_TIMERFD], [1])
+fi
+AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
+
 AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
 #AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
 #AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])
@@ -95,6 +105,7 @@ AC_CONFIG_FILES([Makefile
 		 zmq/Makefile
 		 epoll/Makefile
 		 socket/Makefile
+		 timer/Makefile
 		 dns/Makefile
 		 ratchet/Makefile
 		 test/Makefile])
