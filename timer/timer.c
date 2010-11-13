@@ -115,7 +115,6 @@ static int mytimer_init (lua_State *L)
 		return luaL_typerror (L, 3, "itimerspec userdata");
 
 	int tfd = timerfd_create (clockid, 0);
-	printf ("%d %d\n", tfd, (int) errno);
 	if (tfd < 0)
 		return rhelp_perror (L);
 
@@ -180,7 +179,7 @@ static int mytimer_recv (lua_State *L)
 	fd = lua_tointeger (L, -1);
 	lua_pop (L, 1);
 
-	if (recv (fd, &n, sizeof (uint64_t)) != sizeof (uint64_t))
+	if (read (fd, &n, sizeof (uint64_t)) != sizeof (uint64_t))
 	{
 		lua_pushinteger (L, -1);
 		errno = 0;
