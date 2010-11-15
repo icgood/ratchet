@@ -53,6 +53,11 @@ else
 fi
 AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
 
+AC_DEFINE([HAVE_CLOCK_GETTIME], [0], [Define to 1 if you have the clock_gettime system function.])
+AC_SEARCH_LIBS([clock_gettime], [rt], [
+		AC_DEFINE([HAVE_CLOCK_GETTIME], [1])], [
+		AC_MSG_NOTICE([get_now() method will not be available in timer module.])])
+
 AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
 #AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
 #AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])

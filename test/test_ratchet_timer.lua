@@ -6,11 +6,12 @@ expected = "Hello...World!"
 received = ""
 
 r = ratchet(ratchet.epoll())
-r:register_uri("timer", ratchet.timer, ratchet.timer.parse_timer)
+r:register_uri("timer", ratchet.timer)
 
 -- {{{ timer_context: Manages a timer fd.
 timer_context = r:new_context()
 function timer_context:on_init()
+    self.engine:set(3.0, 1.0)
     self.i = 1
 end
 function timer_context:on_recv()
@@ -21,7 +22,7 @@ function timer_context:on_recv()
 end
 -- }}}
 
-t1 = r:attach(timer_context, r:uri("timer:3:1"))
+t1 = r:attach(timer_context, r:uri("timer:"))
 assert(t1:isinstance(timer_context))
 
 r:run()

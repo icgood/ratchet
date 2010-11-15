@@ -27,6 +27,8 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
+#include <time.h>
 #include <errno.h>
 #if HAVE_SYS_UIO_H
 #include <sys/uio.h>
@@ -43,46 +45,26 @@
 #include "makeclass.h"
 #include "timer.h"
 
-/* {{{ mytimer_parse_timer() */
-static int mytimer_parse_timer (lua_State *L)
+/* {{{ timespec_to_double() */
+static double timespec_to_double (const struct timespec *ts)
 {
-	const char *str = luaL_checkstring (L, 1);
-	struct itimerspec *tsp = (struct itimerspec *) lua_newuserdata (L, sizeof (struct itimerspec));
-	int clockid = CLOCK_MONOTONIC;
-	memset (tsp, 0, sizeof (struct itimerspec));
+	double secs = 0.0f;
 
-	if (strncmp (str, "realtime:", 9) == 0)
-	{
-		clockid = CLOCK_REALTIME;
-		str += 9;
-	}
-	lua_pushinteger (L, clockid);
+	secs += (double) ts->tv_sec;
+	secs += (double) ts->tv_nsec / 1000000000.0;
 
-	/* The following is adapted from Michael Kerrisk's "The Linux
-	 * Programming Interface", No Starch Press, 2010. */
-	char *cptr, *sptr;
+	return secs;
+}
+/* }}} */
 
-	cptr = strchr (str, ':');
-	if (cptr != NULL)
-		*cptr = '\0';
+/* {{{ double_to_timespec() */
+static void double_to_timespec (double secs, struct timespec *ts)
+{
+	double intpart, fractpart;
 
-	sptr = strchr (str, '/');
-	if (sptr != NULL)
-		*sptr = '\0';
-
-	tsp->it_value.tv_sec = atoi (str);
-	tsp->it_value.tv_nsec = (sptr != NULL) ? atoi (sptr + 1) : 0;
-
-	if (cptr != NULL)
-	{
-		sptr = strchr (cptr + 1, '/');
-		if (sptr != NULL)
-			*sptr = '\0';
-		tsp->it_interval.tv_sec = atoi (cptr + 1);
-		tsp->it_interval.tv_nsec = (sptr != NULL) ? atoi (sptr + 1) : 0;
-	}
-
-	return 2;
+	fractpart = modf (secs, &intpart) * 1000000000.0;
+	ts->tv_sec = (time_t) intpart;
+	ts->tv_nsec = (long) fractpart;
 }
 /* }}} */
 
@@ -108,11 +90,13 @@ static int fd_set_blocking_flag (int fd, int blocking)
 /* {{{ mytimer_init() */
 static int mytimer_init (lua_State *L)
 {
-	struct itimerspec *tsp = (struct itimerspec *) lua_touserdata (L, 2);
-	int clockid = luaL_checkint (L, 3);
+	const char *clockid_str = luaL_optstring (L, 2, "");
+	int clockid;
 
-	if (!tsp)
-		return luaL_typerror (L, 3, "itimerspec userdata");
+	if (strcmp (clockid_str, "realtime") == 0)
+		clockid = CLOCK_REALTIME;
+	else
+		clockid = CLOCK_MONOTONIC;
 
 	int tfd = timerfd_create (clockid, 0);
 	if (tfd < 0)
@@ -120,6 +104,9 @@ static int mytimer_init (lua_State *L)
 
 	lua_pushinteger (L, tfd);
 	lua_setfield (L, 1, "fd");
+
+	lua_pushinteger (L, clockid);
+	lua_setfield (L, 1, "clockid");
 
 	return 0;
 }
@@ -169,6 +156,111 @@ static int mytimer_set_nonblocking (lua_State *L)
 }
 /* }}} */
 
+/* {{{ mytimer_set() */
+static int mytimer_set (lua_State *L)
+{
+	double value = luaL_optnumber (L, 2, 0.0);
+	double interval = luaL_optnumber (L, 3, 0.0);
+
+	struct itimerspec tsp;
+	memset (&tsp, 0, sizeof (struct itimerspec));
+	if (value != 0.0)
+		double_to_timespec (value, &tsp.it_value);
+	if (interval != 0.0)
+		double_to_timespec (interval, &tsp.it_interval);
+
+	lua_getfield (L, 1, "fd");
+	int fd = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	struct itimerspec *old = (struct itimerspec *) lua_newuserdata (L, sizeof (struct itimerspec));
+	if (timerfd_settime (fd, 0, &tsp, old) < 0)
+		rhelp_perror (L);
+
+	/* Old itimerspec is on top of the stack, return it with get(). */
+	return rhelp_callmethod (L, 1, "get", 1);
+}
+/* }}} */
+
+/* {{{ mytimer_set_abs() */
+static int mytimer_set_abs (lua_State *L)
+{
+	double value = luaL_optnumber (L, 2, 0.0);
+	double interval = luaL_optnumber (L, 3, 0.0);
+
+	struct itimerspec tsp;
+	memset (&tsp, 0, sizeof (struct itimerspec));
+	if (value != 0.0)
+		double_to_timespec (value, &tsp.it_value);
+	if (interval != 0.0)
+		double_to_timespec (interval, &tsp.it_interval);
+
+	lua_getfield (L, 1, "fd");
+	int fd = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+
+	struct itimerspec *old = (struct itimerspec *) lua_newuserdata (L, sizeof (struct itimerspec));
+	if (timerfd_settime (fd, TFD_TIMER_ABSTIME, &tsp, old) < 0)
+		rhelp_perror (L);
+
+	/* Old itimerspec is on top of the stack, return it with get(). */
+	return rhelp_callmethod (L, 1, "get", 1);
+}
+/* }}} */
+
+/* {{{ mytimer_get() */
+static int mytimer_get (lua_State *L)
+{
+	if (lua_isuserdata (L, 2))
+	{
+		struct itimerspec *its = (struct itimerspec *) lua_touserdata (L, 2);
+		lua_pushnumber (L, timespec_to_double (&its->it_value));
+		lua_pushnumber (L, timespec_to_double (&its->it_interval));
+	}
+	else
+	{
+		struct itimerspec its;
+
+		lua_getfield (L, 1, "fd");
+		int fd = lua_tointeger (L, -1);
+		lua_pop (L, 1);
+
+		if (fd < 0)
+			return 0;
+
+		if (timerfd_gettime (fd, &its) < 0)
+			rhelp_perror (L);
+		lua_pushnumber (L, timespec_to_double (&its.it_value));
+		lua_pushnumber (L, timespec_to_double (&its.it_interval));
+	}
+
+	return 2;
+}
+/* }}} */
+
+#if HAVE_CLOCK_GETTIME
+/* {{{ mytimer_get_now() */
+static int mytimer_get_now (lua_State *L)
+{
+	struct timespec ts;
+	int clockid = CLOCK_MONOTONIC;
+
+	if (lua_istable (L, 1))
+	{
+		lua_getfield (L, 1, "clockid");
+		if (lua_isnumber (L, -1))
+			clockid = lua_tointeger (L, -1);
+	}
+
+	if (clock_gettime ((clockid_t) clockid, &ts) < 0)
+		rhelp_perror (L);
+
+	lua_pushnumber (L, timespec_to_double (&ts));
+	return 1;
+}
+/* }}} */
+#endif
+
 /* {{{ mytimer_recv() */
 static int mytimer_recv (lua_State *L)
 {
@@ -201,16 +293,18 @@ int luaopen_ratchet_timer (lua_State *L)
 		{"getfd", mytimer_getfd},
 		{"set_blocking", mytimer_set_blocking},
 		{"set_nonblocking", mytimer_set_nonblocking},
+		{"set", mytimer_set},
+		{"set_abs", mytimer_set_abs},
+		{"get", mytimer_get},
+#if HAVE_CLOCK_GETTIME
+		{"get_now", mytimer_get_now},
+#endif
 		{"recv", mytimer_recv},
 		{"close", mytimer_close},
 		{NULL}
 	};
-	luaL_Reg funcs[] = {
-		{"parse_timer", mytimer_parse_timer},
-		{NULL}
-	};
 
-	rhelp_newclass (L, "ratchet.timer", meths, funcs);
+	rhelp_newclass (L, "ratchet.timer", meths, NULL);
 
 	return 1;
 }
