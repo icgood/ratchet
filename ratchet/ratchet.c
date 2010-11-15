@@ -168,7 +168,7 @@ static int ratchet_attach (lua_State *L)
 		int rets = rhelp_callmethod (L, 1, "new_context", 0);
 		if (rets > 1)
 			lua_pop (L, rets-1);
-		lua_replace (L, 3);
+		lua_replace (L, 2);
 	}
 
 	/* Add the ratchet's poller as first argument to context constructor. */
