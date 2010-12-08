@@ -169,6 +169,23 @@ static int mysocket_init (lua_State *L)
 }
 /* }}} */
 
+/* {{{ mysocket_shutdown() */
+static int mysocket_shutdown (lua_State *L)
+{
+	static const char *options[] = {"read", "write", "full", NULL};
+	static const int shutdown_params[] = {SHUT_RD, SHUT_WR, SHUT_RDWR};
+
+	int fd, opt = luaL_checkoption (L, 2, "full", options);
+
+	lua_getfield (L, 1, "fd");
+	fd = lua_tointeger (L, -1);
+	shutdown (fd, shutdown_params[opt]);
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ mysocket_close() */
 static int mysocket_close (lua_State *L)
 {
@@ -413,6 +430,7 @@ int luaopen_ratchet_socket (lua_State *L)
 #endif
 		{"recv", mysocket_recv},
 		{"accept", mysocket_accept},
+		{"shutdown", mysocket_shutdown},
 		{"close", mysocket_close},
 		{NULL}
 	};
