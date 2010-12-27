@@ -1,7 +1,0 @@
-
---- The root <code>zmq</code> class manages a context of the
---  <a href="http://www.zeromq.org/">ZeroMQ</a> library. The context is needed
---  to create sockets and as a grouping necessary for its poller.
-module "ratchet.zmq"
-
--- vim:filetype=lua:sw=4:ts=4:sts=4:et:
