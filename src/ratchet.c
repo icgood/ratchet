@@ -107,7 +107,7 @@ static void end_thread_persist (lua_State *L, int index)
 /* }}} */
 
 /* {{{ event_triggered() */
-void event_triggered (int fd, short event, void *arg)
+static void event_triggered (int fd, short event, void *arg)
 {
 	lua_State *L1 = (lua_State *) arg;
 	lua_State *L = lua_tothread (L1, 1);
@@ -469,7 +469,8 @@ static int ratchet_start_all_new (lua_State *L)
 		lua_getfield (L, 1, "run_thread");
 		lua_pushvalue (L, 1);
 		lua_pushvalue (L, 4);	/* The "key" is the thread to start. */
-		lua_call (L, 2, 0);
+		lua_pushboolean (L, 1);	/* not_started flag. */
+		lua_call (L, 3, 0);
 	}
 
 	/* Recreate the not_started table, to clear it. */
@@ -519,12 +520,18 @@ int luaopen_ratchet (lua_State *L)
 	};
 
 	luaL_newmetatable (L, "ratchet_meta");
+	lua_newtable (L);
 	luaI_openlib (L, NULL, meths, 0);
 	lua_setfield (L, -2, "__index");
 	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
 
 	luaI_openlib (L, "ratchet", funcs, 0);
+
+	luaopen_ratchet_socket (L);
+	lua_setfield (L, -2, "socket");
+	luaopen_ratchet_uri (L);
+	lua_setfield (L, -2, "uri");
 
 	return 1;
 }

@@ -1,5 +1,5 @@
 TESTS = test_uri.lua \
-	test_single_socket.lua
+	test_attach_wait.lua
 
 EXTRA_DIST = $(TESTS)
 check_DATA = ratchet.so

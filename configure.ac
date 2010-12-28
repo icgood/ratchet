@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([color-tests silent-rules])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([ratchet/ratchet.c])
+AC_CONFIG_SRCDIR([src/ratchet.c])
 AC_CONFIG_HEADERS([config.h])
 
 #####################
@@ -87,13 +87,6 @@ AC_ARG_VAR([BUFSIZ], [The size of the intermediate buffers used when building la
 if test -n "$BUFSIZ"; then
 	AC_DEFINE_UNQUOTED([BUFSIZ], [$BUFSIZ], [The size of the intermediate buffers used when building large Lua strings.])
 fi
-
-#####################
-# Configure options: --enable-devel[=no].
-AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel],
-	                               [install developer headers and libraries (default no)])],
-	      [enable_devel=yes], [enable_devel=no])
-AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
 
 #####################
 # Configure options: --disable-module[=yes].
