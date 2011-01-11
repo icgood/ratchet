@@ -302,14 +302,13 @@ static int ratchet_finish_thread (lua_State *L)
 {
 	get_event_base (L, 1);
 	get_thread (L, 2, L1);
+	lua_settop (L, 2);
 
 	int nrets = lua_gettop (L1);
 
 	/* Remove the entry from the persistance table, get potential waiting thread. */
 	end_thread_persist (L, 2);
 	lua_State *L2 = lua_tothread (L, -1);
-	lua_replace (L, 3);
-	lua_settop (L, 3);
 
 	/* Resume waiting thread, if necessary. */
 	if (L2)
