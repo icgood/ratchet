@@ -33,19 +33,9 @@ AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
 AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
 AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])
 if test "x${have_libevent}" != "xyes"; then
-	AC_MSG_NOTICE([Libevent libraries required for building.])
+	AC_MSG_ERROR([Libevent libraries required for building.])
 fi
 AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
-
-# epoll
-AC_DEFINE([HAVE_EPOLL], [0], [Define to 1 if you have the Linux epoll(7) interface.])
-AC_DEFINE([HAVE_EPOLL_PWAIT], [0], [Define to 1 if you have the epoll_pwait function.])
-AX_HAVE_EPOLL([AC_DEFINE([HAVE_EPOLL], [1])], [])
-AX_HAVE_EPOLL_PWAIT([AC_DEFINE([HAVE_EPOLL_PWAIT], [1])], [])
-if test "x${ax_cv_have_epoll}" != "xyes"; then
-	AC_MSG_NOTICE([Epoll will not be included in the ratchet library.])
-fi
-AM_CONDITIONAL([HAVE_EPOLL], [test "x${ax_cv_have_epoll}" = "xyes"])
 
 # ZeroMQ 2.1.0+
 AC_DEFINE([HAVE_ZMQ], [0], [Define to 1 if you have the ZeroMQ library.])
@@ -72,6 +62,13 @@ else
 fi
 AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
 
+# signalfd
+AC_CHECK_HEADERS([sys/signalfd.h], [have_signalfd=yes], [have_signalfd=no])
+AC_CHECK_FUNC([signalfd], [], [have_signalfd=no])
+if test "x${have_signalfd}" != "xyes"; then
+	AC_MSG_ERROR([The signalfd libraries required for building.])
+fi
+
 # clock_gettime()
 AC_DEFINE([HAVE_CLOCK_GETTIME], [0], [Define to 1 if you have the clock_gettime system function.])
 AC_SEARCH_LIBS([clock_gettime], [rt], [
@@ -79,7 +76,7 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [
 		AC_MSG_NOTICE([get_now() method will not be available in timer module.])])
 
 # getaddrinfo_a()
-AC_SEARCH_LIBS([getaddrinfo_a], [anl], [], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
+AC_SEARCH_LIBS([getaddrinfo_a], [anl], [LDFLAGS="$LDFLAGS -lpthread"], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
 
 #####################
 # Configure options: BUFSIZ=nnn

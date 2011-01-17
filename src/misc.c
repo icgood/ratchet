@@ -25,11 +25,34 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
 #include <string.h>
+#include <errno.h>
 
 #include "misc.h"
+
+/* {{{ raise_perror_ln() */
+int raise_perror_ln (lua_State *L, const char *file, int line)
+{
+	char errorbuf[512];
+
+	if (errno)
+	{
+		if (strerror_r (errno, errorbuf, sizeof (errorbuf)) == -1)
+			lua_pushfstring (L, "%s:%d: Unknown error occured. [errno=%d]", file, line, errno);
+		else
+			lua_pushfstring (L, "%s:%d: %s", file, line, errorbuf);
+	}
+	else
+		lua_pushfstring (L, "%s:%d: Unknown error occured.", file, line);
+	
+	return lua_error (L);
+}
+/* }}} */
 
 /* {{{ build_lua_function() */
 void build_lua_function (lua_State *L, const char *fstr)
@@ -94,6 +117,98 @@ void gettimeval (lua_State *L, int index, struct timeval *tv)
 	fractpart = modf (secs, &intpart);
 	tv->tv_sec = (long int) intpart;
 	tv->tv_usec = (long int) (fractpart * 1000000.0);
+}
+/* }}} */
+
+/* {{{ set_nonblocking() */
+int set_nonblocking (int fd)
+{
+	int flags = 1;
+#ifdef O_NONBLOCK
+	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#else
+	return ioctl(fd, FIOBIO, &flags);
+#endif
+
+}
+/* }}} */
+
+/* {{{ printf_index() */
+static void printf_index (lua_State *L, int i)
+{
+	int t = lua_type (L, i);
+	int j;
+
+	switch (t)
+	{
+		case LUA_TSTRING: {
+			printf ("'%s'", lua_tostring (L, i));
+			break;
+		}
+		case LUA_TBOOLEAN: {
+			printf (lua_toboolean (L, 1) ? "true" : "false");
+			break;
+		}
+		case LUA_TNUMBER: {
+			printf ("%g", lua_tonumber (L, i));
+			break;
+		}
+		case LUA_TTABLE: {
+			printf ("<{");
+			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
+			{
+				int top = lua_gettop (L);
+				printf_index (L, top-1);
+				printf ("=");
+				if (lua_istable (L, top))
+				{
+					for (j=1; j<=top-2; j++)
+					{
+						if (lua_equal (L, j, top))
+						{
+							printf ("<table:%p>", lua_topointer (L, top));
+							break;
+						}
+					}
+					if (j >= top-1)
+						printf_index (L, top);
+				}
+				else
+					printf_index (L, top);
+				printf (",");
+			}
+			printf ("}:%p>", lua_topointer (L, i));
+			break;
+		}
+		case LUA_TLIGHTUSERDATA:
+		case LUA_TUSERDATA: {
+			printf ("<%s", lua_typename (L, t));
+			printf (":%p>", lua_topointer (L, i));
+			break;
+		}
+		default: {
+			printf ("%s", lua_typename (L, t));
+			break;
+		}
+	}
+}
+/* }}} */
+
+/* {{{ stackdump_ln() */
+void stackdump_ln (lua_State *L, const char *file, int line)
+{
+	int i;
+	int top = lua_gettop (L);
+
+	printf ("------ stackdump %s:%d -------\n", file, line);
+	for (i=1; i<=top; i++)
+	{
+		printf ("%d: ", i);
+		printf_index (L, i);
+		printf ("\n");
+	}
 }
 /* }}} */
 

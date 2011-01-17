@@ -30,6 +30,7 @@
 #include <sys/un.h>
 #include <math.h>
 #include <netdb.h>
+#include <errno.h>
 
 #include "misc.h"
 
@@ -40,8 +41,17 @@
 /* {{{ rsock_new() */
 static int rsock_new (lua_State *L)
 {
+	int family = luaL_optint (L, 1, AF_INET);
+	int socktype = luaL_optint (L, 2, SOCK_STREAM);
+	int protocol = luaL_optint (L, 3, 0);
+
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
-	*fd = -1;
+	*fd = socket (family, socktype, protocol);
+	if (*fd < 0)
+		return raise_perror (L);
+
+	if (set_nonblocking (*fd) < 0)
+		return raise_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -134,6 +144,79 @@ static int rsock_getfd (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rsock_check_error() */
+static int rsock_check_error (lua_State *L)
+{
+	int sockfd = get_fd (L, 1);
+	int error;
+	socklen_t errorlen = sizeof (int);
+
+	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
+		return raise_perror (L);
+
+	if (error)
+	{
+		errno = error;
+		return raise_perror (L);
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rsock_bind() */
+static int rsock_bind (lua_State *L)
+{
+	int sockfd = get_fd (L, 1);
+	luaL_checktype (L, 2, LUA_TUSERDATA);
+	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
+	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
+
+	int ret = bind (sockfd, addr, addrlen);
+	if (ret < 0)
+		return raise_perror (L);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rsock_listen() */
+static int rsock_listen (lua_State *L)
+{
+	int sockfd = get_fd (L, 1);
+	int backlog = luaL_optint (L, 2, SOMAXCONN);
+
+	int ret = listen (sockfd, backlog);
+	if (ret < 0)
+		return raise_perror (L);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rsock_rawconnect() */
+static int rsock_rawconnect (lua_State *L)
+{
+	int sockfd = get_fd (L, 1);
+	luaL_checktype (L, 2, LUA_TUSERDATA);
+	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
+	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
+
+	int ret = connect (sockfd, addr, addrlen);
+	if (ret < 0)
+	{
+		if (errno == EALREADY || errno == EINPROGRESS || errno == EISCONN)
+			lua_pushboolean (L, 0);
+		else
+			return raise_perror (L);
+	}
+	else
+		lua_pushboolean (L, 1);
+
+	return 1;
+}
+/* }}} */
+
 /* ---- Lua-implemented Functions ------------------------------------------- */
 
 /* {{{ send() */
@@ -149,14 +232,11 @@ static int rsock_getfd (lua_State *L)
 /* }}} */
 
 /* {{{ connect() */
-#define rsock_connect "return function (self, ...)\ncoroutine.yield('read', self:getfd())\nreturn self:rawconnect(...)\nend\n"
-/* }}} */
-
-/* {{{ resolve() */
-#define rsock_resolve "return function (self, ...)\n" \
-	"local sig = self:rawresolve(...)\n" \
-	"coroutine.yield('signal', sig)\n" \
-	"return self:rawresolve(...)\n" \
+#define rsock_connect "return function (self, ...)\n" \
+		"if not self:rawconnect(...) then\n" \
+			"coroutine.yield('write', self:getfd())\n" \
+			"self:check_error()\n" \
+		"end\n" \
 	"end\n"
 /* }}} */
 
@@ -185,7 +265,11 @@ int luaopen_ratchet_socket (lua_State *L)
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"getfd", rsock_getfd},
+		{"bind", rsock_bind},
+		{"listen", rsock_listen},
+		{"check_error", rsock_check_error},
 		/* Undocumented, helper methods. */
+		{"rawconnect", rsock_rawconnect},
 		{NULL}
 	};
 
@@ -196,7 +280,6 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"recv", rsock_recv},
 		{"accept", rsock_accept},
 		{"connect", rsock_connect},
-		{"resolve", rsock_resolve},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
