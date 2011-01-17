@@ -1,5 +1,6 @@
 TESTS = test_uri.lua \
-	test_connect.lua \
+	test_listen_connect.lua \
+	test_send_recv.lua \
 	test_attach_wait.lua
 
 EXTRA_DIST = $(TESTS)

@@ -54,6 +54,27 @@ int raise_perror_ln (lua_State *L, const char *file, int line)
 }
 /* }}} */
 
+/* {{{ return_perror_ln() */
+int return_perror_ln (lua_State *L, const char *file, int line)
+{
+	char errorbuf[512];
+
+	lua_pushnil (L);
+
+	if (errno)
+	{
+		if (strerror_r (errno, errorbuf, sizeof (errorbuf)) == -1)
+			lua_pushfstring (L, "%s:%d: Unknown error occured. [errno=%d]", file, line, errno);
+		else
+			lua_pushfstring (L, "%s:%d: %s", file, line, errorbuf);
+	}
+	else
+		lua_pushfstring (L, "%s:%d: Unknown error occured.", file, line);
+	
+	return 2;
+}
+/* }}} */
+
 /* {{{ build_lua_function() */
 void build_lua_function (lua_State *L, const char *fstr)
 {

@@ -8,6 +8,7 @@
 #include <lauxlib.h>
 
 #define raise_perror(L) raise_perror_ln (L, __FILE__, __LINE__)
+#define return_perror(L) return_perror_ln (L, __FILE__, __LINE__)
 #define stackdump(L) stackdump_ln (L, __FILE__, __LINE__)
 
 struct luafunc {
@@ -16,6 +17,7 @@ struct luafunc {
 };
 
 int raise_perror_ln (lua_State *L, const char *file, int line);
+int return_perror_ln (lua_State *L, const char *file, int line);
 void build_lua_function (lua_State *L, const char *fstr);
 void register_luafuncs (lua_State *L, int index, const struct luafunc *fs);
 int strmatch (lua_State *L, int index, const char *match);

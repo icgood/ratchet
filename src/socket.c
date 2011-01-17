@@ -48,10 +48,28 @@ static int rsock_new (lua_State *L)
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
 	*fd = socket (family, socktype, protocol);
 	if (*fd < 0)
-		return raise_perror (L);
+		return return_perror (L);
 
 	if (set_nonblocking (*fd) < 0)
-		return raise_perror (L);
+		return return_perror (L);
+
+	luaL_getmetatable (L, "ratchet_socket_meta");
+	lua_setmetatable (L, -2);
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_from_fd() */
+static int rsock_from_fd (lua_State *L)
+{
+	int *fd = (int *) lua_newuserdata (L, sizeof (int));
+	*fd = luaL_checkint (L, 1);
+	if (*fd < 0)
+		return return_perror (L);
+
+	if (set_nonblocking (*fd) < 0)
+		return return_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -152,12 +170,12 @@ static int rsock_check_error (lua_State *L)
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
-		return raise_perror (L);
+		return return_perror (L);
 
 	if (error)
 	{
 		errno = error;
-		return raise_perror (L);
+		return return_perror (L);
 	}
 
 	return 0;
@@ -174,7 +192,7 @@ static int rsock_bind (lua_State *L)
 
 	int ret = bind (sockfd, addr, addrlen);
 	if (ret < 0)
-		return raise_perror (L);
+		return return_perror (L);
 
 	return 0;
 }
@@ -188,7 +206,7 @@ static int rsock_listen (lua_State *L)
 
 	int ret = listen (sockfd, backlog);
 	if (ret < 0)
-		return raise_perror (L);
+		return return_perror (L);
 
 	return 0;
 }
@@ -197,6 +215,7 @@ static int rsock_listen (lua_State *L)
 /* {{{ rsock_rawconnect() */
 static int rsock_rawconnect (lua_State *L)
 {
+	lua_settop (L, 2);
 	int sockfd = get_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
@@ -208,10 +227,111 @@ static int rsock_rawconnect (lua_State *L)
 		if (errno == EALREADY || errno == EINPROGRESS || errno == EISCONN)
 			lua_pushboolean (L, 0);
 		else
-			return raise_perror (L);
+			return return_perror (L);
 	}
 	else
 		lua_pushboolean (L, 1);
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_rawaccept() */
+static int rsock_rawaccept (lua_State *L)
+{
+	lua_settop (L, 1);
+	int sockfd = get_fd (L, 1);
+
+	socklen_t addr_len = sizeof (struct sockaddr_storage);
+	struct sockaddr *addr = (struct sockaddr *) lua_newuserdata (L, (size_t) addr_len);
+
+	int clientfd = accept (sockfd, addr, &addr_len);
+	if (clientfd == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			lua_getfield (L, 1, "accept");
+			lua_pushvalue (L, 1);
+			lua_call (L, 1, 1);
+			return 1;
+		}
+
+		else
+			return return_perror (L);
+	}
+
+	/* Create the new socket object from file descriptor. */
+	lua_getfield (L, lua_upvalueindex (1), "from_fd");
+	lua_pushinteger (L, clientfd);
+	lua_call (L, 1, 2);
+	if (lua_isnil (L, -2))
+		return 2;
+
+	lua_pop (L, 1);	/* Pop the placeholder for the error msg. */
+	lua_pushvalue (L, 2);
+
+	return 2;
+}
+/* }}} */
+
+/* {{{ rsock_rawsend() */
+static int rsock_rawsend (lua_State *L)
+{
+	lua_settop (L, 2);
+	int sockfd = get_fd (L, 1);
+	size_t data_len;
+	const char *data = luaL_checklstring (L, 2, &data_len);
+	ssize_t ret;
+
+	int flags = MSG_NOSIGNAL;
+	ret = send (sockfd, data, data_len, flags);
+	if (ret == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			lua_getfield (L, 1, "send");
+			lua_pushvalue (L, 1);
+			lua_pushvalue (L, 2);
+			lua_call (L, 2, 1);
+			return 1;
+		}
+
+		else
+			return return_perror (L);
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rsock_rawrecv() */
+static int rsock_rawrecv (lua_State *L)
+{
+	lua_settop (L, 1);
+	int sockfd = get_fd (L, 1);
+	luaL_Buffer buffer;
+	ssize_t ret;
+
+	luaL_buffinit (L, &buffer);
+	char *prepped = luaL_prepbuffer (&buffer);
+
+	ret = recv (sockfd, prepped, LUAL_BUFFERSIZE, 0);
+	if (ret == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+		{
+			lua_getfield (L, 1, "recv");
+			lua_pushvalue (L, 1);
+			lua_call (L, 1, 1);
+			return 1;
+		}
+
+		else
+			return return_perror (L);
+	}
+
+	luaL_addsize (&buffer, (size_t) ret);
+	luaL_pushresult (&buffer);
 
 	return 1;
 }
@@ -235,8 +355,8 @@ static int rsock_rawconnect (lua_State *L)
 #define rsock_connect "return function (self, ...)\n" \
 		"if not self:rawconnect(...) then\n" \
 			"coroutine.yield('write', self:getfd())\n" \
-			"self:check_error()\n" \
 		"end\n" \
+		"return self:check_error()\n" \
 	"end\n"
 /* }}} */
 
@@ -248,8 +368,7 @@ int luaopen_ratchet_socket (lua_State *L)
 	/* Static functions in the ratchet.socket namespace. */
 	static const luaL_Reg funcs[] = {
 		{"new", rsock_new},
-		//{"connect", rsock_new_connect},
-		//{"listen", rsock_new_listen},
+		{"from_fd", rsock_from_fd},
 		{"parse_unix_uri", rsock_parse_unix_uri},
 		{"parse_tcp_uri", rsock_parse_tcp_uri},
 		{NULL}
@@ -270,6 +389,9 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"check_error", rsock_check_error},
 		/* Undocumented, helper methods. */
 		{"rawconnect", rsock_rawconnect},
+		{"rawaccept", rsock_rawaccept},
+		{"rawsend", rsock_rawsend},
+		{"rawrecv", rsock_rawrecv},
 		{NULL}
 	};
 
@@ -284,17 +406,18 @@ int luaopen_ratchet_socket (lua_State *L)
 		{NULL}
 	};
 
+	/* Set up the ratchet.socket namespace functions. */
+	luaI_openlib (L, "ratchet.socket", funcs, 0);
+
 	/* Set up the ratchet.socket class and metatables. */
 	luaL_newmetatable (L, "ratchet_socket_meta");
 	lua_newtable (L);
-	luaI_openlib (L, NULL, meths, 0);
+	lua_pushvalue (L, -3);
+	luaI_openlib (L, NULL, meths, 1);
 	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "__index");
 	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
-
-	/* Set up the ratchet.socket namespace functions. */
-	luaI_openlib (L, "ratchet.socket", funcs, 0);
 
 	return 1;
 }
