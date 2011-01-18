@@ -21,7 +21,7 @@ function ctx2(r, where)
 end
 
 local r = ratchet.new()
-r:attach(ctx1, r, "tcp://localhost:10025")
+r:attach(ctx1, r, "tcp://*:10025")
 r:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

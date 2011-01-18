@@ -538,6 +538,14 @@ static int ratchet_wait_for_resolve (lua_State *L)
 	get_thread (L, 2, L1);
 	const char *host = luaL_checkstring (L, 3);
 	const char *port = luaL_optstring (L, 4, NULL);
+	int flags = (AI_V4MAPPED | AI_ADDRCONFIG);
+
+	/* Check for special-case where host is *. */
+	if (0 == strcmp ("*", host))
+	{
+		host = NULL;
+		flags |= AI_PASSIVE;
+	}
 
 	/* Set up DNS resolution persistance data, leaves 4 items on L1 stack. */
 	lua_settop (L1, 0);
@@ -559,7 +567,7 @@ static int ratchet_wait_for_resolve (lua_State *L)
 	gaicb->ar_service = port;
 	gaicb->ar_request = hints;
 	hints->ai_family = AF_UNSPEC;
-	hints->ai_flags = (AI_V4MAPPED | AI_ADDRCONFIG);
+	hints->ai_flags = flags;
 
 	int ret = getaddrinfo_a (GAI_NOWAIT, &gaicb, 1, sevp);
 	if (ret)

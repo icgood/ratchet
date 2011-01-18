@@ -34,7 +34,7 @@
 
 #include "misc.h"
 
-#define get_fd(L, i) *(int *) luaL_checkudata (L, i, "ratchet_socket_meta")
+#define get_fd(L, i) (*(int *) luaL_checkudata (L, i, "ratchet_socket_meta"))
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
@@ -162,8 +162,8 @@ static int rsock_getfd (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_check_error() */
-static int rsock_check_error (lua_State *L)
+/* {{{ rsock_check_ok() */
+static int rsock_check_ok (lua_State *L)
 {
 	int sockfd = get_fd (L, 1);
 	int error;
@@ -178,7 +178,8 @@ static int rsock_check_error (lua_State *L)
 		return return_perror (L);
 	}
 
-	return 0;
+	lua_pushboolean (L, 1);
+	return 1;
 }
 /* }}} */
 
@@ -194,7 +195,8 @@ static int rsock_bind (lua_State *L)
 	if (ret < 0)
 		return return_perror (L);
 
-	return 0;
+	lua_pushboolean (L, 1);
+	return 1;
 }
 /* }}} */
 
@@ -208,7 +210,24 @@ static int rsock_listen (lua_State *L)
 	if (ret < 0)
 		return return_perror (L);
 
-	return 0;
+	lua_pushboolean (L, 1);
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_close() */
+static int rsock_close (lua_State *L)
+{
+	int *fd = &get_fd (L, 1);
+	if (*fd < 0)
+		return 0;
+
+	int ret = close (*fd);
+	if (ret == -1)
+		return return_perror (L);
+
+	lua_pushboolean (L, 1);
+	return 1;
 }
 /* }}} */
 
@@ -300,7 +319,8 @@ static int rsock_rawsend (lua_State *L)
 			return return_perror (L);
 	}
 
-	return 0;
+	lua_pushboolean (L, 1);
+	return 1;
 }
 /* }}} */
 
@@ -356,7 +376,7 @@ static int rsock_rawrecv (lua_State *L)
 		"if not self:rawconnect(...) then\n" \
 			"coroutine.yield('write', self:getfd())\n" \
 		"end\n" \
-		"return self:check_error()\n" \
+		"return self:check_ok()\n" \
 	"end\n"
 /* }}} */
 
@@ -386,7 +406,8 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"getfd", rsock_getfd},
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
-		{"check_error", rsock_check_error},
+		{"check_ok", rsock_check_ok},
+		{"close", rsock_close},
 		/* Undocumented, helper methods. */
 		{"rawconnect", rsock_rawconnect},
 		{"rawaccept", rsock_rawaccept},
