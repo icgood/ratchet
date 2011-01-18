@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 #include <math.h>
 #include <string.h>
@@ -153,6 +154,14 @@ int set_nonblocking (int fd)
 	return ioctl(fd, FIOBIO, &flags);
 #endif
 
+}
+/* }}} */
+
+/* {{{ set_reuseaddr() */
+int set_reuseaddr (int fd)
+{
+	int flags = 1;
+	return setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof (int));
 }
 /* }}} */
 

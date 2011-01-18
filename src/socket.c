@@ -52,6 +52,8 @@ static int rsock_new (lua_State *L)
 
 	if (set_nonblocking (*fd) < 0)
 		return return_perror (L);
+	if (set_reuseaddr (*fd) < 0)
+		return return_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -208,6 +210,23 @@ static int rsock_listen (lua_State *L)
 
 	int ret = listen (sockfd, backlog);
 	if (ret < 0)
+		return return_perror (L);
+
+	lua_pushboolean (L, 1);
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_shutdown() */
+static int rsock_shutdown (lua_State *L)
+{
+	int sockfd = get_fd (L, 1);
+	static const char *lst[] = {"read", "write", "both", NULL};
+	static const int howlst[] = {SHUT_RD, SHUT_WR, SHUT_RDWR};
+	int how = howlst[luaL_checkoption (L, 2, "both", lst)];
+
+	int ret = shutdown (sockfd, how);
+	if (ret == -1)
 		return return_perror (L);
 
 	lua_pushboolean (L, 1);
@@ -407,6 +426,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
 		{"check_ok", rsock_check_ok},
+		{"shutdown", rsock_shutdown},
 		{"close", rsock_close},
 		/* Undocumented, helper methods. */
 		{"rawconnect", rsock_rawconnect},
