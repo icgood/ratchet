@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([ratchet], [0.2], [Ian Good <icgood@gmail.com>])
+AC_INIT([ratchet], [0.3], [Ian Good <icgood@gmail.com>])
 AM_INIT_AUTOMAKE([color-tests silent-rules])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
@@ -51,29 +51,12 @@ else
 fi
 AM_CONDITIONAL([HAVE_ZMQ], [test "x${have_zmq}" = "xyes"])
 
-# timerfd
-AC_DEFINE([HAVE_TIMERFD], [0], [Define to 1 if you have the timerfd function suite.])
-AC_CHECK_HEADERS([sys/timerfd.h], [have_timerfd=yes], [have_timerfd=no])
-AC_CHECK_FUNC([timerfd_create], [], [have_timerfd=no])
-if test "x${have_timerfd}" != "xyes"; then
-	AC_MSG_NOTICE([The timer module will not be included in the ratchet library.])
-else
-	AC_DEFINE([HAVE_TIMERFD], [1])
-fi
-AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
-
 # signalfd
 AC_CHECK_HEADERS([sys/signalfd.h], [have_signalfd=yes], [have_signalfd=no])
 AC_CHECK_FUNC([signalfd], [], [have_signalfd=no])
 if test "x${have_signalfd}" != "xyes"; then
 	AC_MSG_ERROR([The signalfd libraries required for building.])
 fi
-
-# clock_gettime()
-AC_DEFINE([HAVE_CLOCK_GETTIME], [0], [Define to 1 if you have the clock_gettime system function.])
-AC_SEARCH_LIBS([clock_gettime], [rt], [
-		AC_DEFINE([HAVE_CLOCK_GETTIME], [1])], [
-		AC_MSG_NOTICE([get_now() method will not be available in timer module.])])
 
 # getaddrinfo_a()
 AC_SEARCH_LIBS([getaddrinfo_a], [anl], [LDFLAGS="$LDFLAGS -lpthread"], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
