@@ -35,7 +35,7 @@
 #include "misc.h"
 
 #ifndef RATCHET_DNS_SIGNAL
-#define RATCHET_DNS_SIGNAL SIGRTMIN
+#define RATCHET_DNS_SIGNAL SIGRTMIN+1
 #endif
 
 #define get_event_base(L, index) ((struct ratchet *) luaL_checkudata (L, index, "ratchet_meta"))->base
@@ -154,6 +154,7 @@ static void dns_signal_triggered (int fd, short event, void *arg)
 	if ((ret = read (sigfd, &fdsi, sizeof (fdsi))) == sizeof (fdsi))
 	{
 		lua_State *L1 = (lua_State *) fdsi.ssi_ptr;
+
 		struct gaicb *gaicb = (struct gaicb *) lua_touserdata (L1, 4);
 
 		int invalid = gai_error (gaicb);
@@ -196,7 +197,6 @@ static void dns_signal_triggered (int fd, short event, void *arg)
 
 		dns_pending (L, 1)--;
 	}
-
 
 	/* Re-add the DNS signal event, if there are still more pending. */
 	if (dns_pending (L, 1) > 0)
@@ -378,6 +378,33 @@ static int ratchet_loop (lua_State *L)
 			return luaL_error (L, "libevent internal error");
 		else if (ret > 0)
 			break;
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_start_all_new() */
+static int ratchet_start_all_new (lua_State *L)
+{
+	get_event_base (L, 1);
+	lua_settop (L, 1);
+	
+	lua_getfenv (L, 1);
+	lua_getfield (L, 2, "not_started");
+	for (lua_pushnil (L); lua_next (L, 3); lua_pop (L, 1))
+	{
+		/* Call self:run_thread(t). */
+		lua_getfield (L, 1, "run_thread");
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 4);	/* The "key" is the thread to start. */
+		lua_pushboolean (L, 1);	/* not_started flag. */
+		lua_call (L, 3, 0);
+
+		/* Remove entry from not_started. */
+		lua_pushvalue (L, 4);
+		lua_pushnil (L);
+		lua_settable (L, 3);
 	}
 
 	return 0;
@@ -616,35 +643,6 @@ static int ratchet_wait_for_timeout (lua_State *L)
 	timeout_set (ev, event_triggered, L1);
 	event_base_set (e_b, ev);
 	event_add (ev, &tv);
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ ratchet_start_all_new() */
-static int ratchet_start_all_new (lua_State *L)
-{
-	get_event_base (L, 1);
-	lua_settop (L, 1);
-	
-	lua_getfenv (L, 1);
-	lua_getfield (L, 2, "not_started");
-	for (lua_pushnil (L); lua_next (L, 3); lua_pop (L, 1))
-	{
-		/* Call self:run_thread(t). */
-		lua_getfield (L, 1, "run_thread");
-		lua_pushvalue (L, 1);
-		lua_pushvalue (L, 4);	/* The "key" is the thread to start. */
-		lua_pushboolean (L, 1);	/* not_started flag. */
-		lua_call (L, 3, 0);
-	}
-
-	/* Recreate the not_started table, to clear it. */
-	lua_newtable (L);
-	lua_getmetatable (L, 3);
-	lua_setmetatable (L, -2);
-	lua_setfield (L, 2, "not_started");
-	lua_settop (L, 1);
 
 	return 0;
 }

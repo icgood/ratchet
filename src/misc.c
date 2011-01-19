@@ -226,6 +226,7 @@ static void printf_index (lua_State *L, int i)
 			printf ("}:%p>", lua_topointer (L, i));
 			break;
 		}
+		case LUA_TTHREAD:
 		case LUA_TLIGHTUSERDATA:
 		case LUA_TUSERDATA: {
 			printf ("<%s", lua_typename (L, t));
