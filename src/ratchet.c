@@ -360,6 +360,22 @@ static int ratchet_resolve_dns (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_timer() */
+static int ratchet_timer (lua_State *L)
+{
+	struct event_base *e_b = get_event_base (L, 1);
+	if (lua_pushthread (L))
+		return luaL_error (L, "timer cannot be called from main thread");
+	lua_pop (L, 1);
+
+	int nargs = lua_gettop (L) - 1;
+	lua_pushliteral (L, "timeout");
+	lua_insert (L, 2);
+
+	return lua_yield (L, nargs+1);
+}
+/* }}} */
+
 /* {{{ ratchet_loop() */
 static int ratchet_loop (lua_State *L)
 {
@@ -666,6 +682,7 @@ int luaopen_ratchet (lua_State *L)
 		{"attach", ratchet_attach},
 		{"attach_wait", ratchet_attach_wait},
 		{"resolve_dns", ratchet_resolve_dns},
+		{"timer", ratchet_timer},
 		{"loop", ratchet_loop},
 		/* Undocumented, helper methods. */
 		{"run_thread", ratchet_run_thread},
