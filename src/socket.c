@@ -48,12 +48,12 @@ static int rsock_new (lua_State *L)
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
 	*fd = socket (family, socktype, protocol);
 	if (*fd < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	if (set_nonblocking (*fd) < 0)
-		return return_perror (L);
+		return handle_perror (L);
 	if (set_reuseaddr (*fd) < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -68,10 +68,10 @@ static int rsock_from_fd (lua_State *L)
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
 	*fd = luaL_checkint (L, 1);
 	if (*fd < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	if (set_nonblocking (*fd) < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -172,12 +172,12 @@ static int rsock_check_ok (lua_State *L)
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	if (error)
 	{
 		errno = error;
-		return return_perror (L);
+		return handle_perror (L);
 	}
 
 	lua_pushboolean (L, 1);
@@ -195,7 +195,7 @@ static int rsock_bind (lua_State *L)
 
 	int ret = bind (sockfd, addr, addrlen);
 	if (ret < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -210,7 +210,7 @@ static int rsock_listen (lua_State *L)
 
 	int ret = listen (sockfd, backlog);
 	if (ret < 0)
-		return return_perror (L);
+		return handle_perror (L);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -227,7 +227,7 @@ static int rsock_shutdown (lua_State *L)
 
 	int ret = shutdown (sockfd, how);
 	if (ret == -1)
-		return return_perror (L);
+		return handle_perror (L);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -243,7 +243,7 @@ static int rsock_close (lua_State *L)
 
 	int ret = close (*fd);
 	if (ret == -1)
-		return return_perror (L);
+		return handle_perror (L);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -265,7 +265,7 @@ static int rsock_rawconnect (lua_State *L)
 		if (errno == EALREADY || errno == EINPROGRESS || errno == EISCONN)
 			lua_pushboolean (L, 0);
 		else
-			return return_perror (L);
+			return handle_perror (L);
 	}
 	else
 		lua_pushboolean (L, 1);
@@ -295,7 +295,7 @@ static int rsock_rawaccept (lua_State *L)
 		}
 
 		else
-			return return_perror (L);
+			return handle_perror (L);
 	}
 
 	/* Create the new socket object from file descriptor. */
@@ -335,7 +335,7 @@ static int rsock_rawsend (lua_State *L)
 		}
 
 		else
-			return return_perror (L);
+			return handle_perror (L);
 	}
 
 	lua_pushboolean (L, 1);
@@ -366,7 +366,7 @@ static int rsock_rawrecv (lua_State *L)
 		}
 
 		else
-			return return_perror (L);
+			return handle_perror (L);
 	}
 
 	luaL_addsize (&buffer, (size_t) ret);

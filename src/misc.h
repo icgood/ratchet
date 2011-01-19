@@ -11,6 +11,12 @@
 #define return_perror(L) return_perror_ln (L, __FILE__, __LINE__)
 #define stackdump(L) stackdump_ln (L, __FILE__, __LINE__)
 
+#ifdef RATCHET_RETURN_ERRORS
+#define handle_perror return_perror
+#else
+#define handle_perror raise_perror
+#endif
+
 struct luafunc {
 	const char *fname;
 	char *fstr;
@@ -23,6 +29,7 @@ void register_luafuncs (lua_State *L, int index, const struct luafunc *fs);
 int strmatch (lua_State *L, int index, const char *match);
 int strequal (lua_State *L, int index, const char *s2);
 void gettimeval (lua_State *L, int index, struct timeval *tv);
+int gettimeval_opt (lua_State *L, int index, struct timeval *tv);
 int set_nonblocking (int fd);
 int set_reuseaddr (int fd);
 void stackdump_ln (lua_State *L, const char *file, int line);

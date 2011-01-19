@@ -142,6 +142,20 @@ void gettimeval (lua_State *L, int index, struct timeval *tv)
 }
 /* }}} */
 
+/* {{{ gettimeval_opt() */
+int gettimeval_opt (lua_State *L, int index, struct timeval *tv)
+{
+	double secs = (double) luaL_optnumber (L, index, -1.0);
+	if (secs < 0.0)
+		return 0;
+	double intpart, fractpart;
+	fractpart = modf (secs, &intpart);
+	tv->tv_sec = (long int) intpart;
+	tv->tv_usec = (long int) (fractpart * 1000000.0);
+	return 1;
+}
+/* }}} */
+
 /* {{{ set_nonblocking() */
 int set_nonblocking (int fd)
 {

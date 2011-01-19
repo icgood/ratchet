@@ -216,7 +216,7 @@ static int setup_dns_signal_event (lua_State *L, struct ratchet *r)
 	sigaddset (&sigset, RATCHET_DNS_SIGNAL);
 	int fd = signalfd (-1, &sigset, 0);
 	if (set_nonblocking (fd) < 0)
-		return raise_perror (L);
+		return handle_perror (L);
 	sigprocmask(SIG_BLOCK, &sigset, NULL);
 
 	/* Set up a persistent event to watch for DNS resolution signal. */
@@ -492,6 +492,10 @@ static int ratchet_wait_for_write (lua_State *L)
 	get_thread (L, 2, L1);
 	int fd = luaL_checkint (L, 3);
 
+	/* Build timeout data. */
+	struct timeval tv;
+	int use_tv = gettimeval_opt (L, 4, &tv);
+
 	/* Set the main thread at index 1. */
 	lua_settop (L1, 0);
 	lua_pushthread (L);
@@ -501,7 +505,7 @@ static int ratchet_wait_for_write (lua_State *L)
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
 	event_set (ev, fd, EV_WRITE, event_triggered, L1);
 	event_base_set (e_b, ev);
-	event_add (ev, NULL);
+	event_add (ev, (use_tv ? &tv : NULL));
 
 	return 0;
 }
@@ -515,6 +519,10 @@ static int ratchet_wait_for_read (lua_State *L)
 	get_thread (L, 2, L1);
 	int fd = luaL_checkint (L, 3);
 
+	/* Build timeout data. */
+	struct timeval tv;
+	int use_tv = gettimeval_opt (L, 4, &tv);
+
 	/* Set the main thread at index 1. */
 	lua_settop (L1, 0);
 	lua_pushthread (L);
@@ -524,7 +532,7 @@ static int ratchet_wait_for_read (lua_State *L)
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
 	event_set (ev, fd, EV_READ, event_triggered, L1);
 	event_base_set (e_b, ev);
-	event_add (ev, NULL);
+	event_add (ev, (use_tv ? &tv : NULL));
 
 	return 0;
 }
@@ -539,6 +547,10 @@ static int ratchet_wait_for_resolve (lua_State *L)
 	const char *host = luaL_checkstring (L, 3);
 	const char *port = luaL_optstring (L, 4, NULL);
 	int flags = (AI_V4MAPPED | AI_ADDRCONFIG);
+
+	/* Build timeout data. */
+	struct timeval tv;
+	int use_tv = gettimeval_opt (L, 5, &tv);
 
 	/* Check for special-case where host is *. */
 	if (0 == strcmp ("*", host))
@@ -578,7 +590,7 @@ static int ratchet_wait_for_resolve (lua_State *L)
 
 	/* Add dns_signal event to loop. */
 	struct event *dns_signal = get_dns_signal (L, 1);
-	event_add (dns_signal, NULL);
+	event_add (dns_signal, (use_tv ? &tv : NULL));
 	dns_pending (L, 1)++;
 
 	return 0;
@@ -685,6 +697,8 @@ int luaopen_ratchet (lua_State *L)
 
 	luaopen_ratchet_socket (L);
 	lua_setfield (L, -2, "socket");
+	luaopen_ratchet_zmqsocket (L);
+	lua_setfield (L, -2, "zmqsocket");
 	luaopen_ratchet_uri (L);
 	lua_setfield (L, -2, "uri");
 
