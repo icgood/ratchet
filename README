@@ -1,58 +1,68 @@
 What is Ratchet?
 ================
 
-The purpose of the ratchet library is to provide a generic, event-based socket
-control mechanism for large numbers of connections. The implementation is
-generic in that sockets and pollers can be any objects that provide certain
-methods. Implementations of TCP/UDP, Unix, and ZeroMQ sockets are provided.
-Implementations of poller objects are provided using epoll and ZeroMQ. The
-library also provides a URI system for implementation of connection strings, IP
-v4/v6-capable DNS resolution functions, and exposes the OO implementation and
-other helper functions it uses (when no such features were built into Lua).
+The purpose of the ratchet library is to provide a generic socket control
+mechanism for large numbers of sockets without using threads or losing the ease
+of synchronous socket programming. Implementations of standard Berkeley sockets
+are provided, as well as rudimentary support for ZeroMQ sockets, provided
+versions greater than or equal to 2.1.0 are installed. The polling mechanism is
+written on top of libevent (http://monkey.org/~provos/libevent/). The library
+also provides a URI system for implementation of connection strings. The
+ratchet library provides DNS resolution functions using the GNU getaddrinfo_a()
+function suite, capable of parsing IP v4 and v6 addresses.
 
-Individual sockets are managed with objects that control context. When the
-library handles an event on the socket, a corresponding method in the context
-object is called with event data. This easily keeps per-socket information
-separate and localized, which is important when tens of thousands of sockets
-may exist. Using contexts, any application protocol (text-based or binary) can
-be implemented. No protocol implementations are currently provided, though in
-the future HTTP or SMTP sample client contexts may be included.
+The ratchet library provides and manages a blend of libevent event loops and
+Lua coroutines to provide the effect of synchronous socket programming. Each
+call to a blocking socket (or DNS or ZeroMQ) method actually yields execution
+until the action is ready to be taken. Contexts (the ratchet library's given
+name for Lua coroutines) may also wait for each other, though that must happen
+when the "child" context is created. Any application protocol (text-based or
+binary) can be implemented. No protocol implementations are currently provided,
+though in the future HTTP or SMTP sample client contexts may be included.
 
-The project itself is built using autotools for portability, though it depends
+The project itself is build using autotools for portability, though it depends
 on several GNU/Linux features. The project provides a suite of post-build tests
 which double as sample usages, executed with "make check".
-
 
 Build Information
 =================
 
 Lua 5.1+ is required to build, as this is a Lua library. Other than that, it
-should work on any modern GNU/Linux system with kernel 2.6+ and glibc2. If
+should work on most modern GNU/Linux systems with kernel 2.6+ and glibc2. If
 your Lua installation is custom, you may need to explicitly point the configure
 script to its paths:
 
         --with-lua-prefix=DIR  Lua files are in DIR.
         --with-lua-suffix=ARG  Gives suffix for Lua binary and library files.
 
-There are several libraries that will fail the configure script if they are
-missing, but can be disabled with configure options:
-
-        --disable-epoll      Disable building the epoll module.
-        --disable-zeromq     Disable building ZeroMQ modules.
-        --disable-socket     Disable building TCP/UDP/Unix socket modules.
-
 There are two different ways to use this library: from C or from Lua. By
-default, both options are made available. If you don't need one or the other,
-you can choose to disable them with configure options:
+default, both options are made available. If you don't need to use the library
+from the Lua interpreter, you can choose to disable that with the configure
+option:
 
-        --disable-devel      Disable the C headers/library.
-        --disable-module     Disable the Lua module.
+        --disable-module       Disable the Lua module.
 
 Similarly, if your Lua installation is custom, or the path to install Lua C
 modules is not available in pkg-config, you can define a custom installation
 path for the Lua module with a configure option:
 
-        --enable-module=PATH  Install the Lua module ratchet.so to PATH.
+        --enable-module=PATH   Install the Lua module ratchet.so to PATH.
+
+To increase the size of the buffer used when the size of a piece of data is
+unknown, you can also use the following configure variable. Currently, it only
+controls the size of the buffer used in recv(2) system calls.
+
+        BUFSIZ    The size of the intermediate buffers used when building large
+                  Lua strings.
 
 All other configure options are standard from GNU autotools.
+
+Requirements
+============
+
+ * Lua 5.1+ (http://www.lua.org)
+ * libevent 1.4.10+ (http://monkey.org/~provos/libevent/)
+ * ZeroMQ 2.1.0+ BETA (http://www.zeromq.org)
+ * Linux kernel 2.6.25+
+ * Glibc 2.8+
 
