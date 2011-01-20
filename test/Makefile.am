@@ -3,6 +3,7 @@ TESTS = test_uri.lua \
 	test_send_recv.lua \
 	test_zmq_send_recv.lua \
 	test_multi_protocol.lua \
+	test_error_handler.lua \
 	test_shutdown.lua \
 	test_attach_wait.lua
 

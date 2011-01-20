@@ -271,6 +271,22 @@ static int ratchet_get_method (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_set_error_handler() */
+static int ratchet_set_error_handler (lua_State *L)
+{
+	get_event_base (L, 1);
+	if (!lua_isnoneornil (L, 2))
+		luaL_checktype (L, 2, LUA_TFUNCTION);
+
+	lua_getfenv (L, 1);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, -2, "error_handler");
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ ratchet_dispatch() */
 static int ratchet_dispatch (lua_State *L)
 {
@@ -456,8 +472,20 @@ static int ratchet_run_thread (lua_State *L)
 		lua_call (L, 2, 0);
 	}
 
+	/* Handle the error from the thread. */
 	else
-		return lua_error (L1);
+	{
+		lua_getfenv (L, 1);
+		lua_getfield (L, -1, "error_handler");
+		if (lua_isfunction (L, -1))
+		{
+			lua_xmove (L1, L, 1);
+			lua_call (L, 1, 0);
+			lua_pop (L, 1);
+		}
+		else
+			return lua_error (L1);
+	}
 
 	return 0;
 }
@@ -677,6 +705,7 @@ int luaopen_ratchet (lua_State *L)
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_method", ratchet_get_method},
+		{"set_error_handler", ratchet_set_error_handler},
 		{"stop", ratchet_stop},
 		{"stop_after", ratchet_stop_after},
 		{"attach", ratchet_attach},
