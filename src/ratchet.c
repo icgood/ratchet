@@ -274,8 +274,9 @@ static int ratchet_get_method (lua_State *L)
 /* {{{ ratchet_set_error_handler() */
 static int ratchet_set_error_handler (lua_State *L)
 {
+	lua_settop (L, 2);
 	get_event_base (L, 1);
-	if (!lua_isnoneornil (L, 2))
+	if (!lua_isnil (L, 2))
 		luaL_checktype (L, 2, LUA_TFUNCTION);
 
 	lua_getfenv (L, 1);
