@@ -34,7 +34,14 @@
 
 #include "misc.h"
 
-#define get_fd(L, i) (*(int *) luaL_checkudata (L, i, "ratchet_socket_meta"))
+struct socket_data
+{
+	int fd;
+	double timeout;
+};
+
+#define socket_fd(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->fd)
+#define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->timeout)
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
@@ -45,14 +52,15 @@ static int rsock_new (lua_State *L)
 	int socktype = luaL_optint (L, 2, SOCK_STREAM);
 	int protocol = luaL_optint (L, 3, 0);
 
-	int *fd = (int *) lua_newuserdata (L, sizeof (int));
-	*fd = socket (family, socktype, protocol);
-	if (*fd < 0)
+	struct socket_data *sd = (struct socket_data *) lua_newuserdata (L, sizeof (struct socket_data));
+	sd->fd = socket (family, socktype, protocol);
+	if (sd->fd < 0)
 		return handle_perror (L);
+	sd->timeout = -1.0;
 
-	if (set_nonblocking (*fd) < 0)
+	if (set_nonblocking (sd->fd) < 0)
 		return handle_perror (L);
-	if (set_reuseaddr (*fd) < 0)
+	if (set_reuseaddr (sd->fd) < 0)
 		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
@@ -65,12 +73,13 @@ static int rsock_new (lua_State *L)
 /* {{{ rsock_from_fd() */
 static int rsock_from_fd (lua_State *L)
 {
-	int *fd = (int *) lua_newuserdata (L, sizeof (int));
-	*fd = luaL_checkint (L, 1);
-	if (*fd < 0)
+	struct socket_data *sd = (struct socket_data *) lua_newuserdata (L, sizeof (struct socket_data));
+	sd->fd = luaL_checkint (L, 1);
+	if (sd->fd < 0)
 		return handle_perror (L);
+	sd->timeout = -1.0;
 
-	if (set_nonblocking (*fd) < 0)
+	if (set_nonblocking (sd->fd) < 0)
 		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
@@ -147,7 +156,7 @@ static int rsock_parse_tcp_uri (lua_State *L)
 /* {{{ rsock_gc() */
 static int rsock_gc (lua_State *L)
 {
-	int fd = get_fd (L, 1);
+	int fd = socket_fd (L, 1);
 	if (fd >= 0)
 		close (fd);
 
@@ -155,19 +164,38 @@ static int rsock_gc (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_getfd() */
-static int rsock_getfd (lua_State *L)
+/* {{{ rsock_get_fd() */
+static int rsock_get_fd (lua_State *L)
 {
-	int fd = get_fd (L, 1);
+	int fd = socket_fd (L, 1);
 	lua_pushinteger (L, fd);
 	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_get_timeout() */
+static int rsock_get_timeout (lua_State *L)
+{
+	double timeout = socket_timeout (L, 1);
+	lua_pushnumber (L, timeout);
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_set_timeout() */
+static int rsock_set_timeout (lua_State *L)
+{
+	double new_timeout = luaL_checknumber (L, 2);
+	double *timeout = &socket_timeout (L, 1);
+	*timeout = new_timeout;
+	return 0;
 }
 /* }}} */
 
 /* {{{ rsock_check_ok() */
 static int rsock_check_ok (lua_State *L)
 {
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	int error;
 	socklen_t errorlen = sizeof (int);
 
@@ -188,7 +216,7 @@ static int rsock_check_ok (lua_State *L)
 /* {{{ rsock_bind() */
 static int rsock_bind (lua_State *L)
 {
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
 	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
@@ -205,7 +233,7 @@ static int rsock_bind (lua_State *L)
 /* {{{ rsock_listen() */
 static int rsock_listen (lua_State *L)
 {
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	int backlog = luaL_optint (L, 2, SOMAXCONN);
 
 	int ret = listen (sockfd, backlog);
@@ -220,7 +248,7 @@ static int rsock_listen (lua_State *L)
 /* {{{ rsock_shutdown() */
 static int rsock_shutdown (lua_State *L)
 {
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	static const char *lst[] = {"read", "write", "both", NULL};
 	static const int howlst[] = {SHUT_RD, SHUT_WR, SHUT_RDWR};
 	int how = howlst[luaL_checkoption (L, 2, "both", lst)];
@@ -237,13 +265,14 @@ static int rsock_shutdown (lua_State *L)
 /* {{{ rsock_close() */
 static int rsock_close (lua_State *L)
 {
-	int *fd = &get_fd (L, 1);
+	int *fd = &socket_fd (L, 1);
 	if (*fd < 0)
 		return 0;
 
 	int ret = close (*fd);
 	if (ret == -1)
 		return handle_perror (L);
+	*fd = -1;
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -254,7 +283,7 @@ static int rsock_close (lua_State *L)
 static int rsock_rawconnect (lua_State *L)
 {
 	lua_settop (L, 2);
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
 	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
@@ -278,7 +307,7 @@ static int rsock_rawconnect (lua_State *L)
 static int rsock_rawaccept (lua_State *L)
 {
 	lua_settop (L, 1);
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
 	struct sockaddr *addr = (struct sockaddr *) lua_newuserdata (L, (size_t) addr_len);
@@ -316,7 +345,7 @@ static int rsock_rawaccept (lua_State *L)
 static int rsock_rawsend (lua_State *L)
 {
 	lua_settop (L, 2);
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	size_t data_len;
 	const char *data = luaL_checklstring (L, 2, &data_len);
 	ssize_t ret;
@@ -347,7 +376,7 @@ static int rsock_rawsend (lua_State *L)
 static int rsock_rawrecv (lua_State *L)
 {
 	lua_settop (L, 1);
-	int sockfd = get_fd (L, 1);
+	int sockfd = socket_fd (L, 1);
 	luaL_Buffer buffer;
 	ssize_t ret;
 
@@ -379,21 +408,21 @@ static int rsock_rawrecv (lua_State *L)
 /* ---- Lua-implemented Functions ------------------------------------------- */
 
 /* {{{ send() */
-#define rsock_send "return function (self, ...)\ncoroutine.yield('write', self:getfd())\nself:rawsend(...)\nend\n"
+#define rsock_send "return function (self, ...)\ncoroutine.yield('write', self)\nself:rawsend(...)\nend\n"
 /* }}} */
 
 /* {{{ recv() */
-#define rsock_recv "return function (self, ...)\ncoroutine.yield('read', self:getfd())\nreturn self:rawrecv(...)\nend\n"
+#define rsock_recv "return function (self, ...)\ncoroutine.yield('read', self)\nreturn self:rawrecv(...)\nend\n"
 /* }}} */
 
 /* {{{ accept() */
-#define rsock_accept "return function (self, ...)\ncoroutine.yield('read', self:getfd())\nreturn self:rawaccept(...)\nend\n"
+#define rsock_accept "return function (self, ...)\ncoroutine.yield('read', self)\nreturn self:rawaccept(...)\nend\n"
 /* }}} */
 
 /* {{{ connect() */
 #define rsock_connect "return function (self, ...)\n" \
 		"if not self:rawconnect(...) then\n" \
-			"coroutine.yield('write', self:getfd())\n" \
+			"coroutine.yield('write', self)\n" \
 		"end\n" \
 		"return self:check_ok()\n" \
 	"end\n"
@@ -422,7 +451,9 @@ int luaopen_ratchet_socket (lua_State *L)
 	/* Methods in the ratchet.socket class. */
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
-		{"getfd", rsock_getfd},
+		{"get_fd", rsock_get_fd},
+		{"get_timeout", rsock_get_timeout},
+		{"set_timeout", rsock_get_timeout},
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
 		{"check_ok", rsock_check_ok},

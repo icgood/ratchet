@@ -132,20 +132,8 @@ int strequal (lua_State *L, int index, const char *s2)
 /* }}} */
 
 /* {{{ gettimeval() */
-void gettimeval (lua_State *L, int index, struct timeval *tv)
+int gettimeval (double secs, struct timeval *tv)
 {
-	double secs = (double) luaL_checknumber (L, index);
-	double intpart, fractpart;
-	fractpart = modf (secs, &intpart);
-	tv->tv_sec = (long int) intpart;
-	tv->tv_usec = (long int) (fractpart * 1000000.0);
-}
-/* }}} */
-
-/* {{{ gettimeval_opt() */
-int gettimeval_opt (lua_State *L, int index, struct timeval *tv)
-{
-	double secs = (double) luaL_optnumber (L, index, -1.0);
 	if (secs < 0.0)
 		return 0;
 	double intpart, fractpart;
@@ -153,6 +141,22 @@ int gettimeval_opt (lua_State *L, int index, struct timeval *tv)
 	tv->tv_sec = (long int) intpart;
 	tv->tv_usec = (long int) (fractpart * 1000000.0);
 	return 1;
+}
+/* }}} */
+
+/* {{{ gettimeval_arg() */
+int gettimeval_arg (lua_State *L, int index, struct timeval *tv)
+{
+	double secs = (double) luaL_checknumber (L, index);
+	return gettimeval (secs, tv);
+}
+/* }}} */
+
+/* {{{ gettimeval_opt() */
+int gettimeval_opt (lua_State *L, int index, struct timeval *tv)
+{
+	double secs = (double) luaL_optnumber (L, index, -1.0);
+	return gettimeval (secs, tv);
 }
 /* }}} */
 

@@ -126,6 +126,41 @@ static void end_thread_persist (lua_State *L, int index)
 }
 /* }}} */
 
+/* {{{ get_fd_from_object() */
+static int get_fd_from_object (lua_State *L, int index)
+{
+	lua_pushvalue (L, index);
+	lua_getfield (L, -1, "get_fd");
+	if (!lua_isfunction (L, -1))
+		luaL_argerror (L, index, "object has no get_fd() method");
+	lua_insert (L, -2);
+	lua_call (L, 1, 1);
+
+	int fd = lua_tointeger (L, -1);
+	lua_pop (L, 1);
+	return fd;
+}
+/* }}} */
+
+/* {{{ get_timeout_from_object() */
+static double get_timeout_from_object (lua_State *L, int index)
+{
+	lua_pushvalue (L, index);
+	lua_getfield (L, -1, "get_timeout");
+	if (!lua_isfunction (L, -1))
+	{
+		lua_pop (L, 2);
+		return -1.0;
+	}
+	lua_insert (L, -2);
+	lua_call (L, 1, 1);
+
+	double timeout = (double) lua_tonumber (L, -1);
+	lua_pop (L, 1);
+	return timeout;
+}
+/* }}} */
+
 /* {{{ event_triggered() */
 static void event_triggered (int fd, short event, void *arg)
 {
@@ -313,7 +348,7 @@ static int ratchet_stop_after (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
 	struct timeval tv;
-	gettimeval (L, 2, &tv);
+	gettimeval_arg (L, 2, &tv);
 	if (event_base_loopexit (e_b, &tv) < 0)
 		return luaL_error (L, "libevent internal error.");
 	return 0;
@@ -562,11 +597,12 @@ static int ratchet_wait_for_write (lua_State *L)
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
-	int fd = luaL_checkint (L, 3);
+	int fd = get_fd_from_object (L, 3);
+	double timeout = get_timeout_from_object (L, 3);
 
 	/* Build timeout data. */
 	struct timeval tv;
-	int use_tv = gettimeval_opt (L, 4, &tv);
+	int use_tv = gettimeval (timeout, &tv);
 
 	/* Set the main thread at index 1. */
 	lua_settop (L1, 0);
@@ -589,11 +625,12 @@ static int ratchet_wait_for_read (lua_State *L)
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
-	int fd = luaL_checkint (L, 3);
+	int fd = get_fd_from_object (L, 3);
+	double timeout = get_timeout_from_object (L, 3);
 
 	/* Build timeout data. */
 	struct timeval tv;
-	int use_tv = gettimeval_opt (L, 4, &tv);
+	int use_tv = gettimeval (timeout, &tv);
 
 	/* Set the main thread at index 1. */
 	lua_settop (L1, 0);
@@ -676,7 +713,7 @@ static int ratchet_wait_for_timeout (lua_State *L)
 	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
 	struct timeval tv;
-	gettimeval (L, 3, &tv);
+	gettimeval_arg (L, 3, &tv);
 
 	/* Set the main thread at index 1. */
 	lua_settop (L1, 0);

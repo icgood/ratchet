@@ -37,7 +37,8 @@
 #define RATCHET_ZMQ_IO_THREADS 10
 #endif
 
-#define get_socket(L, i) *(void **) luaL_checkudata (L, i, "ratchet_zmqsocket_meta")
+#define socket_ptr(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->socket)
+#define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->timeout)
 
 #ifdef RATCHET_RETURN_ERRORS
 #define handle_zmq_error return_zmq_error
@@ -47,6 +48,12 @@
 
 #define raise_zmq_error(L) raise_zmq_error_ln (L, __FILE__, __LINE__)
 #define return_zmq_error(L) return_zmq_error_ln (L, __FILE__, __LINE__)
+
+struct socket_data
+{
+	void *socket;
+	double timeout;
+};
 
 /* {{{ raise_zmq_error_ln() */
 static int raise_zmq_error_ln (lua_State *L, const char *file, int line)
@@ -111,8 +118,9 @@ static int rzmq_new (lua_State *L)
 	void *socket = zmq_socket (context, type);
 	if (socket)
 	{
-		void **ptr = (void **) lua_newuserdata (L, sizeof (void *));
-		*ptr = socket;
+		struct socket_data *sd = (struct socket_data *) lua_newuserdata (L, sizeof (struct socket_data));
+		sd->socket = socket;
+		sd->timeout = -1.0;
 
 		luaL_getmetatable (L, "ratchet_zmqsocket_meta");
 		lua_setmetatable (L, -2);
@@ -155,7 +163,7 @@ static int rzmq_parse_uri (lua_State *L)
 /* {{{ rzmq_gc() */
 static int rzmq_gc (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	if (socket)
 		zmq_close (socket);
 
@@ -163,10 +171,10 @@ static int rzmq_gc (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rzmq_getfd() */
-static int rzmq_getfd (lua_State *L)
+/* {{{ rzmq_get_fd() */
+static int rzmq_get_fd (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	int fd;
 	size_t fd_len = sizeof (int);
 
@@ -179,10 +187,29 @@ static int rzmq_getfd (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rzmq_get_timeout() */
+static int rzmq_get_timeout (lua_State *L)
+{
+	double timeout = socket_timeout (L, 1);
+	lua_pushnumber (L, timeout);
+	return 1;
+}
+/* }}} */
+
+/* {{{ rzmq_set_timeout() */
+static int rzmq_set_timeout (lua_State *L)
+{
+	double new_timeout = luaL_checknumber (L, 2);
+	double *timeout = &socket_timeout (L, 1);
+	*timeout = new_timeout;
+	return 0;
+}
+/* }}} */
+
 /* {{{ rzmq_is_readable() */
 static int rzmq_is_readable (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	int events;
 	size_t events_len = sizeof (int);
 
@@ -199,7 +226,7 @@ static int rzmq_is_readable (lua_State *L)
 /* {{{ rzmq_is_writable() */
 static int rzmq_is_writable (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	int events;
 	size_t events_len = sizeof (int);
 
@@ -216,7 +243,7 @@ static int rzmq_is_writable (lua_State *L)
 /* {{{ rzmq_is_rcvmore() */
 static int rzmq_is_rcvmore (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	int64_t rcvmore;
 	size_t rcvmore_len = sizeof (rcvmore);
 
@@ -232,7 +259,7 @@ static int rzmq_is_rcvmore (lua_State *L)
 /* {{{ rzmq_bind() */
 static int rzmq_bind (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	const char *endpoint = luaL_checkstring (L, 2);
 
 	int ret = zmq_bind (socket, endpoint);
@@ -247,7 +274,7 @@ static int rzmq_bind (lua_State *L)
 /* {{{ rzmq_connect() */
 static int rzmq_connect (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	const char *endpoint = luaL_checkstring (L, 2);
 
 	int ret = zmq_connect (socket, endpoint);
@@ -262,7 +289,7 @@ static int rzmq_connect (lua_State *L)
 /* {{{ rzmq_rawsend() */
 static int rzmq_rawsend (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	size_t data_len;
 	const char *data = luaL_checklstring (L, 2, &data_len);
 	int flags = ZMQ_NOBLOCK | (lua_toboolean (L, 3) ? ZMQ_SNDMORE : 0);
@@ -285,7 +312,7 @@ static int rzmq_rawsend (lua_State *L)
 /* {{{ rzmq_rawrecv() */
 static int rzmq_rawrecv (lua_State *L)
 {
-	void *socket = get_socket (L, 1);
+	void *socket = socket_ptr (L, 1);
 	int flags = ZMQ_NOBLOCK;
 
 	/* Set up the zmq_msg_t object to recv. */
@@ -349,7 +376,7 @@ static int rzmq_rawrecv_all (lua_State *L)
 /* {{{ send() */
 #define rzmq_send "return function (self, ...)\n" \
 	"	while not self:is_writable() do\n" \
-	"		coroutine.yield('write', self:getfd())\n" \
+	"		coroutine.yield('write', self)\n" \
 	"	end\n" \
 	"	return self:rawsend(...)\n" \
 	"end\n"
@@ -358,7 +385,7 @@ static int rzmq_rawrecv_all (lua_State *L)
 /* {{{ recv() */
 #define rzmq_recv "return function (self, ...)\n" \
 	"	while not self:is_readable() do\n" \
-	"		coroutine.yield('read', self:getfd())\n" \
+	"		coroutine.yield('read', self)\n" \
 	"	end\n" \
 	"	return self:rawrecv_all()\n" \
 	"end\n"
@@ -385,7 +412,9 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 	/* Methods in the ratchet.zmqsocket class. */
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
-		{"getfd", rzmq_getfd},
+		{"get_fd", rzmq_get_fd},
+		{"get_timeout", rzmq_get_timeout},
+		{"set_timeout", rzmq_get_timeout},
 		{"is_readable", rzmq_is_readable},
 		{"is_writable", rzmq_is_writable},
 		{"is_rcvmore", rzmq_is_rcvmore},
