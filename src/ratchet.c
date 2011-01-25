@@ -359,7 +359,7 @@ static int ratchet_stop_after (lua_State *L)
 static int ratchet_attach (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
-	luaL_checktype (L, 2, LUA_TFUNCTION);
+	luaL_checkany (L, 2);	/* Function or callable object. */
 	int nargs = lua_gettop (L) - 2;
 
 	/* Set up new coroutine. */
@@ -379,7 +379,7 @@ static int ratchet_attach (lua_State *L)
 static int ratchet_attach_wait (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
-	luaL_checktype (L, 2, LUA_TFUNCTION);
+	luaL_checkany (L, 2);	/* Function or callable object. */
 	if (lua_pushthread (L))
 		return luaL_error (L, "attach_wait cannot be called from main thread");
 	lua_insert (L, 2);
