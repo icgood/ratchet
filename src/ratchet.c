@@ -269,7 +269,7 @@ static int ratchet_new (lua_State *L)
 	memset (new, 0, sizeof (struct ratchet));
 	new->base = event_base_new ();
 	if (!new->base)
-		return luaL_error (L, "failed to create event_base structure.");
+		return luaL_error (L, "failed to create event_base structure");
 	setup_dns_signal_event (L, new);
 
 	luaL_getmetatable (L, "ratchet_meta");
@@ -370,7 +370,8 @@ static int ratchet_attach (lua_State *L)
 	set_thread_persist (L, 2 /* index of thread */, 1 /* not yet started */, 0 /* no thread waiting */);
 	event_base_loopbreak (e_b);	/* So that new threads get started. */
 
-	return 0;
+	lua_pushvalue (L, 2);
+	return 1;
 }
 /* }}} */
 
@@ -428,6 +429,44 @@ static int ratchet_timer (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_pause() */
+static int ratchet_pause (lua_State *L)
+{
+	get_event_base (L, 1);
+	if (lua_pushthread (L))
+		return luaL_error (L, "timer cannot be called from main thread");
+	lua_pop (L, 1);
+
+	int nargs = lua_gettop (L) - 1;
+	lua_pushliteral (L, "waken");
+	lua_insert (L, 2);
+
+	return lua_yield (L, nargs+1);
+}
+/* }}} */
+
+/* {{{ ratchet_unpause() */
+static int ratchet_unpause (lua_State *L)
+{
+	struct event_base *e_b = get_event_base (L, 1);
+	get_thread (L, 2, L1);
+
+	/* Make sure it's unpause-able. */
+	if (lua_status (L1) != LUA_YIELD)
+		return luaL_error (L, "thread is not yielding, cannot unpause");
+
+	/* Set up the extra arguments as return values from pause(). */
+	int nargs = lua_gettop (L) - 2;
+	lua_xmove (L, L1, nargs);
+
+	/* The following adds the thread to the not_started table so it gets resumed. */
+	set_thread_persist (L, 2, 1, 0);
+	event_base_loopbreak (e_b);	/* So that new threads get started. */
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ ratchet_loop() */
 static int ratchet_loop (lua_State *L)
 {
@@ -466,8 +505,7 @@ static int ratchet_start_all_new (lua_State *L)
 		lua_getfield (L, 1, "run_thread");
 		lua_pushvalue (L, 1);
 		lua_pushvalue (L, 4);	/* The "key" is the thread to start. */
-		lua_pushboolean (L, 1);	/* not_started flag. */
-		lua_call (L, 3, 0);
+		lua_call (L, 2, 0);
 
 		/* Remove entry from not_started. */
 		lua_pushvalue (L, 4);
@@ -486,7 +524,7 @@ static int ratchet_run_thread (lua_State *L)
 	get_thread (L, 2, L1);
 
 	int nargs = lua_gettop (L1);
-	if (lua_toboolean (L, 3))	/* not_started, first stack slot is the function */
+	if (lua_status (L1) != LUA_YIELD)
 		nargs--;
 	int ret = lua_resume (L1, nargs);
 
@@ -577,14 +615,22 @@ static int ratchet_yield_thread (lua_State *L)
 			lua_getfield (L, 1, "wait_for_resolve");
 		else if (0 == strcmp (yieldtype, "timeout"))
 			lua_getfield (L, 1, "wait_for_timeout");
+		else if (0 == strcmp (yieldtype, "waken"))
+			lua_pushnil (L);
 		else
 			luaL_error (L, "unknown wait request [%s]", yieldtype);
 
-		/* Call wait_for_xxxxx method with self, thread, arg1, arg2... */
-		lua_pushvalue (L, 1);
-		lua_pushvalue (L, 2);
-		lua_xmove (L1, L, nrets-1);
-		lua_call (L, nrets+1, 0);
+		if (lua_isfunction (L, -1))
+		{
+			/* Call wait_for_xxxxx method with self, thread, arg1, arg2... */
+			lua_pushvalue (L, 1);
+			lua_pushvalue (L, 2);
+			lua_xmove (L1, L, nrets-1);
+			lua_settop (L1, 0);
+			lua_call (L, nrets+1, 0);
+		}
+		else
+			lua_settop (L1, 0);
 	}
 
 	return 0;
@@ -750,6 +796,8 @@ int luaopen_ratchet (lua_State *L)
 		{"attach_wait", ratchet_attach_wait},
 		{"resolve_dns", ratchet_resolve_dns},
 		{"timer", ratchet_timer},
+		{"pause", ratchet_pause},
+		{"unpause", ratchet_unpause},
 		{"loop", ratchet_loop},
 		/* Undocumented, helper methods. */
 		{"run_thread", ratchet_run_thread},
