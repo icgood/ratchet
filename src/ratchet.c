@@ -397,6 +397,15 @@ static int ratchet_attach_wait (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_running_thread() */
+static int ratchet_running_thread (lua_State *L)
+{
+	if (lua_pushthread (L))
+		lua_pushnil (L);
+	return 1;
+}
+/* }}} */
+
 /* {{{ ratchet_resolve_dns() */
 static int ratchet_resolve_dns (lua_State *L)
 {
@@ -794,6 +803,7 @@ int luaopen_ratchet (lua_State *L)
 		{"stop_after", ratchet_stop_after},
 		{"attach", ratchet_attach},
 		{"attach_wait", ratchet_attach_wait},
+		{"running_thread", ratchet_running_thread},
 		{"resolve_dns", ratchet_resolve_dns},
 		{"timer", ratchet_timer},
 		{"pause", ratchet_pause},
