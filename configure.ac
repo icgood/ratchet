@@ -83,6 +83,7 @@ AC_SUBST([LUA_CPATH], ["$enable_module"])
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h strings.h errno.h limits.h])
 AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
+AC_CHECK_HEADERS([net/if.h])
 AX_LUA_HEADERS
 if test "x${ac_cv_header_lua_h}" != "xyes"; then
 	AC_MSG_ERROR([Lua headers are required for building.])

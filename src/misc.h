@@ -32,7 +32,6 @@ int gettimeval (double secs, struct timeval *tv);
 int gettimeval_arg (lua_State *L, int index, struct timeval *tv);
 int gettimeval_opt (lua_State *L, int index, struct timeval *tv);
 int set_nonblocking (int fd);
-int set_reuseaddr (int fd);
 void stackdump_ln (lua_State *L, const char *file, int line);
 
 #endif

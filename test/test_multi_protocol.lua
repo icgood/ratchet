@@ -9,6 +9,7 @@ uri:register("zmq", ratchet.zmqsocket.parse_uri)
 function tcpctx1(r, where)
     local rec = r:resolve_dns(uri(where))
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
+    socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 

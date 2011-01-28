@@ -8,6 +8,7 @@ uri:register("tcp", ratchet.socket.parse_tcp_uri)
 function ctx1(r, where)
     local rec = r:resolve_dns(uri(where))
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
+    socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 

@@ -7,6 +7,7 @@ TESTS = test_uri.lua \
 	test_shutdown.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
+	test_sockopt.lua \
 	test_attach_wait.lua
 
 EXTRA_DIST = $(TESTS)

@@ -175,14 +175,6 @@ int set_nonblocking (int fd)
 }
 /* }}} */
 
-/* {{{ set_reuseaddr() */
-int set_reuseaddr (int fd)
-{
-	int flags = 1;
-	return setsockopt (fd, SOL_SOCKET, SO_REUSEADDR, &flags, sizeof (int));
-}
-/* }}} */
-
 /* {{{ printf_index() */
 static void printf_index (lua_State *L, int i)
 {

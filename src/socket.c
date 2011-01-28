@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include "misc.h"
+#include "sockopt.h"
 
 struct socket_data
 {
@@ -59,8 +60,6 @@ static int rsock_new (lua_State *L)
 	sd->timeout = -1.0;
 
 	if (set_nonblocking (sd->fd) < 0)
-		return handle_perror (L);
-	if (set_reuseaddr (sd->fd) < 0)
 		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
@@ -160,6 +159,47 @@ static int rsock_gc (lua_State *L)
 	if (fd >= 0)
 		close (fd);
 
+	return 0;
+}
+/* }}} */
+
+/* {{{ rsock_index() */
+static int rsock_index (lua_State *L)
+{
+	lua_getmetatable (L, 1);
+	lua_getfield (L, -1, "methods");
+	lua_pushvalue (L, 2);
+	lua_gettable (L, -2);
+	if (!lua_isnil (L, -1))
+		return 1;
+	else
+		lua_pop (L, 3);
+
+	if (lua_isstring (L, 2))
+	{
+		const char *key = lua_tostring (L, 2);
+		int fd = socket_fd (L, 1);
+		return rsockopt_get (L, key, fd);
+	}
+	else
+	{
+		lua_pushnil (L);
+		return 1;
+	}
+}
+/* }}} */
+
+/* {{{ rsock_newindex() */
+static int rsock_newindex (lua_State *L)
+{
+	if (lua_isstring (L, 2))
+	{
+		const char *key = lua_tostring (L, 2);
+		int fd = socket_fd (L, 1);
+		if (rsockopt_set (L, key, fd, 3) == -1)
+			return luaL_error (L, "cannot set arbitrary key on socket");
+		
+	}
 	return 0;
 }
 /* }}} */
@@ -445,6 +485,8 @@ int luaopen_ratchet_socket (lua_State *L)
 	/* Meta-methods for ratchet.socket object metatables. */
 	static const luaL_Reg metameths[] = {
 		{"__gc", rsock_gc},
+		{"__index", rsock_index},
+		{"__newindex", rsock_newindex},
 		{NULL}
 	};
 
@@ -487,7 +529,7 @@ int luaopen_ratchet_socket (lua_State *L)
 	lua_pushvalue (L, -3);
 	luaI_openlib (L, NULL, meths, 1);
 	register_luafuncs (L, -1, luameths);
-	lua_setfield (L, -2, "__index");
+	lua_setfield (L, -2, "methods");
 	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
 
