@@ -83,7 +83,7 @@ AC_SUBST([LUA_CPATH], ["$enable_module"])
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h strings.h errno.h limits.h])
 AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
-AC_CHECK_HEADERS([net/if.h])
+AC_CHECK_HEADERS([net/if.h fcntl.h sys/time.h])
 AX_LUA_HEADERS
 if test "x${ac_cv_header_lua_h}" != "xyes"; then
 	AC_MSG_ERROR([Lua headers are required for building.])
@@ -91,12 +91,13 @@ fi
 
 #####################
 # Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_INT64_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 
 #####################
 # Checks for library functions.
-AC_CHECK_FUNCS([memset socket writev])
+AC_CHECK_FUNCS([memset socket writev modf])
 AC_FUNC_STRERROR_R
 
 #####################
