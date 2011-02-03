@@ -387,6 +387,15 @@ static int rzmq_rawrecv_all (lua_State *L)
 	"	while not self:is_readable() do\n" \
 	"		coroutine.yield('read', self)\n" \
 	"	end\n" \
+	"	return self:rawrecv()\n" \
+	"end\n"
+/* }}} */
+
+/* {{{ recv_all() */
+#define rzmq_recv_all "return function (self, ...)\n" \
+	"	while not self:is_readable() do\n" \
+	"		coroutine.yield('read', self)\n" \
+	"	end\n" \
 	"	return self:rawrecv_all()\n" \
 	"end\n"
 /* }}} */
@@ -432,6 +441,7 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 		/* Documented methods. */
 		{"send", rzmq_send},
 		{"recv", rzmq_recv},
+		{"recv_all", rzmq_recv_all},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

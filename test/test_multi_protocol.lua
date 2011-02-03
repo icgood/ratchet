@@ -46,7 +46,7 @@ function zmqctx1(r, where)
     -- Portion being tested.
     --
     socket:send("hello")
-    local data = socket:recv()
+    local data = socket:recv_all()
     assert(data == "world")
 end
 
