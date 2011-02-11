@@ -52,6 +52,14 @@ struct ratchet
 };
 /* }}} */
 
+/* {{{ return_first_upvalue() */
+static int return_first_upvalue (lua_State *L)
+{
+	lua_pushvalue (L, lua_upvalueindex (1));
+	return 1;
+}
+/* }}} */
+
 /* {{{ setup_persistance_tables() */
 static int setup_persistance_tables (lua_State *L)
 {
@@ -64,6 +72,17 @@ static int setup_persistance_tables (lua_State *L)
 	lua_setfield (L, -2, "__mode");
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "not_started");
+
+	/* Set up a weak-key table to track thread error handlers. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "k");
+	lua_setfield (L, -2, "__mode");
+	lua_pushnil (L);
+	lua_pushcclosure (L, return_first_upvalue, 1);
+	lua_setfield (L, -2, "__index");
+	lua_setmetatable (L, -2);
+	lua_setfield (L, -2, "error_handlers");
 
 	return 1;
 }
@@ -287,15 +306,42 @@ static int ratchet_get_method (lua_State *L)
 /* {{{ ratchet_set_error_handler() */
 static int ratchet_set_error_handler (lua_State *L)
 {
-	lua_settop (L, 2);
 	get_event_base (L, 1);
-	if (!lua_isnil (L, 2))
-		luaL_checktype (L, 2, LUA_TFUNCTION);
+	luaL_checkany (L, 2);
+	int nargs = lua_gettop (L) - 1;
+	int i;
 
+	/* Set up table with error handler call stack. */
+	lua_createtable (L, nargs, 0);
+	for (i=1; i<=nargs; i++)
+	{
+		lua_pushvalue (L, i+1);
+		lua_rawseti (L, -2, i);
+	}
+	lua_replace (L, 2);
+	lua_settop (L, 2);
+
+	/* Set the error handler, global or thread-specific. */
 	lua_getfenv (L, 1);
-	lua_pushvalue (L, 2);
-	lua_setfield (L, -2, "error_handler");
-	lua_pop (L, 1);
+	lua_getfield (L, -1, "error_handlers");
+	if (lua_pushthread (L))
+	{
+		/* The main thread isn't needed. */
+		lua_pop (L, 1);
+
+		/* Set new default error handler as fallback. */
+		lua_getmetatable (L, -1);
+		lua_pushvalue (L, 2);
+		lua_pushcclosure (L, return_first_upvalue, 1);
+		lua_setfield (L, -2, "__index");
+		lua_pop (L, 1);
+	}
+	else
+	{
+		lua_pushvalue (L, 2);
+		lua_rawset (L, -3);	/* Key: thread, Value: call stack table. */
+	}
+	lua_pop (L, 2);
 
 	return 0;
 }
@@ -511,16 +557,11 @@ static int ratchet_run_thread (lua_State *L)
 	/* Handle the error from the thread. */
 	else
 	{
-		lua_getfenv (L, 1);
-		lua_getfield (L, -1, "error_handler");
-		if (lua_isfunction (L, -1))
-		{
-			lua_xmove (L1, L, 1);
-			lua_call (L, 1, 0);
-			lua_pop (L, 1);
-		}
-		else
-			return lua_error (L1);
+		/* Call self:handle_thread_error(). */
+		lua_getfield (L, 1, "handle_thread_error");
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_call (L, 2, 0);
 	}
 
 	return 0;
@@ -564,6 +605,32 @@ static int ratchet_yield_thread (lua_State *L)
 		else
 			lua_settop (L1, 0);
 	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_handle_thread_error() */
+static int ratchet_handle_thread_error (lua_State *L)
+{
+	get_event_base (L, 1);
+	get_thread (L, 2, L1);
+
+	/* Get the error handler call stack table. */
+	lua_getfenv (L, 1);
+	lua_getfield (L, -1, "error_handlers");
+	lua_pushvalue (L, 2);
+	lua_gettable (L, -2);
+	lua_replace (L, 3);
+	lua_settop (L, 3);
+
+	/* Unpack the call stack and call it. */
+	int i;
+	for (i=0; !lua_isnil (L, -1); i++)
+		lua_rawgeti (L, 3, i+1);
+	lua_pop (L, 1);	/* Pop the nil from the end off. */
+	lua_xmove (L1, L, 1);
+	lua_call (L, i-1, 0);
 
 	return 0;
 }
@@ -734,6 +801,7 @@ int luaopen_ratchet (lua_State *L)
 		/* Undocumented, helper methods. */
 		{"run_thread", ratchet_run_thread},
 		{"yield_thread", ratchet_yield_thread},
+		{"handle_thread_error", ratchet_handle_thread_error},
 		{"wait_for_write", ratchet_wait_for_write},
 		{"wait_for_read", ratchet_wait_for_read},
 		{"wait_for_resolve", ratchet_wait_for_resolve},
