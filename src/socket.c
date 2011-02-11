@@ -244,11 +244,17 @@ static int rsock_check_ok (lua_State *L)
 
 	if (error)
 	{
-		errno = error;
-		return handle_perror (L);
+		if (error == ECONNREFUSED)
+			lua_pushboolean (L, 0);
+		else
+		{
+			errno = error;
+			return handle_perror (L);
+		}
 	}
+	else
+		lua_pushboolean (L, 1);
 
-	lua_pushboolean (L, 1);
 	return 1;
 }
 /* }}} */
