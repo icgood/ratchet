@@ -2,7 +2,8 @@ include_HEADERS = ratchet.h
 
 lib_LTLIBRARIES = libratchet.la
 libratchet_la_SOURCES = ratchet.h ratchet.c misc.h misc.c \
-			socket.c sockopt.h sockopt.c uri.c zmq.c
+			socket.c sockopt.h sockopt.c uri.c \
+			timerfd.c zmq.c
 
 if ENABLE_MODULE
 lualibdir = @LUA_CPATH@

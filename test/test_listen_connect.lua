@@ -12,7 +12,7 @@ function ctx1(r, where)
     socket:bind(rec.addr)
     socket:listen()
 
-    r:attach_wait(ctx2, r, "tcp://localhost:10025")
+    ctx2(r, "tcp://localhost:10025")
 end
 
 function ctx2(r, where)

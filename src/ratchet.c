@@ -57,14 +57,6 @@ static int setup_persistance_tables (lua_State *L)
 {
 	lua_newtable (L);
 
-	/* Set up weak-ref table to track what threads are waiting for others. */
-	lua_newtable (L);
-	lua_newtable (L);
-	lua_pushliteral (L, "kv");
-	lua_setfield (L, -2, "__mode");
-	lua_setmetatable (L, -2);
-	lua_setfield (L, -2, "waited_for");
-
 	/* Set up a weak-ref table to track what threads are not yet started. */
 	lua_newtable (L);
 	lua_newtable (L);
@@ -78,7 +70,7 @@ static int setup_persistance_tables (lua_State *L)
 /* }}} */
 
 /* {{{ set_thread_persist() */
-static void set_thread_persist (lua_State *L, int index, int not_started, int waiting_index)
+static void set_thread_persist (lua_State *L, int index, int not_started)
 {
 	lua_getfenv (L, 1);
 
@@ -95,15 +87,6 @@ static void set_thread_persist (lua_State *L, int index, int not_started, int wa
 		lua_pop (L, 1);
 	}
 
-	if (waiting_index)
-	{
-		lua_getfield (L, -1, "waited_for");
-		lua_pushvalue (L, index);
-		lua_pushvalue (L, waiting_index);
-		lua_settable (L, -3);
-		lua_pop (L, 1);
-	}
-
 	lua_pop (L, 1);
 }
 /* }}} */
@@ -113,16 +96,11 @@ static void end_thread_persist (lua_State *L, int index)
 {
 	lua_getfenv (L, 1);
 
-	lua_getfield (L, -1, "waited_for");
-	lua_pushvalue (L, index);
-	lua_gettable (L, -2);
-	lua_remove (L, -2);
-
 	lua_pushvalue (L, index);
 	lua_pushnil (L);
-	lua_settable (L, -4);
+	lua_settable (L, -3);
 
-	lua_remove (L, -2);
+	lua_pop (L, 1);
 }
 /* }}} */
 
@@ -367,33 +345,11 @@ static int ratchet_attach (lua_State *L)
 	lua_insert (L, 2);
 	lua_xmove (L, L1, nargs+1);
 
-	set_thread_persist (L, 2 /* index of thread */, 1 /* not yet started */, 0 /* no thread waiting */);
+	set_thread_persist (L, 2 /* index of thread */, 1 /* not yet started */);
 	event_base_loopbreak (e_b);	/* So that new threads get started. */
 
 	lua_pushvalue (L, 2);
 	return 1;
-}
-/* }}} */
-
-/* {{{ ratchet_attach_wait() */
-static int ratchet_attach_wait (lua_State *L)
-{
-	struct event_base *e_b = get_event_base (L, 1);
-	luaL_checkany (L, 2);	/* Function or callable object. */
-	if (lua_pushthread (L))
-		return luaL_error (L, "attach_wait cannot be called from main thread");
-	lua_insert (L, 2);
-	int nargs = lua_gettop (L) - 3;
-
-	/* Set up new coroutine. */
-	lua_State *L1 = lua_newthread (L);
-	lua_insert (L, 3);
-	lua_xmove (L, L1, nargs+1);
-
-	set_thread_persist (L, 3 /* index of thread */, 1 /* not yet started */, 2 /* index of waiting thread */);
-	event_base_loopbreak (e_b);	/* So that new threads get started. */
-
-	return lua_yield (L, 0);
 }
 /* }}} */
 
@@ -469,7 +425,7 @@ static int ratchet_unpause (lua_State *L)
 	lua_xmove (L, L1, nargs);
 
 	/* The following adds the thread to the not_started table so it gets resumed. */
-	set_thread_persist (L, 2, 1, 0);
+	set_thread_persist (L, 2, 1);
 	event_base_loopbreak (e_b);	/* So that new threads get started. */
 
 	return 0;
@@ -539,11 +495,8 @@ static int ratchet_run_thread (lua_State *L)
 
 	if (ret == 0)
 	{
-		/* Call self:finish_thread(). */
-		lua_getfield (L, 1, "finish_thread");
-		lua_pushvalue (L, 1);
-		lua_pushvalue (L, 2);
-		lua_call (L, 2, 0);
+		/* Remove the entry from the persistance table. */
+		end_thread_persist (L, 2);
 	}
 
 	else if (ret == LUA_YIELD)
@@ -568,36 +521,6 @@ static int ratchet_run_thread (lua_State *L)
 		}
 		else
 			return lua_error (L1);
-	}
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ ratchet_finish_thread() */
-static int ratchet_finish_thread (lua_State *L)
-{
-	get_event_base (L, 1);
-	get_thread (L, 2, L1);
-	lua_settop (L, 2);
-
-	int nrets = lua_gettop (L1);
-
-	/* Remove the entry from the persistance table, get potential waiting thread. */
-	end_thread_persist (L, 2);
-	lua_State *L2 = lua_tothread (L, -1);
-
-	/* Resume waiting thread, if necessary. */
-	if (L2)
-	{
-		/* Set up the returns as args to the waiting thread. */
-		lua_xmove (L1, L2, nrets);
-
-		/* Execute the next waiting chunk of the waiting thread. */
-		lua_getfield (L, 1, "run_thread");
-		lua_pushvalue (L, 1);
-		lua_pushvalue (L, 3);
-		lua_call (L, 2, 0);
 	}
 
 	return 0;
@@ -802,7 +725,6 @@ int luaopen_ratchet (lua_State *L)
 		{"stop", ratchet_stop},
 		{"stop_after", ratchet_stop_after},
 		{"attach", ratchet_attach},
-		{"attach_wait", ratchet_attach_wait},
 		{"running_thread", ratchet_running_thread},
 		{"resolve_dns", ratchet_resolve_dns},
 		{"timer", ratchet_timer},
@@ -811,7 +733,6 @@ int luaopen_ratchet (lua_State *L)
 		{"loop", ratchet_loop},
 		/* Undocumented, helper methods. */
 		{"run_thread", ratchet_run_thread},
-		{"finish_thread", ratchet_finish_thread},
 		{"yield_thread", ratchet_yield_thread},
 		{"wait_for_write", ratchet_wait_for_write},
 		{"wait_for_read", ratchet_wait_for_read},
@@ -835,6 +756,8 @@ int luaopen_ratchet (lua_State *L)
 
 	luaI_openlib (L, "ratchet", funcs, 0);
 
+	luaopen_ratchet_timerfd (L);
+	lua_setfield (L, -2, "timerfd");
 	luaopen_ratchet_socket (L);
 	lua_setfield (L, -2, "socket");
 	luaopen_ratchet_zmqsocket (L);

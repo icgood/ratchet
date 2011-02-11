@@ -58,6 +58,13 @@ if test "x${have_signalfd}" != "xyes"; then
 	AC_MSG_ERROR([The signalfd libraries required for building.])
 fi
 
+# timerfd
+AC_CHECK_HEADERS([sys/timerfd.h], [have_timerfd=yes], [have_timerfd=no])
+AC_CHECK_FUNC([timerfd_create], [], [have_timerfd=no])
+if test "x${have_timerfd}" != "xyes"; then
+	AC_MSG_ERROR([The timerfd libraries required for building.])
+fi
+
 # getaddrinfo_a()
 AC_SEARCH_LIBS([getaddrinfo_a], [anl], [LDFLAGS="$LDFLAGS -lpthread"], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
 
