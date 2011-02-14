@@ -562,6 +562,9 @@ static int ratchet_run_thread (lua_State *L)
 		lua_pushvalue (L, 1);
 		lua_pushvalue (L, 2);
 		lua_call (L, 2, 0);
+
+		/* Remove the entry from the persistance table. */
+		end_thread_persist (L, 2);
 	}
 
 	return 0;
@@ -624,13 +627,21 @@ static int ratchet_handle_thread_error (lua_State *L)
 	lua_replace (L, 3);
 	lua_settop (L, 3);
 
-	/* Unpack the call stack and call it. */
-	int i;
-	for (i=0; !lua_isnil (L, -1); i++)
-		lua_rawgeti (L, 3, i+1);
-	lua_pop (L, 1);	/* Pop the nil from the end off. */
-	lua_xmove (L1, L, 1);
-	lua_call (L, i-1, 0);
+	if (lua_isnil (L, 3))
+	{
+		/* Propogate the error. */
+		lua_error (L1);
+	}
+	else
+	{
+		/* Unpack the call stack and call it. */
+		int i;
+		for (i=0; !lua_isnil (L, -1); i++)
+			lua_rawgeti (L, 3, i+1);
+		lua_pop (L, 1);	/* Pop the nil from the end off. */
+		lua_xmove (L1, L, 1);
+		lua_call (L, i-1, 0);
+	}
 
 	return 0;
 }
