@@ -17,6 +17,7 @@ local function ctx2(r)
 
     r:wait_all({t1, t2, t3, t4, t5})
     assert(count == 15)
+    count = count + 6
 end
 
 local r = ratchet.new()
@@ -24,5 +25,6 @@ local r = ratchet.new()
 r:attach(ctx2, r)
 
 r:loop()
+assert(count == 21, count.." != 21")
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
