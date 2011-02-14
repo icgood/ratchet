@@ -73,6 +73,18 @@ static int setup_persistance_tables (lua_State *L)
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "not_started");
 
+	/* Set up a weak-key table to track what threads a thread is waiting on. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "k");
+	lua_setfield (L, -2, "__mode");
+	lua_setmetatable (L, -2);
+	lua_newtable (L);
+	lua_pushliteral (L, "v");
+	lua_setfield (L, -2, "__mode");
+	lua_setfield (L, -2, "weak_val_meta");
+	lua_setfield (L, -2, "waiting_on");
+
 	/* Set up a weak-key table to track thread error handlers. */
 	lua_newtable (L);
 	lua_newtable (L);
@@ -399,6 +411,24 @@ static int ratchet_attach (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_wait_all() */
+static int ratchet_wait_all (lua_State *L)
+{
+	get_event_base (L, 1);
+	luaL_checktype (L, 2, LUA_TTABLE);
+
+	lua_getfenv (L, 1);
+	lua_getfield (L, -1, "waiting_on");
+	lua_getfield (L, -1, "weak_val_meta");
+	lua_setmetatable (L, 2);
+	lua_pushthread (L);
+	lua_pushvalue (L, 2);
+	lua_settable (L, -3);
+
+	return lua_yield (L, 0);
+}
+/* }}} */
+
 /* {{{ ratchet_running_thread() */
 static int ratchet_running_thread (lua_State *L)
 {
@@ -490,6 +520,11 @@ static int ratchet_loop (lua_State *L)
 		lua_pushvalue (L, 1);
 		lua_call (L, 1, 0);
 
+		/* Execute self:start_all_waiting(). */
+		lua_getfield (L, 1, "start_all_ready");
+		lua_pushvalue (L, 1);
+		lua_call (L, 1, 0);
+
 		/* Call event loop, break if we're out of events. */
 		int ret = event_base_loop (e_b, 0);
 		if (ret < 0)
@@ -528,10 +563,38 @@ static int ratchet_start_all_new (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_start_all_ready() */
+static int ratchet_start_all_ready (lua_State *L)
+{
+	get_event_base (L, 1);
+	lua_settop (L, 1);
+	
+	lua_getfenv (L, 1);
+	lua_getfield (L, 2, "waiting_on");
+	for (lua_pushnil (L); lua_next (L, 3); lua_pop (L, 1))
+	{
+		/* Check for empty value table. */
+		lua_pushnil (L);
+		if (lua_next (L, 5) == 0)
+		{
+			/* Call self:run_thread(t). */
+			lua_getfield (L, 1, "run_thread");
+			lua_pushvalue (L, 1);
+			lua_pushvalue (L, 7);	/* The "value" is the thread to start. */
+			lua_call (L, 2, 0);
+		}
+		else
+			lua_pop (L, 2);
+	}
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ ratchet_run_thread() */
 static int ratchet_run_thread (lua_State *L)
 {
-	get_event_base (L, 1);
+	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
 
 	int nargs = lua_gettop (L1);
@@ -543,6 +606,8 @@ static int ratchet_run_thread (lua_State *L)
 	{
 		/* Remove the entry from the persistance table. */
 		end_thread_persist (L, 2);
+
+		event_base_loopbreak (e_b);	/* So that waiting threads get started. */
 	}
 
 	else if (ret == LUA_YIELD)
@@ -803,6 +868,7 @@ int luaopen_ratchet (lua_State *L)
 		{"stop", ratchet_stop},
 		{"stop_after", ratchet_stop_after},
 		{"attach", ratchet_attach},
+		{"wait_all", ratchet_wait_all},
 		{"running_thread", ratchet_running_thread},
 		{"resolve_dns", ratchet_resolve_dns},
 		{"timer", ratchet_timer},
@@ -818,6 +884,7 @@ int luaopen_ratchet (lua_State *L)
 		{"wait_for_resolve", ratchet_wait_for_resolve},
 		{"wait_for_timeout", ratchet_wait_for_timeout},
 		{"start_all_new", ratchet_start_all_new},
+		{"start_all_ready", ratchet_start_all_ready},
 		{NULL}
 	};
 
