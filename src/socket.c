@@ -244,7 +244,7 @@ static int rsock_check_ok (lua_State *L)
 
 	if (error)
 	{
-		if (error == ECONNREFUSED)
+		if (error == ECONNREFUSED || error == ETIMEDOUT)
 			lua_pushboolean (L, 0);
 		else
 		{
