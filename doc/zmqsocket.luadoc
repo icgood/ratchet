@@ -4,7 +4,7 @@
 --  MUST be called from within a thread attached to a ratchet object.
 module "ratchet.zmqsocket"
 
--- Returns a new zmqsocket object.
+--- Returns a new zmqsocket object.
 -- @param type string corresponding to ZeroMQ socket types, e.g. "PAIR".
 -- @return a new zmqsocket object.
 function new(type)

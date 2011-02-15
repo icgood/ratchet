@@ -6,7 +6,7 @@
 module "ratchet.timerfd"
 
 --- Returns a new timerfd object.
---- @param clock either "monotonic" or "realtime" based on the desired clock
+--  @param clock either "monotonic" or "realtime" based on the desired clock
 --               type. See man page timerfd_create(2) for details. The default
 --               is "monotonic".
 --  @return a new timerfd object.

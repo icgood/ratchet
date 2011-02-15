@@ -114,6 +114,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(type)</td>
+	<td class="summary">Returns a new zmqsocket object.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#parse_uri">parse_uri</a>&nbsp;(uri)</td>
 	<td class="summary">URI schema handler for TCP connection strings.</td>
 	</tr>
@@ -352,6 +357,35 @@ Tells whether or not the socket an currently send() data.
 
 <h3>Return value:</h3>
 true or false.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="new"></a><strong>new</strong>&nbsp;(type)</dt>
+<dd>
+Returns a new zmqsocket object.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  type: string corresponding to ZeroMQ socket types, e.g. "PAIR".
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a new zmqsocket object.
 
 
 
