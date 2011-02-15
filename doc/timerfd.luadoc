@@ -1,0 +1,47 @@
+
+--- The timerfd library provides an advanced timer interface using the system
+--  library of the same name. Timers from this library can be set to fire
+--  repeatedly and provide counts if several fires have taken place since last
+--  check.
+module "ratchet.timerfd"
+
+--- Returns a new timerfd object.
+--- @param clock either "monotonic" or "realtime" based on the desired clock
+--               type. See man page timerfd_create(2) for details. The default
+--               is "monotonic".
+--  @return a new timerfd object.
+function new(clock)
+
+--- Returns the file descriptor for the internal timerfd object.
+--  @param self the timerfd object.
+--  @return the file descriptor.
+function get_fd(self)
+
+--- Arms (or disarms) the timerfd object. This function corresponds to the
+--  timerfd_settime() system call. If wait_seconds is not given or nil, the
+--  timer is disarmed.
+--  @param self the timerfd object.
+--  @param wait_seconds seconds until first fire of timerfd.
+--  @param interval_seconds seconds until subsequent fires.
+--  @param flag either "relative" or "absolute", default "relative".
+function settime(self, wait_seconds, interval_seconds, flag)
+
+--- Returns information about the current timer, corresponding to the
+--  timerfd_gettime() system call. This would be the number of seconds until
+--  the next fire of the timer.
+--  @param self the timerfd object.
+--  @return seconds until next timer firing.
+function gettime(self)
+
+--- Pauses the current thread until the next firing of the timer. If the
+--  timer has fired since the last call to read(), it will return immediately.
+--  @param self the timerfd object.
+--  @return the number of fires since last call to read().
+function read(self)
+
+--- Closes the timerfd internal file descriptor. This is called automatically
+--  when the timerfd object is collected, for convenience.
+--  @param self the timerfd object.
+function close(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

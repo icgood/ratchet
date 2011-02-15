@@ -1,0 +1,82 @@
+
+--- The zmqsocket library provides an implementation of the ZeroMQ socket
+--  library on top of the ratchet library. Any methods that pause execution
+--  MUST be called from within a thread attached to a ratchet object.
+module "ratchet.zmqsocket"
+
+-- Returns a new zmqsocket object.
+-- @param type string corresponding to ZeroMQ socket types, e.g. "PAIR".
+-- @return a new zmqsocket object.
+function new(type)
+
+--- URI schema handler for TCP connection strings. Strings start out with the
+--  ZeroMQ socket type (e.g. "PAIR"), followed by a ":", followed by something
+--  suitable to be passed to zmq_connect() or zmq_bind() as an endpoint.
+--  @param uri the URI connection string.
+--  @return the socket type followed by the endpoint.
+function parse_uri(uri)
+
+--- Returns the internal socket file descriptor.
+--  @param self the zmqsocket object.
+--  @return a file descriptor.
+function get_fd(self)
+
+--- Gets the current timeout for all methods that pause the thread.
+--  @param self the zmqsocket object.
+--  @return the current timeout in seconds.
+function get_timeout(self)
+
+--- Sets the current timeout for all methods that pause the thread.
+--  @param self the zmqsocket object.
+--  @param seconds the new timeout in seconds.
+function set_timeout(self, seconds)
+
+--- Tells whether or not the socket has data currently available to recv().
+--  @param self the zmqsocket object.
+--  @return true if data is available, false otherwise.
+function is_readable(self)
+
+--- Tells whether or not the socket an currently send() data.
+--  @param self the zmqsocket object.
+--  @return true or false.
+function is_writable(self)
+
+--- Tells whether or not the most recent call to recv() has more message parts
+--  waiting. If more parts are waiting, subsequent calls to recv() will get
+--  them immediately.
+--  @param self the zmqsocket object.
+--  @return true or false.
+function is_rcvmore(self)
+
+--- Binds the socket to the given endpoint and accepts connections.
+--  @param self the zmqsocket object.
+--  @param endpoint connection string to bind to.
+function bind(self, endpoint)
+
+--- Connects the socket to the given endpoint.
+--  @param self the zmqsocket object.
+--  @param endpoint connection string to connect to.
+function connect(self, endpoint)
+
+--- Pauses the current thread until the socket is ready to send data and then
+--  sends it.
+--  @param self the zmqsocket object.
+--  @param data string with the data to send.
+--  @param more_coming optionally pass true if more message parts will be sent,
+--                     last message part more_coming must be false or not
+--                     given.
+function send(self, data, more_coming)
+
+--- Pauses the current thread until the socket has data to receive and returns
+--  it. This call only receives one message part.
+--  @param self the zmqsocket object.
+--  @return string containing data.
+function recv(self)
+
+--- Loops calls to recv() as long as is_rcvmore() is true. Message parts are
+--  concatenated into one large message.
+--  @param self the zmqsocket object.
+--  @return string containing the data.
+function recv_all(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

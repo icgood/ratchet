@@ -1,0 +1,86 @@
+
+--- The purpose of the ratchet library is to provide a generic socket control
+--  mechanism for large numbers of sockets without using threads or losing the ease
+--  of synchronous socket programming. Along with networking, the library provides
+--  a sort of kernel to allow side-by-side execution of different streams of logic.
+module "ratchet"
+
+--- Constructs and returns a new ratchet object. This also creates a new libevent
+--  control structure that is freed when the object is collected.
+--  @return a new ratchet object.
+function new()
+
+--- Returns the polling method used behind-the-scenes by libevent.
+--  @param self the ratchet object.
+--  @return a string identifying the kernel event mechanism (kqueue, epoll, etc.).
+function get_method(self)
+
+--- Sets the new error handler for threads. The scope of the error handler depends
+--  on where this method is called. Calling from the main thread will use this
+--  handler as the default. Error handlers set in threads apply only to that thead.
+--  Extra arguments to this function are given to the handler function. The last
+--  parameter in the call will be the error object.
+--  @param self the ratchet object.
+--  @param func the function to call.
+--  @param ... extra parameters to the function, before error object.
+function set_error_handler(self, func, ...)
+
+--- From within a thread, this call will stop the network-based event loop in order
+--  to allow new threads to start or waiting threads to finish.
+--  @param self the ratchet object.
+function stop(self)
+
+--- Queues a new thread for execution. The thread calls func and gives it any extra
+--  arguments as its parameters. The thread is not started by this method, instead
+--  it is started on next iteration of the loop.
+--  @param self the ratchet object.
+--  @param func the function to run in the thread.
+--  @param ... extra parameters to function.
+--  @return a Lua thread object.
+function attach(self, func, ...)
+
+--- Pauses the current thread until all threads listed in the given table have
+--  completed their execution either normally or by error.
+--  @param self the ratchet object.
+--  @param threads table containing threads to wait for.
+function wait_all(self, threads)
+
+--- Returns the Lua thread object that is currently running, or nil for the main
+--  thread.
+--  @param self the ratchet object.
+--  @return thread object or nil.
+function running_thread(self)
+
+--- Pauses the current thread until a DNS lookup completes. The resulting data
+--  can be used to create a socket connecting or binding to the given host and
+--  service (from /etc/services or a numeric port).
+--  @param self the ratchet object.
+--  @param host hostname or IP (v4 or v6) to resolve, or "*" for all interfaces.
+--  @param service optional service string or numeric port.
+function resolve_dns(self, host, service)
+
+--- Pauses the current thread for the given period.
+--  @param self the ratchet object.
+--  @param seconds resume thread after this many seconds elapse.
+function timer(self, seconds)
+
+--- Pauses the current thread indefinitely. The thread must be resumed by a call
+--  to unpause() from another thread.
+--  @param self the ratchet object.
+--  @return any extra arguments passed to unpause() from other thread.
+function pause(self)
+
+--- Unpauses the given thread. The paused thread will resume on next iteration
+--  of the main loop. Extra parameters to this function will be given to the
+--  paused thread as return values from pause().
+--  @param self the ratchet object.
+--  @param thread the thread to unpause.
+function unpause(self, thread, ...)
+
+--- Starts the main loop. Every iteration of this loop runs all new threads, runs
+--  all recently unpaused threads, runs all ready-and-waiting threads, and finally
+--  enters a loop waiting for network/socket events.
+--  @param self the ratchet object.
+function loop(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

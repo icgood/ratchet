@@ -1,0 +1,102 @@
+
+--- The socket library provides an implementation of the standard Berkeley
+--  sockets on top of the ratchet library. Any methods that pause execution
+--  MUST be called from within a thread attached to a ratchet object. This
+--  library is also intended for use alongside calls to ratchet:resolve_dns(),
+--  see the manual for examples.
+module "ratchet.socket"
+
+--- Returns a new socket object, with its own file descriptor.
+--  @param family the protocol family which will be used for communication.
+--  @param socktype specifies the communication semantics.
+--  @param protocol specifies a particular protocol to be used.
+--  @return a new socket object.
+function new(family, socktype, protocol)
+
+--- Returns a new socket object, using the given file descriptor. This is
+--  particularly useful when sockets are returned by the accept() system call.
+--  @param fd an existing file descriptor of a socket.
+--  @return a new socket object.
+function from_fd(fd)
+
+--- URI schema handler for TCP connection strings. Strings can have several
+--  different forms, see the manual for complete details.
+--  @param uri the URI connection string.
+--  @return host and service strings, as passable to ratchet:resolve_dns().
+function parse_tcp_uri(uri)
+
+--- Returns the internal socket file descriptor.
+--  @param self the socket object.
+--  @return a file descriptor.
+function get_fd(self)
+
+--- Gets the current timeout for all socket methods that pause the thread.
+--  @param self the socket object.
+--  @return the current timeout in seconds.
+function get_timeout(self)
+
+--- Sets the current timeout for all socket methods that pause the thread.
+--  @param self the socket object.
+--  @param seconds the new timeout in seconds.
+function set_timeout(self, seconds)
+
+--- Binds the socket to the given sockaddr, corresponding to the bind() system
+--  call. This method must be used for sockets that call listen(), and may be
+--  used for sockets that call connect() when it is desired to connect from
+--  a specific network interface.
+--  @param self the socket object.
+--  @param sockaddr a sockaddr userdata object.
+function bind(self, sockaddr)
+
+--- Sets the socket to listen mode. This socket will open the system port it
+--  was bind()ed to. Connections to this socket can be accepted by the accept()
+--  method.
+--  @param self the socket object.
+--  @param backlog optional maximum length of pending connections queue.
+function listen(self, backlog)
+
+--- Pauses the current thread until a new connection to the socket is
+--  attempted. The current socket MUST have called listen().
+--  @param self the socket object.
+--  @return a new socket object for the connection, followed by a sockaddr
+--          userdata object with its information.
+function accept(self)
+
+--- Attempts a connection to the given sockaddr and pauses the thread until it
+--  is completed.
+--  @param self the socket object.
+--  @param sockaddr a sockaddr userdata object.
+--  @return true if the connection succeeded, false otherwise.
+function connect(self, sockaddr)
+
+--- Attempts to send the given data across the socket, pausing the thread until
+--  it is able to do so.
+--  @param self the socket object.
+--  @param data a string of data to send.
+function send(self, data)
+
+--- Attempts to receive data from across the socket, pausing the thread until
+--  data is available. As in the system call, recv() will return an empty
+--  string if the other end has shutdown.
+--  @param self the socket object.
+--  @return string of data received on the socket.
+function recv(self)
+
+--- Gets the current state of the socket. If a fatal socket error has occurred,
+--  a Lua error is raised on the current thread.
+--  @param self the socket object.
+--  @return true if the socket is okay, false otherwise followed by info.
+function check_ok(self)
+
+--- Shuts down portions of the socket, corresponding to the system call of the
+--  same name. You can shut down reads, writes, or both.
+--  @param self the socket object.
+--  @param what either "read", "write", or "both". Default "both".
+function shutdown(self, what)
+
+--- Closes the socket internal file descriptor. This is called automatically
+--  when the socket object is collected, for convenience.
+--  @param self the socket object.
+function close(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
