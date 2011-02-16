@@ -360,12 +360,12 @@ static int rzmq_rawrecv (lua_State *L)
 	"	while not self:is_readable() do\n" \
 	"		coroutine.yield('read', self)\n" \
 	"	end\n" \
-    "   local ret = ''\n" \
+	"   local ret = ''\n" \
 	"   repeat\n" \
-    "       local data, more = self:recv()\n" \
-    "       ret = ret .. data\n" \
-    "   until not more\n" \
-    "   return ret\n" \
+	"       local data, more = self:recv()\n" \
+	"       ret = ret .. data\n" \
+	"   until not more\n" \
+	"   return ret\n" \
 	"end\n"
 /* }}} */
 
