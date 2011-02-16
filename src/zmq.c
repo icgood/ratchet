@@ -327,47 +327,11 @@ static int rzmq_rawrecv (lua_State *L)
 	lua_pushlstring (L, (const char *) zmq_msg_data (&msg), zmq_msg_size (&msg));
 	zmq_msg_close (&msg);
 
-	return 1;
-}
-/* }}} */
-
-/* {{{ rzmq_rawrecv_all() */
-static int rzmq_rawrecv_all (lua_State *L)
-{
-	lua_getfield (L, 1, "rawrecv");
+	lua_getfield (L, 1, "is_rcvmore");
 	lua_pushvalue (L, 1);
-	lua_call (L, 1, 2);
-	if (lua_isnil (L, -2))
-		return 2;
-	else
-		lua_pop (L, 1);
+	lua_call (L, 1, 1);
 
-	while (1)
-	{
-		lua_getfield (L, 1, "is_rcvmore");
-		lua_pushvalue (L, 1);
-		lua_call (L, 1, 2);
-		if (lua_isnil (L, -2))
-			return 2;
-		int more = lua_toboolean (L, -2);
-		lua_pop (L, 2);
-
-		if (more)
-		{
-			lua_getfield (L, 1, "rawrecv");
-			lua_pushvalue (L, 1);
-			lua_call (L, 1, 2);
-			if (lua_isnil (L, -2))
-				return 2;
-			else
-				lua_pop (L, 1);
-			lua_concat (L, 2);
-		}
-		else
-			break;
-	}
-
-	return 1;
+	return 2;
 }
 /* }}} */
 
@@ -396,7 +360,12 @@ static int rzmq_rawrecv_all (lua_State *L)
 	"	while not self:is_readable() do\n" \
 	"		coroutine.yield('read', self)\n" \
 	"	end\n" \
-	"	return self:rawrecv_all()\n" \
+    "   local ret = ''\n" \
+	"   repeat\n" \
+    "       local data, more = self:recv()\n" \
+    "       ret = ret .. data\n" \
+    "   until not more\n" \
+    "   return ret\n" \
 	"end\n"
 /* }}} */
 
@@ -424,15 +393,14 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 		{"get_fd", rzmq_get_fd},
 		{"get_timeout", rzmq_get_timeout},
 		{"set_timeout", rzmq_get_timeout},
-		{"is_readable", rzmq_is_readable},
-		{"is_writable", rzmq_is_writable},
-		{"is_rcvmore", rzmq_is_rcvmore},
 		{"bind", rzmq_bind},
 		{"connect", rzmq_connect},
 		/* Undocumented, helper methods. */
+		{"is_readable", rzmq_is_readable},
+		{"is_writable", rzmq_is_writable},
+		{"is_rcvmore", rzmq_is_rcvmore},
 		{"rawsend", rzmq_rawsend},
 		{"rawrecv", rzmq_rawrecv},
-		{"rawrecv_all", rzmq_rawrecv_all},
 		{NULL}
 	};
 

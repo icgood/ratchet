@@ -99,21 +99,6 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#is_rcvmore">is_rcvmore</a>&nbsp;(self)</td>
-	<td class="summary">Tells whether or not the most recent call to recv() has more message parts waiting.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#is_readable">is_readable</a>&nbsp;(self)</td>
-	<td class="summary">Tells whether or not the socket has data currently available to recv().</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#is_writable">is_writable</a>&nbsp;(self)</td>
-	<td class="summary">Tells whether or not the socket an currently send() data.</td>
-	</tr>
-
-	<tr>
 	<td class="name" nowrap><a href="#new">new</a>&nbsp;(type)</td>
 	<td class="summary">Returns a new zmqsocket object.</td>
 	</tr>
@@ -130,7 +115,7 @@
 
 	<tr>
 	<td class="name" nowrap><a href="#recv_all">recv_all</a>&nbsp;(self)</td>
-	<td class="summary">Loops calls to recv() as long as is_rcvmore() is true.</td>
+	<td class="summary">Loops calls to recv() until all message parts are received.</td>
 	</tr>
 
 	<tr>
@@ -278,93 +263,6 @@ the current timeout in seconds.
 
 
 
-<dt><a name="is_rcvmore"></a><strong>is_rcvmore</strong>&nbsp;(self)</dt>
-<dd>
-Tells whether or not the most recent call to recv() has more message parts waiting. If more parts are waiting, subsequent calls to recv() will get them immediately.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the zmqsocket object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-true or false.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="is_readable"></a><strong>is_readable</strong>&nbsp;(self)</dt>
-<dd>
-Tells whether or not the socket has data currently available to recv().
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the zmqsocket object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-true if data is available, false otherwise.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="is_writable"></a><strong>is_writable</strong>&nbsp;(self)</dt>
-<dd>
-Tells whether or not the socket an currently send() data.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the zmqsocket object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-true or false.
-
-
-
-</dd>
-
-
-
-
 <dt><a name="new"></a><strong>new</strong>&nbsp;(type)</dt>
 <dd>
 Returns a new zmqsocket object.
@@ -425,7 +323,7 @@ the socket type followed by the endpoint.
 
 <dt><a name="recv"></a><strong>recv</strong>&nbsp;(self)</dt>
 <dd>
-Pauses the current thread until the socket has data to receive and returns it. This call only receives one message part.
+Pauses the current thread until the socket has data to receive and returns it. This call only receives one message part, but tells if this message has more parts to follow.
 
 
 <h3>Parameters</h3>
@@ -443,7 +341,7 @@ Pauses the current thread until the socket has data to receive and returns it. T
 
 
 <h3>Return value:</h3>
-string containing data.
+string containing data, followed by true if there are more parts of this message to receive.
 
 
 
@@ -454,7 +352,7 @@ string containing data.
 
 <dt><a name="recv_all"></a><strong>recv_all</strong>&nbsp;(self)</dt>
 <dd>
-Loops calls to recv() as long as is_rcvmore() is true. Message parts are concatenated into one large message.
+Loops calls to recv() until all message parts are received. Message parts are concatenated into one large string.
 
 
 <h3>Parameters</h3>

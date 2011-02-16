@@ -31,23 +31,6 @@ function get_timeout(self)
 --  @param seconds the new timeout in seconds.
 function set_timeout(self, seconds)
 
---- Tells whether or not the socket has data currently available to recv().
---  @param self the zmqsocket object.
---  @return true if data is available, false otherwise.
-function is_readable(self)
-
---- Tells whether or not the socket an currently send() data.
---  @param self the zmqsocket object.
---  @return true or false.
-function is_writable(self)
-
---- Tells whether or not the most recent call to recv() has more message parts
---  waiting. If more parts are waiting, subsequent calls to recv() will get
---  them immediately.
---  @param self the zmqsocket object.
---  @return true or false.
-function is_rcvmore(self)
-
 --- Binds the socket to the given endpoint and accepts connections.
 --  @param self the zmqsocket object.
 --  @param endpoint connection string to bind to.
@@ -68,13 +51,15 @@ function connect(self, endpoint)
 function send(self, data, more_coming)
 
 --- Pauses the current thread until the socket has data to receive and returns
---  it. This call only receives one message part.
+--  it. This call only receives one message part, but tells if this message has
+--  more parts to follow.
 --  @param self the zmqsocket object.
---  @return string containing data.
+--  @return string containing data, followed by true if there are more parts of
+--          this message to receive.
 function recv(self)
 
---- Loops calls to recv() as long as is_rcvmore() is true. Message parts are
---  concatenated into one large message.
+--- Loops calls to recv() until all message parts are received. Message parts
+--  are concatenated into one large string.
 --  @param self the zmqsocket object.
 --  @return string containing the data.
 function recv_all(self)
