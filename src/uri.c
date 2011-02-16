@@ -25,6 +25,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include "ratchet.h"
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ ruri_new() */

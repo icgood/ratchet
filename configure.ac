@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([ratchet], [0.4], [Ian Good <icgood@gmail.com>])
+AC_INIT([ratchet], [0.4.1], [Ian Good <icgood@gmail.com>])
 AM_INIT_AUTOMAKE([color-tests silent-rules])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
@@ -18,6 +18,12 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
+
+#####################
+# Configure options: --disable-zeromq[=no]
+AC_ARG_ENABLE([zeromq], [AS_HELP_STRING([--disable-zeromq],
+	                                [disable usage of ZeroMQ libraries (default no)])],
+	      [use_zeromq="$enableval"], [use_zeromq=yes])
 
 #####################
 # Checks for libraries.
@@ -38,16 +44,21 @@ fi
 AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
 
 # ZeroMQ 2.1.0+
+have_zmq=no
 AC_DEFINE([HAVE_ZMQ], [0], [Define to 1 if you have the ZeroMQ library.])
-AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
-AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
-AC_MSG_CHECKING([for ZeroMQ version 2.1.0 or higher])
-AC_COMPUTE_INT([have_zmq_version], [ZMQ_VERSION], [@%:@include <zmq.h>], [have_zmq_version=0])
-AS_IF([test $have_zmq_version -ge 20100], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); have_zmq=no])
-if test "x${have_zmq}" != "xyes"; then
-	AC_MSG_NOTICE([ZeroMQ will not be included in the ratchet library.])
+if test "x${use_zeromq}" != "xno"; then
+	AC_CHECK_HEADERS([zmq.h], [have_zmq=yes], [have_zmq=no])
+	AC_SEARCH_LIBS([zmq_init], [zmq], [], [have_zmq=no])
+	AC_MSG_CHECKING([for ZeroMQ version 2.1.0 or higher])
+	AC_COMPUTE_INT([have_zmq_version], [ZMQ_VERSION], [@%:@include <zmq.h>], [have_zmq_version=0])
+	AS_IF([test $have_zmq_version -ge 20100], [AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no]); have_zmq=no])
+	if test "x${have_zmq}" != "xyes"; then
+		AC_MSG_ERROR([ZeroMQ libraries required for building (or --disable-zeromq).])
+	else
+		AC_DEFINE([HAVE_ZMQ], [1])
+	fi
 else
-	AC_DEFINE([HAVE_ZMQ], [1])
+	AC_MSG_NOTICE([ZeroMQ will not be included in the ratchet library.])
 fi
 AM_CONDITIONAL([HAVE_ZMQ], [test "x${have_zmq}" = "xyes"])
 

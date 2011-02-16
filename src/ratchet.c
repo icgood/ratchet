@@ -32,6 +32,7 @@
 #include <netdb.h>
 #include <string.h>
 
+#include "ratchet.h"
 #include "misc.h"
 
 #ifndef RATCHET_DNS_SIGNAL
@@ -971,8 +972,10 @@ int luaopen_ratchet (lua_State *L)
 	lua_setfield (L, -2, "timerfd");
 	luaopen_ratchet_socket (L);
 	lua_setfield (L, -2, "socket");
+#if HAVE_ZMQ
 	luaopen_ratchet_zmqsocket (L);
 	lua_setfield (L, -2, "zmqsocket");
+#endif
 	luaopen_ratchet_uri (L);
 	lua_setfield (L, -2, "uri");
 

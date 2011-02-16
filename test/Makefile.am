@@ -1,7 +1,5 @@
 TESTS = test_listen_connect.lua \
 	test_send_recv.lua \
-	test_zmq_send_recv.lua \
-	test_multi_protocol.lua \
 	test_error_handler.lua \
 	test_wait_all.lua \
 	test_thread_error_handler.lua \
@@ -10,6 +8,11 @@ TESTS = test_listen_connect.lua \
 	test_callable_object.lua \
 	test_sockopt.lua \
 	test_uri.lua
+
+if HAVE_ZMQ
+TESTS += test_zmq_send_recv.lua \
+	 test_multi_protocol.lua
+endif
 
 EXTRA_DIST = $(TESTS)
 check_DATA = ratchet.so

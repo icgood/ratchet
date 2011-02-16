@@ -32,6 +32,7 @@
 #include <netdb.h>
 #include <errno.h>
 
+#include "ratchet.h"
 #include "misc.h"
 #include "sockopt.h"
 
