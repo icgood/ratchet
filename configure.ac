@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([ratchet], [0.3], [Ian Good <icgood@gmail.com>])
+AC_INIT([ratchet], [0.4], [Ian Good <icgood@gmail.com>])
 AM_INIT_AUTOMAKE([color-tests silent-rules])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
