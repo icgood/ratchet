@@ -1,7 +1,7 @@
 if HAVE_LUA_INTERPRETER
 
 if ENABLE_MODULE
-TESTS_ENVIRONMENT = LUA_CPATH=";;../src/.libs/?.so" @LUA@
+TESTS_ENVIRONMENT = LUA_CPATH="../src/.libs/?.so;;" @LUA@
 else
 TESTS_ENVIRONMENT = @LUA@ -e 'package.preload["ratchet"] = package.loadlib("../src/.libs/libratchet.so", "luaopen_ratchet")'
 endif
