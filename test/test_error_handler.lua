@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 require "ratchet"
 
 function ctx1 ()
@@ -7,7 +5,7 @@ function ctx1 ()
 end
 
 function on_error(err)
-    assert("./test_error_handler.lua:6: uh oh" == tostring(err))
+    assert("uh oh" == tostring(err):sub(-5))
     error_happened = true
 end
 

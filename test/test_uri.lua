@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 require "ratchet.uri"
 
 function uri_parser_1(uri)

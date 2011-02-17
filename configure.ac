@@ -29,10 +29,20 @@ AC_ARG_ENABLE([zeromq], [AS_HELP_STRING([--disable-zeromq],
 # Checks for libraries.
 
 # Lua
+AX_WITH_LUA
+if test "x${LUA}" == "x"; then
+	AC_MSG_NOTICE([Lua interpreter not found, disabling build tests.])
+else
+	AX_LUA_VERSION([501])
+fi
+AX_LUA_HEADERS
+AX_LUA_HEADERS_VERSION([501])
 AX_LUA_LIBS
 if test "x${LUA_LIB}" == "x"; then
-	AC_MSG_ERROR([Lua libraries required for building.])
+	AC_MSG_ERROR([Lua development libraries required for building.])
 fi
+AC_SUBST([LUA], ["$LUA"])
+AM_CONDITIONAL([HAVE_LUA_INTERPRETER], [test "x${LUA}" != "x"])
 
 # Libevent
 AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
@@ -77,7 +87,7 @@ if test "x${have_timerfd}" != "xyes"; then
 fi
 
 # getaddrinfo_a()
-AC_SEARCH_LIBS([getaddrinfo_a], [anl], [LDFLAGS="$LDFLAGS -lpthread"], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
+AC_SEARCH_LIBS([getaddrinfo_a], [anl], [], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
 
 #####################
 # Configure options: BUFSIZ=nnn
@@ -90,9 +100,12 @@ fi
 # Configure options: --disable-module[=yes].
 AC_ARG_ENABLE([module], [AS_HELP_STRING([--enable-module@<:@=CPATH@:>@],
 					[install Lua interpreter module to CPATH (use default)])],
-	      [enable_module="$enableval"], [enable_module=yes])
+	      [enable_module="${enableval%/}"], [enable_module=yes])
 if test "x${enable_module}" == "xyes"; then
 	enable_module="`pkg-config lua --variable=INSTALL_CMOD`"
+fi
+if test "x${enable_module}" == "x"; then
+	AC_MSG_ERROR([Please provide --enable-module=CPATH with Lua module directory.])
 fi
 AM_CONDITIONAL([ENABLE_MODULE], [test "x${enable_module}" != "xno"])
 AC_SUBST([LUA_CPATH], ["$enable_module"])

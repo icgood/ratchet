@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 require "ratchet"
 
 function ctx1 ()
@@ -9,7 +7,7 @@ end
 
 function on_thread_error(str, err)
     assert("error thread" == str)
-    assert("./test_thread_error_handler.lua:7: uh oh" == tostring(err))
+    assert("uh oh" == tostring(err):sub(-5))
     error_happened = true
 end
 

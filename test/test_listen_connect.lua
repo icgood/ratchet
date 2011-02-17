@@ -1,5 +1,3 @@
-#!/usr/bin/lua
-
 require "ratchet"
 
 uri = ratchet.uri.new()

@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 require "ratchet"
 
 local function ctx2(r, t)
