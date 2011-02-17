@@ -1,5 +1,10 @@
 if HAVE_LUA_INTERPRETER
-TESTS_ENVIRONMENT = @LUA@
+
+if ENABLE_MODULE
+TESTS_ENVIRONMENT = LUA_CPATH=";;../src/.libs/?.so" @LUA@
+else
+TESTS_ENVIRONMENT = @LUA@ -e 'package.preload["ratchet"] = package.loadlib("../src/.libs/libratchet.so", "luaopen_ratchet")'
+endif
 
 TESTS = test_listen_connect.lua \
 	test_send_recv.lua \
@@ -14,19 +19,13 @@ TESTS = test_listen_connect.lua \
 	test_sockopt.lua \
 	test_uri.lua
 
+EXTRA_DIST = $(TESTS)
+
 if HAVE_ZMQ
 XFAIL_TESTS = 
 else
 XFAIL_TESTS = test_zmq_send_recv.lua \
 	      test_multi_protocol.lua
 endif
-
-EXTRA_DIST = $(TESTS)
-check_DATA = ratchet.so
-
-ratchet.so:
-	ln -sf ../src/.libs/ratchet.so .
-
-CLEANFILES = ratchet.so
 
 endif

@@ -1,4 +1,4 @@
-require "ratchet.uri"
+require "ratchet"
 
 function uri_parser_1(uri)
     return uri:reverse()
