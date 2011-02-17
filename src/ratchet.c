@@ -267,7 +267,15 @@ static int setup_dns_signal_event (lua_State *L, struct ratchet *r)
 	int fd = signalfd (-1, &sigset, 0);
 	if (set_nonblocking (fd) < 0)
 		return handle_perror (L);
-	sigprocmask(SIG_BLOCK, &sigset, NULL);
+
+	/* Turn off any other handling of signal. */
+	if (sigprocmask(SIG_BLOCK, &sigset, NULL) < 0)
+		return handle_perror (L);
+	struct sigaction act;
+	memset (&act, 0, sizeof (act));
+	act.sa_handler = SIG_IGN;
+	if (sigaction(RATCHET_DNS_SIGNAL, &act, NULL) < 0)
+		return handle_perror (L);
 
 	/* Set up a persistent event to watch for DNS resolution signal. */
 	event_set (&r->dns_signal, fd, EV_READ, dns_signal_triggered, L);
