@@ -48,6 +48,12 @@ path for the Lua module with a configure option:
 
         --enable-module=PATH   Install the Lua module ratchet.so to PATH.
 
+By default, ratchet attempts to build with ZeroMQ (2.1.0+ is required). If you
+do not need access to ZeroMQ sockets or do not meet the version requirement,
+you can disable that portion of the library with a configure option:
+
+        --disable-zeromq       Disable usage of ZeroMQ libraries.
+
 To increase the size of the buffer used when the size of a piece of data is
 unknown, you can also use the following configure variable. Currently, it only
 controls the size of the buffer used in recv(2) system calls.
