@@ -48,6 +48,11 @@ path for the Lua module with a configure option:
 
         --enable-module=PATH   Install the Lua module ratchet.so to PATH.
 
+If you do not need the developement libraries and headers installed, you can
+choose to disable them with the configure option:
+
+        --disable-devel        Disable developement headers and libraries.
+
 By default, ratchet attempts to build with ZeroMQ (2.1.0+ is required). If you
 do not need access to ZeroMQ sockets or do not meet the version requirement,
 you can disable that portion of the library with a configure option:
