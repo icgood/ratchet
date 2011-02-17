@@ -902,20 +902,6 @@ static int ratchet_wait_for_timeout (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_stackdump() */
-static int ratchet_stackdump (lua_State *L)
-{
-	get_event_base (L, 1);
-	lua_settop (L, 1);
-
-	lua_getfenv (L, 1);
-	lua_remove (L, 1);
-	stackdump (L);
-
-	return 0;
-}
-/* }}} */
-
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet() */
@@ -941,7 +927,6 @@ int luaopen_ratchet (lua_State *L)
 		{"unpause", ratchet_unpause},
 		{"loop", ratchet_loop},
 		/* Undocumented, helper methods. */
-		{"stackdump", ratchet_stackdump},
 		{"run_thread", ratchet_run_thread},
 		{"yield_thread", ratchet_yield_thread},
 		{"handle_thread_error", ratchet_handle_thread_error},
