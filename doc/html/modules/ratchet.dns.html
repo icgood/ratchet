@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../luadoc.css" type="text/css" />
+	<!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
+</head>
+
+<body>
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+<div id="navigation">
+
+
+<h1>LuaDoc</h1>
+<ul>
+	
+	<li><a href="../index.html">Index</a></li>
+	
+</ul>
+
+
+<!-- Module list -->
+
+<h1>Modules</h1>
+<ul>
+
+	<li>
+		<a href="../modules/ratchet.html">ratchet</a>
+	</li>
+
+	<li><strong>ratchet.dns</strong></li>
+	
+	<li>
+		<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+	</li>
+
+</ul>
+
+
+
+<!-- File list -->
+
+
+
+
+
+
+</div><!-- id="navigation" -->
+
+<div id="content">
+
+<h1>Module <code>ratchet.dns</code></h1>
+
+<p>Provides a system for querying DNS for information such as A/AAAA, PTR, MX, and TXT records. Specifically, this module allows creation of an object that runs as a background ratchet thread handling all DNS resolution requests. If a request is not immediately ready, the requesting thread will be paused and reawoken when the results are in.</p>
+
+
+
+
+
+<h2>Functions</h2>
+<table class="function_list">
+
+	<tr>
+	<td class="name" nowrap><a href="#get_fd">get_fd</a>&nbsp;(self)</td>
+	<td class="summary">Returns the internal socket file descriptor.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(ratchet)</td>
+	<td class="summary">Creates a new dns object and attaches itself to the given ratchet thread manager.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#submit">submit</a>&nbsp;(self, data, ...)</td>
+	<td class="summary">Performs a DNS query on the given data.</td>
+	</tr>
+
+</table>
+
+
+
+
+
+
+<br/>
+<br/>
+
+
+
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+
+
+
+<dt><a name="get_fd"></a><strong>get_fd</strong>&nbsp;(self)</dt>
+<dd>
+Returns the internal socket file descriptor.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the dns object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a file descriptor.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="new"></a><strong>new</strong>&nbsp;(ratchet)</dt>
+<dd>
+Creates a new dns object and attaches itself to the given ratchet thread manager. A reference to this object must be accessible anywhere requests need to be made.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  ratchet: the ratchet object to attach to. This must be the same object that all threads using the dns object are attached to.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a new dns object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="submit"></a><strong>submit</strong>&nbsp;(self, data, ...)</dt>
+<dd>
+Performs a DNS query on the given data. If the results are not immediately available, the current thread will pause until they are. The types of queries are given as extra parameters, if none are given, the default query type is used. See the manual for complete details.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the dns object.
+	</li>
+	
+	<li>
+	  data: a string of the domain name or IP address to query against.
+	</li>
+	
+	<li>
+	  ...: strings containing the query types, e.g. "ipv6" or "mx".
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a table keyed on the given query types containing the query results. If a query type failed, the table key will be suffixed with "_error" (e.g. "ipv6_error") and will contain a string form of the error type. If the entire query submission failed, no table is returned, instead nil followed by an error message.
+
+
+
+</dd>
+
+
+</dl>
+
+
+
+
+
+
+</div> <!-- id="content" -->
+
+</div> <!-- id="main" -->
+
+<div id="about">
+	<p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
+</div> <!-- id="about" -->
+
+</div> <!-- id="container" -->	
+</body>
+</html>

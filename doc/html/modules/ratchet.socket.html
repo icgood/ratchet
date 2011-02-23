@@ -38,14 +38,14 @@
 		<a href="../modules/ratchet.html">ratchet</a>
 	</li>
 
+	<li>
+		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+	</li>
+
 	<li><strong>ratchet.socket</strong></li>
 	
 	<li>
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
-	</li>
-
-	<li>
-		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
 	</li>
 
 	<li>
@@ -129,8 +129,8 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#parse_tcp_uri">parse_tcp_uri</a>&nbsp;(uri)</td>
-	<td class="summary">URI schema handler for TCP connection strings.</td>
+	<td class="name" nowrap><a href="#parse_uri">parse_uri</a>&nbsp;(uri, dns, ...)</td>
+	<td class="summary">URI parser for socket connection strings.</td>
 	</tr>
 
 	<tr>
@@ -471,9 +471,9 @@ a new socket object.
 
 
 
-<dt><a name="parse_tcp_uri"></a><strong>parse_tcp_uri</strong>&nbsp;(uri)</dt>
+<dt><a name="parse_uri"></a><strong>parse_uri</strong>&nbsp;(uri, dns, ...)</dt>
 <dd>
-URI schema handler for TCP connection strings. Strings can have several different forms, see the manual for complete details.
+URI parser for socket connection strings. On success, the returned object contains all necessary data to create and bind/connect a new socket object. The parser is capable of creating TCP, UDP, and Unix sockets. See the manual page for complete details.
 
 
 <h3>Parameters</h3>
@@ -481,6 +481,14 @@ URI schema handler for TCP connection strings. Strings can have several differen
 	
 	<li>
 	  uri: the URI connection string.
+	</li>
+	
+	<li>
+	  dns: ratchet.dns object, for URIs that require it.
+	</li>
+	
+	<li>
+	  ...: DNS query types to use, e.g. "ipv6". See ratchet.dns.
 	</li>
 	
 </ul>
@@ -491,7 +499,7 @@ URI schema handler for TCP connection strings. Strings can have several differen
 
 
 <h3>Return value:</h3>
-host and service strings, as passable to ratchet:resolve_dns().
+Table of information useful in creating a new socket, or nil on failure followed by an error. See the manual for details.
 
 
 

@@ -37,15 +37,15 @@
 	<li><strong>ratchet</strong></li>
 	
 	<li>
+		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.socket.html">ratchet.socket</a>
 	</li>
 
 	<li>
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
-	</li>
-
-	<li>
-		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
 	</li>
 
 	<li>
@@ -84,6 +84,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#attach_background">attach_background</a>&nbsp;(self, func, ...)</td>
+	<td class="summary">Queues a new thread for execution.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#get_method">get_method</a>&nbsp;(self)</td>
 	<td class="summary">Returns the polling method used behind-the-scenes by libevent.</td>
 	</tr>
@@ -104,11 +109,6 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#resolve_dns">resolve_dns</a>&nbsp;(self, host, service)</td>
-	<td class="summary">Pauses the current thread until a DNS lookup completes.</td>
-	</tr>
-
-	<tr>
 	<td class="name" nowrap><a href="#running_thread">running_thread</a>&nbsp;(self)</td>
 	<td class="summary">Returns the Lua thread object that is currently running, or nil for the main thread.</td>
 	</tr>
@@ -116,11 +116,6 @@
 	<tr>
 	<td class="name" nowrap><a href="#set_error_handler">set_error_handler</a>&nbsp;(self, func, ...)</td>
 	<td class="summary">Sets the new error handler for threads.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#stop">stop</a>&nbsp;(self)</td>
-	<td class="summary">From within a thread, this call will stop the network-based event loop in order to allow new threads to start or waiting threads to finish.</td>
 	</tr>
 
 	<tr>
@@ -157,7 +152,44 @@
 
 <dt><a name="attach"></a><strong>attach</strong>&nbsp;(self, func, ...)</dt>
 <dd>
-Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop.
+Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. All threads attached with this method must be completed before loop() will finish.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ratchet object.
+	</li>
+	
+	<li>
+	  func: the function to run in the thread.
+	</li>
+	
+	<li>
+	  ...: extra parameters to function.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a Lua thread object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="attach_background"></a><strong>attach_background</strong>&nbsp;(self, func, ...)</dt>
+<dd>
+Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. Threads attached with this method as opposed to attach() will be destroyed when loop() finishes, whether completed or not.
 
 
 <h3>Parameters</h3>
@@ -223,7 +255,7 @@ a string identifying the kernel event mechanism (kqueue, epoll, etc.).
 
 <dt><a name="loop"></a><strong>loop</strong>&nbsp;(self)</dt>
 <dd>
-Starts the main loop. Every iteration of this loop runs all new threads, runs all recently unpaused threads, runs all ready-and-waiting threads, and finally enters a loop waiting for network/socket events.
+Starts the main loop. Every iteration of this loop runs all new threads, runs all recently unpaused threads, runs all threads that are done waiting on others, and finally starts waiting for and handling network/socket events. The loop will continue until all threads created with attach() are completed.
 
 
 <h3>Parameters</h3>
@@ -296,40 +328,6 @@ any extra arguments passed to unpause() from other thread.
 
 
 
-<dt><a name="resolve_dns"></a><strong>resolve_dns</strong>&nbsp;(self, host, service)</dt>
-<dd>
-Pauses the current thread until a DNS lookup completes. The resulting data can be used to create a socket connecting or binding to the given host and service (from /etc/services or a numeric port).
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  host: hostname or IP (v4 or v6) to resolve, or "*" for all interfaces.
-	</li>
-	
-	<li>
-	  service: optional service string or numeric port.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
 <dt><a name="running_thread"></a><strong>running_thread</strong>&nbsp;(self)</dt>
 <dd>
 Returns the Lua thread object that is currently running, or nil for the main thread.
@@ -377,32 +375,6 @@ Sets the new error handler for threads. The scope of the error handler depends o
 	
 	<li>
 	  ...: extra parameters to the function, before error object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
-<dt><a name="stop"></a><strong>stop</strong>&nbsp;(self)</dt>
-<dd>
-From within a thread, this call will stop the network-based event loop in order to allow new threads to start or waiting threads to finish.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
 	</li>
 	
 </ul>
