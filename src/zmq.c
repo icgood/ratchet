@@ -141,7 +141,7 @@ static int rzmq_parse_uri (lua_State *L)
 
 	/* Check for form: schema:TYPE:endpoint
 	 * example: zmq:PAIR:tcp://localhost:10025 */
-	if (strmatch (L, 1, "^(.-)%:(.*)$"))
+	if (strmatch (L, 1, "^zmq%:(.-)%:(.*)$"))
 	{
 		lua_getfield (L, 2, "upper");
 		lua_pushvalue (L, 2);
