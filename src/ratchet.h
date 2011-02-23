@@ -8,12 +8,6 @@
 const char *ratchet_version (void);
 
 int luaopen_ratchet (lua_State *L);
-int luaopen_ratchet_timerfd (lua_State *L);
-int luaopen_ratchet_socket (lua_State *L);
-#if HAVE_ZMQ
-int luaopen_ratchet_zmqsocket (lua_State *L);
-#endif
-int luaopen_ratchet_uri (lua_State *L);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:
