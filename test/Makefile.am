@@ -16,16 +16,36 @@ TESTS = test_listen_connect.lua \
 	test_multi_protocol.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
-	test_sockopt.lua \
-	test_uri.lua
+	test_sockopt.lua
+XFAIL_TESTS = 
 
 EXTRA_DIST = $(TESTS)
 
-if HAVE_ZMQ
-XFAIL_TESTS = 
+if HAVE_SOCKET
+XFAIL_TESTS +=  
 else
-XFAIL_TESTS = test_zmq_send_recv.lua \
-	      test_multi_protocol.lua
+XFAIL_TESTS += test_listen_connect.lua \
+	       test_send_recv.lua \
+	       test_shutdown.lua \
+	       test_multi_protocol.lua \
+	       test_sockopt.lua
+endif
+
+if HAVE_UDNS
+XFAIL_TESTS +=  
+else
+XFAIL_TESTS += test_listen_connect.lua \
+	       test_send_recv.lua \
+	       test_shutdown.lua \
+	       test_multi_protocol.lua \
+	       test_sockopt.lua
+endif
+
+if HAVE_ZMQ
+XFAIL_TESTS += 
+else
+XFAIL_TESTS += test_zmq_send_recv.lua \
+	       test_multi_protocol.lua
 endif
 
 endif
