@@ -19,11 +19,16 @@ function new(family, socktype, protocol)
 --  @return a new socket object.
 function from_fd(fd)
 
---- URI schema handler for TCP connection strings. Strings can have several
---  different forms, see the manual for complete details.
+--- URI parser for socket connection strings. On success, the returned object
+--  contains all necessary data to create and bind/connect a new socket object.
+--  The parser is capable of creating TCP, UDP, and Unix sockets. See the manual
+--  page for complete details.
 --  @param uri the URI connection string.
---  @return host and service strings, as passable to ratchet:resolve_dns().
-function parse_tcp_uri(uri)
+--  @param dns ratchet.dns object, for URIs that require it.
+--  @param ... DNS query types to use, e.g. "ipv6". See ratchet.dns.
+--  @return Table of information useful in creating a new socket, or nil on
+--          failure followed by an error. See the manual for details.
+function parse_uri(uri, dns, ...)
 
 --- Returns the internal socket file descriptor.
 --  @param self the socket object.

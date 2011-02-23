@@ -25,19 +25,26 @@ function get_method(self)
 --  @param ... extra parameters to the function, before error object.
 function set_error_handler(self, func, ...)
 
---- From within a thread, this call will stop the network-based event loop in order
---  to allow new threads to start or waiting threads to finish.
---  @param self the ratchet object.
-function stop(self)
-
 --- Queues a new thread for execution. The thread calls func and gives it any extra
 --  arguments as its parameters. The thread is not started by this method, instead
---  it is started on next iteration of the loop.
+--  it is started on next iteration of the loop. All threads attached with
+--  this method must be completed before loop() will finish.
 --  @param self the ratchet object.
 --  @param func the function to run in the thread.
 --  @param ... extra parameters to function.
 --  @return a Lua thread object.
 function attach(self, func, ...)
+
+--- Queues a new thread for execution. The thread calls func and gives it any extra
+--  arguments as its parameters. The thread is not started by this method, instead
+--  it is started on next iteration of the loop. Threads attached with this method
+--  as opposed to attach() will be destroyed when loop() finishes, whether
+--  completed or not.
+--  @param self the ratchet object.
+--  @param func the function to run in the thread.
+--  @param ... extra parameters to function.
+--  @return a Lua thread object.
+function attach_background(self, func, ...)
 
 --- Pauses the current thread until all threads listed in the given table have
 --  completed their execution either normally or by error.
@@ -50,14 +57,6 @@ function wait_all(self, threads)
 --  @param self the ratchet object.
 --  @return thread object or nil.
 function running_thread(self)
-
---- Pauses the current thread until a DNS lookup completes. The resulting data
---  can be used to create a socket connecting or binding to the given host and
---  service (from /etc/services or a numeric port).
---  @param self the ratchet object.
---  @param host hostname or IP (v4 or v6) to resolve, or "*" for all interfaces.
---  @param service optional service string or numeric port.
-function resolve_dns(self, host, service)
 
 --- Pauses the current thread for the given period.
 --  @param self the ratchet object.
@@ -78,8 +77,9 @@ function pause(self)
 function unpause(self, thread, ...)
 
 --- Starts the main loop. Every iteration of this loop runs all new threads, runs
---  all recently unpaused threads, runs all ready-and-waiting threads, and finally
---  enters a loop waiting for network/socket events.
+--  all recently unpaused threads, runs all threads that are done waiting on
+--  others, and finally starts waiting for and handling network/socket events. The
+--  loop will continue until all threads created with attach() are completed.
 --  @param self the ratchet object.
 function loop(self)
 

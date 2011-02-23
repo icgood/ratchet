@@ -9,9 +9,11 @@ module "ratchet.zmqsocket"
 -- @return a new zmqsocket object.
 function new(type)
 
---- URI schema handler for TCP connection strings. Strings start out with the
---  ZeroMQ socket type (e.g. "PAIR"), followed by a ":", followed by something
---  suitable to be passed to zmq_connect() or zmq_bind() as an endpoint.
+--- URI schema handler for TCP connection strings. Strings must with "zmq",
+--  followed by a ":", followed by a ZeroMQ socket type (e.g. "PAIR"),
+--  followed by a ":", followed by something suitable to be passed to
+--  zmq_connect() or zmq_bind() as an endpoint. See the manual page for
+--  complete details.
 --  @param uri the URI connection string.
 --  @return the socket type followed by the endpoint.
 function parse_uri(uri)

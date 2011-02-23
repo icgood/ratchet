@@ -1,14 +1,11 @@
 require "ratchet"
 
-uri = ratchet.uri.new()
-uri:register("zmq", ratchet.zmqsocket.parse_uri)
-
-function ctx1(r, where)
-    local t, e = uri(where)
+function ctx1(where)
+    local t, e = ratchet.zmqsocket.parse_uri(where)
     local socket = ratchet.zmqsocket.new(t)
     socket:bind(e)
 
-    r:attach(ctx2, r, "zmq:rep:tcp://127.0.0.1:10025")
+    kernel:attach(ctx2, "zmq:rep:tcp://127.0.0.1:10025")
 
     -- Portion being tested.
     --
@@ -17,8 +14,8 @@ function ctx1(r, where)
     assert(data == "world")
 end
 
-function ctx2(r, where)
-    local t, e = uri(where)
+function ctx2(where)
+    local t, e = ratchet.zmqsocket.parse_uri(where)
     local socket = ratchet.zmqsocket.new(t)
     socket:connect(e)
 
@@ -30,8 +27,9 @@ function ctx2(r, where)
     socket:send("rld")
 end
 
-local r = ratchet.new()
-r:attach(ctx1, r, "zmq:req:tcp://127.0.0.1:10025")
-r:loop()
+kernel = ratchet.new()
+dns = ratchet.dns.new(kernel)
+kernel:attach(ctx1, "zmq:req:tcp://127.0.0.1:10025")
+kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

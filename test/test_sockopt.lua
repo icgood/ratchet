@@ -1,10 +1,7 @@
 require "ratchet"
 
-uri = ratchet.uri.new()
-uri:register("tcp", ratchet.socket.parse_tcp_uri)
-
-function ctx1(r, where)
-    local rec = r:resolve_dns(uri(where))
+function ctx1(where)
+    local rec = ratchet.socket.parse_uri(where, dns, "ipv6", "ipv4")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -18,8 +15,8 @@ function ctx1(r, where)
     socket.SO_REUSEADDR = true
 end
 
-function ctx2(r, where)
-    local rec = r:resolve_dns(uri(where))
+function ctx2(where)
+    local rec = ratchet.socket.parse_uri(where, dns, "ipv6", "ipv4")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
 
     assert(socket.SO_ACCEPTCONN == false, "SO_ACCEPTCONN != false")
@@ -29,9 +26,10 @@ function ctx2(r, where)
     assert(socket.SO_SNDBUF == 2048, "SO_SNDBUF (" .. socket.SO_SNDBUF .. ") != 2048")
 end
 
-local r = ratchet.new()
-r:attach(ctx1, r, "tcp://localhost:10025")
-r:attach(ctx2, r, "tcp://localhost:10025")
-r:loop()
+kernel = ratchet.new()
+dns = ratchet.dns.new(kernel)
+kernel:attach(ctx1, "tcp://localhost:10025")
+kernel:attach(ctx2, "tcp://localhost:10025")
+kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

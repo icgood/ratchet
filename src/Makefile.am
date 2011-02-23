@@ -1,12 +1,20 @@
 allsources = ratchet.h ratchet.c \
-	     misc.h misc.c \
-	     sockopt.h sockopt.c \
-	     socket.c \
-	     uri.c \
-	     timerfd.c
+	     misc.h misc.c
+
+if HAVE_SOCKET
+allsources += sockopt.h sockopt.c socket.c
+endif
 
 if HAVE_ZMQ
 allsources += zmq.c
+endif
+
+if HAVE_UDNS
+allsources += dns.c
+endif
+
+if HAVE_TIMERFD
+allsources += timerfd.c
 endif
 
 if ENABLE_DEVEL
