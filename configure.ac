@@ -20,10 +20,28 @@ AC_PROG_MAKE_SET
 AM_PROG_CC_C_O
 
 #####################
+# Configure options: --disable-socket[=no]
+AC_ARG_ENABLE([socket], [AS_HELP_STRING([--disable-socket],
+	                                [disable usage of BSD socket libraries (default no)])],
+	      [use_socket="$enableval"], [use_socket=yes])
+
+#####################
 # Configure options: --disable-zeromq[=no]
 AC_ARG_ENABLE([zeromq], [AS_HELP_STRING([--disable-zeromq],
 	                                [disable usage of ZeroMQ libraries (default no)])],
 	      [use_zeromq="$enableval"], [use_zeromq=yes])
+
+#####################
+# Configure options: --disable-udns[=no]
+AC_ARG_ENABLE([udns], [AS_HELP_STRING([--disable-udns],
+	                              [disable usage of UDNS libraries (default no)])],
+	      [use_udns="$enableval"], [use_udns=yes])
+
+#####################
+# Configure options: --disable-timerfd[=no]
+AC_ARG_ENABLE([timerfd], [AS_HELP_STRING([--disable-timerfd],
+	      				 [disable usage of timerfd calls (default no)])],
+	      [use_timerfd="$enableval"], [use_timerfd=yes])
 
 #####################
 # Checks for libraries.
@@ -50,8 +68,25 @@ AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
 AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])
 if test "x${have_libevent}" != "xyes"; then
 	AC_MSG_ERROR([Libevent libraries required for building.])
+else
+	AC_DEFINE([HAVE_LIBEVENT], [1])
 fi
 AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
+
+# UDNS
+AC_DEFINE([HAVE_UDNS], [0], [Define to 1 if you have the udns library.])
+if test "x${use_udns}" != "xno"; then
+	AC_CHECK_HEADER([udns.h], [have_udns=yes], [have_udns=no])
+	AC_SEARCH_LIBS([dns_init], [udns], [], [have_udns=no])
+	if test "x${have_udns}" != "xyes"; then
+		AC_MSG_ERROR([UDNS libraries required for building (or --disable-udns).])
+	else
+		AC_DEFINE([HAVE_UDNS], [1])
+	fi
+else
+	AC_MSG_NOTICE([UDNS will not be included in the ratchet library.])
+fi
+AM_CONDITIONAL([HAVE_UDNS], [test "x${have_udns}" = "xyes"])
 
 # ZeroMQ 2.1.0+
 have_zmq=no
@@ -72,22 +107,37 @@ else
 fi
 AM_CONDITIONAL([HAVE_ZMQ], [test "x${have_zmq}" = "xyes"])
 
-# signalfd
-AC_CHECK_HEADERS([sys/signalfd.h], [have_signalfd=yes], [have_signalfd=no])
-AC_CHECK_FUNC([signalfd], [], [have_signalfd=no])
-if test "x${have_signalfd}" != "xyes"; then
-	AC_MSG_ERROR([The signalfd libraries required for building.])
-fi
-
 # timerfd
-AC_CHECK_HEADERS([sys/timerfd.h], [have_timerfd=yes], [have_timerfd=no])
-AC_CHECK_FUNC([timerfd_create], [], [have_timerfd=no])
-if test "x${have_timerfd}" != "xyes"; then
-	AC_MSG_ERROR([The timerfd libraries required for building.])
+AC_DEFINE([HAVE_TIMERFD], [0], [Define to 1 if you have the timerfd system call suite.])
+if test "x${use_timerfd}" != "xno"; then
+	AC_CHECK_HEADERS([sys/timerfd.h], [have_timerfd=yes], [have_timerfd=no])
+	AC_CHECK_FUNC([timerfd_create], [], [have_timerfd=no])
+	if test "x${have_timerfd}" != "xyes"; then
+		AC_MSG_ERROR([The timerfd libraries required for building.])
+	else
+		AC_DEFINE([HAVE_TIMERFD], [1])
+	fi
+else
+	AC_MSG_NOTICE([timerfd will not be included in the ratchet library.])
 fi
+AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
 
-# getaddrinfo_a()
-AC_SEARCH_LIBS([getaddrinfo_a], [anl], [], [AC_MSG_ERROR([getaddrinfo_a() is not available for asynchronous DNS resolution.])])
+# socket
+AC_DEFINE([HAVE_SOCKET], [0], [Define to 1 if you have the BSD socket system call suite.])
+if test "x${use_socket}" != "xno"; then
+	AC_CHECK_HEADERS([sys/socket.h], [have_socket=yes], [have_socket=no])
+	AC_CHECK_FUNC([socket], [], [have_socket=no])
+	AC_CHECK_FUNC([getsockopt], [], [have_socket=no])
+	AC_CHECK_FUNC([setsockopt], [], [have_socket=no])
+	if test "x${have_socket}" != "xyes"; then
+		AC_MSG_ERROR([The BSD socket libraries required for building.])
+	else
+		AC_DEFINE([HAVE_SOCKET], [1])
+	fi
+else
+	AC_MSG_NOTICE([socket will not be included in the ratchet library.])
+fi
+AM_CONDITIONAL([HAVE_SOCKET], [test "x${have_socket}" = "xyes"])
 
 #####################
 # Configure options: BUFSIZ=nnn
