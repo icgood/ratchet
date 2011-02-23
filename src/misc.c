@@ -79,7 +79,8 @@ int return_perror_ln (lua_State *L, const char *file, int line)
 /* {{{ build_lua_function() */
 void build_lua_function (lua_State *L, const char *fstr)
 {
-	luaL_loadstring (L, fstr);
+	if (luaL_loadstring (L, fstr) != 0)
+		lua_error (L);
 	lua_call (L, 0, 1);
 }
 /* }}} */
@@ -237,7 +238,7 @@ static void printf_index (lua_State *L, int i)
 			break;
 		}
 		case LUA_TBOOLEAN: {
-			printf (lua_toboolean (L, 1) ? "true" : "false");
+			printf (lua_toboolean (L, i) ? "true" : "false");
 			break;
 		}
 		case LUA_TNUMBER: {
