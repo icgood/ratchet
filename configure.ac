@@ -149,14 +149,14 @@ fi
 #####################
 # Configure options: --disable-devel.
 AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel@<:@=yes@:>@],
-				       [install development headers and libraries (default yes)])],
+				       [install development headers and libraries.])],
 	      [enable_devel="${enableval}"], [enable_devel=yes])
 AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
 
 #####################
 # Configure options: --disable-module.
 AC_ARG_ENABLE([module], [AS_HELP_STRING([--enable-module@<:@=CPATH@:>@],
-					[install Lua interpreter module to CPATH (use pkg-config)])],
+					[install Lua interpreter module to CPATH, which uses pkg-config for default.])],
 	      [enable_module="${enableval%/}"], [enable_module=yes])
 if test "x${enable_module}" == "xyes"; then
 	enable_module="`pkg-config lua --variable=INSTALL_CMOD`"

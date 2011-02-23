@@ -59,6 +59,26 @@ you can disable that portion of the library with a configure option:
 
         --disable-zeromq       Disable usage of ZeroMQ libraries.
 
+By default, ratchet attempts to build with UDNS (0.0.9+). If you do not need
+access to DNS queries whatsoever, you can disable that portion of the library
+with the configure option below. Note, however, that currently there is no
+built-in method build the data required for BSD sockets without this feature.
+
+        --disable-udns         Disable usage of UNDS libraries.
+
+For Linux users (see version requirements below), there is access to the
+timerfd (man page timerfd_create(2)) routines for intelligent time keeping and
+time-based triggers. If the requirements can't be met, this feature can be
+disabled with a configure option:
+
+        --disable-timerfd      Disabe usage of timerfd calls.
+
+If, for any reason, you do not need access to BSD sockets (for example you only
+need ZeroMQ, timers, or thread management), you can disable inclusion of these
+features with another configure option:
+
+        --disable-socket       Disable usage of BSD sockets.
+
 To increase the size of the buffer used when the size of a piece of data is
 unknown, you can also use the following configure variable. Currently, it only
 controls the size of the buffer used in recv(2) system calls.
@@ -68,12 +88,13 @@ controls the size of the buffer used in recv(2) system calls.
 
 All other configure options are standard from GNU autotools.
 
-Requirements
+Dependencies
 ============
 
  * Lua 5.1+ (http://www.lua.org)
  * libevent 1.4.10+ (http://monkey.org/~provos/libevent/)
- * ZeroMQ 2.1.0+ BETA (http://www.zeromq.org)
- * Linux kernel 2.6.25+
- * Glibc 2.8+
+
+ * Without --disable-zeromq:  ZeroMQ 2.1.0+ BETA (http://www.zeromq.org)
+ * Without --disable-timerfd: Linux kernel 2.6.25+, Glibc 2.8+
+ * Without --disable-udns:    UDNS 0.0.9+ (http://www.corpit.ru/mjt/udns.html)
 
