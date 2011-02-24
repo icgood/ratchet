@@ -37,8 +37,7 @@
 #define QUERY_V6 2
 #define QUERY_MX 4
 #define QUERY_TXT 8
-#define QUERY_PTR_V4 16
-#define QUERY_PTR_V6 32
+#define QUERY_PTR 16
 
 #ifndef DNS_MAX_TIMEOUT
 #define DNS_MAX_TIMEOUT 0
@@ -224,8 +223,8 @@ static void query_finished_mx (struct dns_ctx *ctx, struct dns_rr_mx *result, vo
 }
 /* }}} */
 
-/* {{{ query_finished_ptrv4() */
-static void query_finished_ptrv4 (struct dns_ctx *ctx, struct dns_rr_ptr *result, void *data)
+/* {{{ query_finished_ptr() */
+static void query_finished_ptr (struct dns_ctx *ctx, struct dns_rr_ptr *result, void *data)
 {
 	lua_State *L = (lua_State *) data;
 
@@ -234,8 +233,8 @@ static void query_finished_ptrv4 (struct dns_ctx *ctx, struct dns_rr_ptr *result
 	if (!result)
 	{
 		return_error (L, ctx);
-		lua_setfield (L, 2, "ptrv4_error");
-		lua_setfield (L, 2, "ptrv4");
+		lua_setfield (L, 2, "ptr_error");
+		lua_setfield (L, 2, "ptr");
 		query_finished (L, ctx);
 		return;
 	}
@@ -248,36 +247,7 @@ static void query_finished_ptrv4 (struct dns_ctx *ctx, struct dns_rr_ptr *result
 		lua_rawseti (L, -2, i+1);
 	}
 
-	lua_setfield (L, 2, "ptrv4");
-	query_finished (L, ctx);
-}
-/* }}} */
-
-/* {{{ query_finished_ptrv6() */
-static void query_finished_ptrv6 (struct dns_ctx *ctx, struct dns_rr_ptr *result, void *data)
-{
-	lua_State *L = (lua_State *) data;
-
-	int i;
-
-	if (!result)
-	{
-		return_error (L, ctx);
-		lua_setfield (L, 2, "ptrv6_error");
-		lua_setfield (L, 2, "ptrv6");
-		query_finished (L, ctx);
-		return;
-	}
-
-	lua_createtable (L, result->dnsptr_nrr, 0);
-
-	for (i=0; i<result->dnsptr_nrr; i++)
-	{
-		lua_pushstring (L, result->dnsptr_ptr[i]);
-		lua_rawseti (L, -2, i+1);
-	}
-
-	lua_setfield (L, 2, "ptrv6");
+	lua_setfield (L, 2, "ptr");
 	query_finished (L, ctx);
 }
 /* }}} */
@@ -411,11 +381,10 @@ static void timeout_handler (struct dns_ctx *ctx, int new_timeout, void *data)
 /* {{{ get_query_type() */
 static int get_query_type (lua_State *L, int index)
 {
-	static const char *lst[] = {"ipv4", "ipv6", "mx", "txt", "ptrv4", "ptrv6", NULL};
+	static const char *lst[] = {"ipv4", "ipv6", "mx", "txt", "ptr", NULL};
 	static const int howlst[] = {
 		QUERY_V4, QUERY_V6,
-		QUERY_MX, QUERY_TXT,
-		QUERY_PTR_V4, QUERY_PTR_V6
+		QUERY_MX, QUERY_TXT, QUERY_PTR
 	};
 
 	int i, ret = howlst[luaL_checkoption (L, index, "ipv6", lst)];
@@ -565,10 +534,17 @@ static int mydns_submit (lua_State *L)
 		{
 			struct dns_query *query = dns_submit_a6 (ctx, data, 0, query_finished_a6, L);
 			if (!query)
-				return return_error (L, ctx);
-			queries++;
-			lua_pushboolean (L, 0);
-			lua_setfield (L, -2, "ipv6");
+			{
+				return_error (L, ctx);
+				lua_setfield (L, -3, "ipv6_error");
+				lua_setfield (L, -2, "ipv6");
+			}
+			else
+			{
+				queries++;
+				lua_pushboolean (L, 0);
+				lua_setfield (L, -2, "ipv6");
+			}
 		}
 	}
 
@@ -578,10 +554,17 @@ static int mydns_submit (lua_State *L)
 		{
 			struct dns_query *query = dns_submit_a4 (ctx, data, 0, query_finished_a4, L);
 			if (!query)
-				return return_error (L, ctx);
-			queries++;
-			lua_pushboolean (L, 0);
-			lua_setfield (L, -2, "ipv4");
+			{
+				return_error (L, ctx);
+				lua_setfield (L, -3, "ipv4_error");
+				lua_setfield (L, -2, "ipv4");
+			}
+			else
+			{
+				queries++;
+				lua_pushboolean (L, 0);
+				lua_setfield (L, -2, "ipv4");
+			}
 		}
 	}
 
@@ -589,49 +572,75 @@ static int mydns_submit (lua_State *L)
 	{
 		struct dns_query *query = dns_submit_mx (ctx, data, 0, query_finished_mx, L);
 		if (!query)
-			return return_error (L, ctx);
-		queries++;
-		lua_pushboolean (L, 0);
-		lua_setfield (L, -2, "mx");
+		{
+			return_error (L, ctx);
+			lua_setfield (L, -3, "mx_error");
+			lua_setfield (L, -2, "mx");
+		}
+		else
+		{
+			queries++;
+			lua_pushboolean (L, 0);
+			lua_setfield (L, -2, "mx");
+		}
 	}
 
 	if (query_type & QUERY_TXT)
 	{
 		struct dns_query *query = dns_submit_txt (ctx, data, DNS_C_IN, 0, query_finished_txt, L);
 		if (!query)
-			return return_error (L, ctx);
-		queries++;
-		lua_pushboolean (L, 0);
-		lua_setfield (L, -2, "txt");
-	}
-
-	if (query_type & QUERY_PTR_V6)
-	{
-		struct in6_addr addr;
-		int ret = inet_pton (AF_INET6, data, &addr);
-		if (ret > 0)
 		{
-			struct dns_query *query = dns_submit_a6ptr (ctx, &addr, query_finished_ptrv6, L);
-			if (!query)
-				return return_error (L, ctx);
+			return_error (L, ctx);
+			lua_setfield (L, -3, "txt_error");
+			lua_setfield (L, -2, "txt");
+		}
+		else
+		{
 			queries++;
 			lua_pushboolean (L, 0);
-			lua_setfield (L, -2, "ptrv6");
+			lua_setfield (L, -2, "txt");
 		}
 	}
 
-	if (query_type & QUERY_PTR_V4)
+	if (query_type & QUERY_PTR)
 	{
+		struct in6_addr addr6;
 		struct in_addr addr;
+
+		int ret6 = inet_pton (AF_INET6, data, &addr6);
 		int ret = inet_pton (AF_INET, data, &addr);
-		if (ret > 0)
+
+		if (ret6 > 0)
 		{
-			struct dns_query *query = dns_submit_a4ptr (ctx, &addr, query_finished_ptrv4, L);
+			struct dns_query *query = dns_submit_a6ptr (ctx, &addr6, query_finished_ptr, L);
 			if (!query)
-				return return_error (L, ctx);
-			queries++;
-			lua_pushboolean (L, 0);
-			lua_setfield (L, -2, "ptrv4");
+			{
+				return_error (L, ctx);
+				lua_setfield (L, -3, "ptr_error");
+				lua_setfield (L, -2, "ptr");
+			}
+			else
+			{
+				queries++;
+				lua_pushboolean (L, 0);
+				lua_setfield (L, -2, "ptr");
+			}
+		}
+		else if (ret > 0)
+		{
+			struct dns_query *query = dns_submit_a4ptr (ctx, &addr, query_finished_ptr, L);
+			if (!query)
+			{
+				return_error (L, ctx);
+				lua_setfield (L, -3, "ptr_error");
+				lua_setfield (L, -2, "ptr");
+			}
+			else
+			{
+				queries++;
+				lua_pushboolean (L, 0);
+				lua_setfield (L, -2, "ptr");
+			}
 		}
 	}
 
