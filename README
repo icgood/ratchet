@@ -94,7 +94,7 @@ Dependencies
  * Lua 5.1+ (http://www.lua.org)
  * libevent 1.4.10+ (http://monkey.org/~provos/libevent/)
 
- * Without --disable-zeromq:  ZeroMQ 2.1.0+ BETA (http://www.zeromq.org)
+ * Without --disable-zeromq:  ZeroMQ 2.1.0+ (http://www.zeromq.org)
  * Without --disable-timerfd: Linux kernel 2.6.25+, Glibc 2.8+
  * Without --disable-udns:    UDNS 0.0.9+ (http://www.corpit.ru/mjt/udns.html)
 
