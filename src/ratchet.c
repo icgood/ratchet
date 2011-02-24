@@ -214,6 +214,23 @@ static void event_triggered (int fd, short event, void *arg)
 	lua_settop (L1, 0);
 	lua_pushthread (L1);
 	lua_xmove (L1, L, 1);
+	lua_pushboolean (L1, !(event & EV_TIMEOUT));
+	lua_call (L, 2, 0);
+}
+/* }}} */
+
+/* {{{ timeout_triggered() */
+static void timeout_triggered (int fd, short event, void *arg)
+{
+	lua_State *L1 = (lua_State *) arg;
+	lua_State *L = lua_tothread (L1, 1);
+
+	/* Call the run_thread() helper method. */
+	lua_getfield (L, 1, "run_thread");
+	lua_pushvalue (L, 1);
+	lua_settop (L1, 0);
+	lua_pushthread (L1);
+	lua_xmove (L1, L, 1);
 	lua_call (L, 2, 0);
 }
 /* }}} */
@@ -781,7 +798,7 @@ static int ratchet_wait_for_timeout (lua_State *L)
 
 	/* Build event and queue it up. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-	timeout_set (ev, event_triggered, L1);
+	timeout_set (ev, timeout_triggered, L1);
 	event_base_set (e_b, ev);
 	event_add (ev, &tv);
 

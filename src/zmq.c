@@ -341,7 +341,9 @@ static int rzmq_rawrecv (lua_State *L)
 /* {{{ send() */
 #define rzmq_send "return function (self, ...)\n" \
 	"	while not self:is_writable() do\n" \
-	"		coroutine.yield('write', self)\n" \
+	"		if not coroutine.yield('write', self) then\n" \
+	"			return\n" \
+	"		end\n" \
 	"	end\n" \
 	"	return self:rawsend(...)\n" \
 	"end\n"
@@ -350,7 +352,9 @@ static int rzmq_rawrecv (lua_State *L)
 /* {{{ recv() */
 #define rzmq_recv "return function (self, ...)\n" \
 	"	while not self:is_readable() do\n" \
-	"		coroutine.yield('read', self)\n" \
+	"		if not coroutine.yield('read', self) then\n" \
+	"			return\n" \
+	"		end\n" \
 	"	end\n" \
 	"	return self:rawrecv()\n" \
 	"end\n"
@@ -359,7 +363,9 @@ static int rzmq_rawrecv (lua_State *L)
 /* {{{ recv_all() */
 #define rzmq_recv_all "return function (self, ...)\n" \
 	"	while not self:is_readable() do\n" \
-	"		coroutine.yield('read', self)\n" \
+	"		if not coroutine.yield('read', self) then\n" \
+	"			return\n" \
+	"		end\n" \
 	"	end\n" \
 	"   local ret = ''\n" \
 	"   repeat\n" \
@@ -393,7 +399,7 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 		/* Documented methods. */
 		{"get_fd", rzmq_get_fd},
 		{"get_timeout", rzmq_get_timeout},
-		{"set_timeout", rzmq_get_timeout},
+		{"set_timeout", rzmq_set_timeout},
 		{"bind", rzmq_bind},
 		{"connect", rzmq_connect},
 		/* Undocumented, helper methods. */

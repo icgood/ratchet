@@ -619,15 +619,27 @@ static int rsock_rawrecv (lua_State *L)
 /* ---- Lua-implemented Functions ------------------------------------------- */
 
 /* {{{ send() */
-#define rsock_send "return function (self, ...)\ncoroutine.yield('write', self)\nself:rawsend(...)\nend\n"
+#define rsock_send "return function (self, ...)\n" \
+	"	if coroutine.yield('write', self) then\n" \
+	"		return self:rawsend(...)\n" \
+	"	end\n" \
+	"end\n"
 /* }}} */
 
 /* {{{ recv() */
-#define rsock_recv "return function (self, ...)\ncoroutine.yield('read', self)\nreturn self:rawrecv(...)\nend\n"
+#define rsock_recv "return function (self, ...)\n" \
+	"	if coroutine.yield('read', self) then\n" \
+	"		return self:rawrecv(...)\n" \
+	"	end\n" \
+	"end\n"
 /* }}} */
 
 /* {{{ accept() */
-#define rsock_accept "return function (self, ...)\ncoroutine.yield('read', self)\nreturn self:rawaccept(...)\nend\n"
+#define rsock_accept "return function (self, ...)\n" \
+	"	if coroutine.yield('read', self) then\n" \
+	"		return self:rawaccept(...)\n" \
+	"	end\n" \
+	"end\n"
 /* }}} */
 
 /* {{{ connect() */
@@ -699,7 +711,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		/* Documented methods. */
 		{"get_fd", rsock_get_fd},
 		{"get_timeout", rsock_get_timeout},
-		{"set_timeout", rsock_get_timeout},
+		{"set_timeout", rsock_set_timeout},
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
 		{"check_ok", rsock_check_ok},
