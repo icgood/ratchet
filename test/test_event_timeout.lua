@@ -7,7 +7,7 @@ function ctx1(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    socket:set_timeout(0.01)
+    socket:set_timeout(0.0)
     local client = socket:accept()
     assert(not client, "accept failed to timeout")
 end
