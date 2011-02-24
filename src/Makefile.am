@@ -28,5 +28,5 @@ if ENABLE_MODULE
 lualibdir = @LUA_CPATH@
 lualib_LTLIBRARIES = ratchet.la
 ratchet_la_SOURCES = $(allsources)
-ratchet_la_LDFLAGS = -module -avoid-version
+ratchet_la_LDFLAGS = -module -avoid-version -shared
 endif
