@@ -26,6 +26,7 @@
 #include <lualib.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <math.h>
@@ -431,6 +432,9 @@ static int rsock_bind (lua_State *L)
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
 	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
+
+	if (addr->sa_family == AF_UNIX)
+		unlink (((struct sockaddr_un *) addr)->sun_path);
 
 	int ret = bind (sockfd, addr, addrlen);
 	if (ret < 0)

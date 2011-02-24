@@ -14,7 +14,7 @@ end
 
 kernel = ratchet.new()
 dns = ratchet.dns.new(kernel)
-kernel:attach(ctx1, "tcp://localhost:10025")
+kernel:attach(ctx1, "tcp://127.0.0.1:10025")
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

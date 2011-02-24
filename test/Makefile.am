@@ -12,6 +12,7 @@ TESTS = test_listen_connect.lua \
 	test_wait_all.lua \
 	test_thread_error_handler.lua \
 	test_shutdown.lua \
+	test_unix_sockets.lua \
 	test_event_timeout.lua \
 	test_zmq_send_recv.lua \
 	test_multi_protocol.lua \
@@ -28,6 +29,7 @@ else
 XFAIL_TESTS += test_listen_connect.lua \
 	       test_send_recv.lua \
 	       test_shutdown.lua \
+	       test_unix_sockets.lua \
 	       test_event_timeout.lua \
 	       test_multi_protocol.lua \
 	       test_sockopt.lua

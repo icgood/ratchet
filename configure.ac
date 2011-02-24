@@ -13,6 +13,8 @@ AC_CONFIG_HEADERS([config.h])
 #####################
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_RANLIB
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -77,6 +79,7 @@ AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
 AC_DEFINE([HAVE_UDNS], [0], [Define to 1 if you have the udns library.])
 if test "x${use_udns}" != "xno"; then
 	AC_CHECK_HEADER([udns.h], [have_udns=yes], [have_udns=no])
+	AC_CHECK_HEADER([arpa/inet.h], [have_udns=yes], [have_udns=no])
 	AC_SEARCH_LIBS([dns_init], [udns], [], [have_udns=no])
 	if test "x${have_udns}" != "xyes"; then
 		AC_MSG_ERROR([UDNS libraries required for building (or --disable-udns).])
@@ -126,9 +129,7 @@ AM_CONDITIONAL([HAVE_TIMERFD], [test "x${have_timerfd}" = "xyes"])
 AC_DEFINE([HAVE_SOCKET], [0], [Define to 1 if you have the BSD socket system call suite.])
 if test "x${use_socket}" != "xno"; then
 	AC_CHECK_HEADERS([sys/socket.h], [have_socket=yes], [have_socket=no])
-	AC_CHECK_FUNC([socket], [], [have_socket=no])
-	AC_CHECK_FUNC([getsockopt], [], [have_socket=no])
-	AC_CHECK_FUNC([setsockopt], [], [have_socket=no])
+	AC_CHECK_FUNCS([socket getsockopt setsockopt], [], [have_socket=no])
 	if test "x${have_socket}" != "xyes"; then
 		AC_MSG_ERROR([The BSD socket libraries required for building.])
 	else
@@ -180,12 +181,13 @@ fi
 #####################
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT64_T
+AC_TYPE_UINT64_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
 
 #####################
 # Checks for library functions.
-AC_CHECK_FUNCS([memset socket writev modf])
+AC_CHECK_FUNCS([memset writev modf])
 AC_FUNC_STRERROR_R
 
 #####################
