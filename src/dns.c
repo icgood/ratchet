@@ -40,7 +40,20 @@
 #define QUERY_PTR_V4 16
 #define QUERY_PTR_V6 32
 
-#define get_dns_ctx(L, i) *((struct dns_ctx **) luaL_checkudata (L, i, "ratchet_dns_meta"))
+#ifndef DNS_MAX_TIMEOUT
+#define DNS_MAX_TIMEOUT 0
+#endif
+
+#define get_dns_ctx(L, i) ((struct mydns_data *) luaL_checkudata (L, i, "ratchet_dns_meta"))->ctx
+#define get_dns_timeout(L, i) ((struct mydns_data *) luaL_checkudata (L, i, "ratchet_dns_meta"))->timeout
+
+/* {{{ struct mydns_data */
+struct mydns_data
+{
+	struct dns_ctx *ctx;
+	double timeout;
+};
+/* }}} */
 
 /* {{{ return_error() */
 static int return_error (lua_State *L, struct dns_ctx *ctx)
@@ -300,6 +313,46 @@ static void query_finished_txt (struct dns_ctx *ctx, struct dns_rr_txt *result, 
 
 /* }}} */
 
+/* {{{ reset_timeouts() */
+static void reset_timeouts (lua_State *L, struct dns_ctx *ctx)
+{
+	dns_timeouts (ctx, DNS_MAX_TIMEOUT, 0);
+
+	lua_getfenv (L, 1);
+
+	/* Unpause dns thread, if it's paused. */
+	lua_getfield (L, -1, "thread");
+	if (lua_status (lua_tothread (L, -1)) == LUA_YIELD)
+	{
+		/* Prepare to call ratchet:unpause(). */
+		lua_getfield (L, -2, "ratchet");
+		lua_getfield (L, -1, "unpause");
+		lua_insert (L, -2);
+
+		/* Call as ratchet:unpause(dns_thread, false). */
+		lua_pushvalue (L, -3);
+		lua_pushboolean (L, 0);
+		lua_call (L, 3, 0);
+	}
+
+	lua_pop (L, 2);
+}
+/* }}} */
+
+/* {{{ timeout_handler() */
+static void timeout_handler (struct dns_ctx *ctx, int new_timeout, void *data)
+{
+	if (ctx)
+	{
+		double *timeout = (double *) data;
+		if (new_timeout < 0)
+			*timeout = -1.0;
+		else
+			*timeout = (double) new_timeout;
+	}
+}
+/* }}} */
+
 /* {{{ get_query_type() */
 static int get_query_type (lua_State *L, int index)
 {
@@ -330,25 +383,33 @@ static int mydns_new (lua_State *L)
 {
 	luaL_checkudata (L, 1, "ratchet_meta");
 
-	struct dns_ctx **new = (struct dns_ctx **) lua_newuserdata (L, sizeof (struct dns_ctx *));
-	*new = dns_new (NULL);
-	if (!*new)
+	struct mydns_data *new = (struct mydns_data *) lua_newuserdata (L, sizeof (struct mydns_data));
+	memset (new, 0, sizeof (struct mydns_data));
+	new->ctx = dns_new (NULL);
+	if (!new->ctx)
 		return luaL_error (L, "dns_new failed");
-	dns_open (*new);
+	dns_open (new->ctx);
+	new->timeout = -1.0;
+	dns_set_tmcbck (new->ctx, timeout_handler, &new->timeout);
 
 	luaL_getmetatable (L, "ratchet_dns_meta");
 	lua_setmetatable (L, -2);
 
+	/* Set up the environment table. */
 	lua_newtable (L);
+
+	/* Save the ratchet object. */
 	lua_pushvalue (L, 1);
 	lua_setfield (L, -2, "ratchet");
-	lua_setfenv (L, -2);
 
 	/* Attach the DNS as a background thread. */
 	lua_getfield (L, 1, "attach_background");
 	lua_pushvalue (L, 1);
-	lua_pushvalue (L, -3);
-	lua_call (L, 2, 0);
+	lua_pushvalue (L, -4);
+	lua_call (L, 2, 1);
+	lua_setfield (L, -2, "thread");
+
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -392,6 +453,16 @@ static int mydns_get_fd (lua_State *L)
 }
 /* }}} */
 
+/* {{{ mydns_get_timeout() */
+static int mydns_get_timeout (lua_State *L)
+{
+	double timeout = get_dns_timeout (L, 1);
+	lua_pushnumber (L, (lua_Number) timeout);
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ mydns_ioevent() */
 static int mydns_ioevent (lua_State *L)
 {
@@ -406,7 +477,7 @@ static int mydns_ioevent (lua_State *L)
 static int mydns_timeouts (lua_State *L)
 {
 	struct dns_ctx *ctx = get_dns_ctx (L, 1);
-	dns_timeouts (ctx, 0, 0);
+	dns_timeouts (ctx, DNS_MAX_TIMEOUT, 0);
 
 	return 0;
 }
@@ -526,7 +597,7 @@ static int mydns_submit (lua_State *L)
 
 	if (queries > 0)
 	{
-		dns_timeouts (ctx, 0, 0);
+		reset_timeouts (L, ctx);
 		return lua_yield (L, 2);
 	}
 	else
@@ -538,16 +609,18 @@ static int mydns_submit (lua_State *L)
 
 /* {{{ wait() */
 #define mydns_wait "return function (self, ...)\n" \
-	"	coroutine.yield('read', self)\n" \
-	"	return self:ioevent(...)\n" \
+	"	if coroutine.yield('read', self) then\n" \
+	"		return self:ioevent(...)\n" \
+	"	else\n" \
+	"		return self:timeouts(...)\n" \
+	"	end\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ wait_all() */
 #define mydns_wait_all "return function (self, ...)\n" \
 	"	while true do\n" \
-	"		coroutine.yield('read', self)\n" \
-	"		self:ioevent(...)\n" \
+	"		self:wait(...)\n" \
 	"	end\n" \
 	"end\n"
 /* }}} */
@@ -579,6 +652,7 @@ int luaopen_ratchet_dns (lua_State *L)
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_fd", mydns_get_fd},
+		{"get_timeout", mydns_get_timeout},
 		{"submit", mydns_submit},
 		/* Undocumented, helper methods. */
 		{"ioevent", mydns_ioevent},
