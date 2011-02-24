@@ -47,6 +47,10 @@ struct socket_data
 #define UNIX_PATH_MAX 108
 #endif
 
+#ifndef DEFAULT_TCPUDP_PORT
+#define DEFAULT_TCPUDP_PORT 80
+#endif
+
 #define socket_fd(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->fd)
 #define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->timeout)
 
@@ -102,36 +106,19 @@ static int rsock_type_and_info_from_uri (lua_State *L)
 
 	/* Check for form: schema://[127.0.0.1]:25
 	 * or: schema://[01:02:03:04:05:06:07:08]:25 */
-	if (strmatch (L, 1, "^([tu][cd]p)%:%/+%[(.-)%](%:?)(%d*)$"))
-	{
-		if (!strequal (L, -2, ":") || strequal (L, -1, ""))
-		{
-			lua_pop (L, 1);
-			lua_pushnil (L);
-		}
-		lua_remove (L, -2);
+	if (strmatch (L, 1, "^([tu][cd]p)%:%/+%[(.-)%]%:(%d+)$"))
 		return 3;
-	}
 
 	/* Check for form: schema://127.0.0.1:25 */
-	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+([^%:]*)(%:?)(%d*)$"))
-	{
-		if (!strequal (L, -2, ":") || strequal (L, -1, ""))
-		{
-			/* Send nil as the port/service if not given. */
-			lua_pop (L, 1);
-			lua_pushnil (L);
-		}
-		lua_remove (L, -2);
+	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+([^%:]*)%:(%d+)$"))
 		return 3;
-	}
 
 	/* Check for form: tcp://127.0.0.1
 	 * or: tcp://01:02:03:04:05:06:07:08
-	 * Use port 80 as the fallback. */
+	 * Always uses default port. */
 	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+(.*)$"))
 	{
-		lua_pushinteger (L, 80);
+		lua_pushinteger (L, DEFAULT_TCPUDP_PORT);
 		return 3;
 	}
 
