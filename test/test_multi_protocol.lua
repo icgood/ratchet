@@ -1,7 +1,7 @@
 require "ratchet"
 
 function tcpctx1(where)
-    local rec = ratchet.socket.parse_uri(where, dns)
+    local rec = ratchet.socket.parse_uri(where, dns, "ipv6", "ipv4")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -19,7 +19,7 @@ function tcpctx1(where)
 end
 
 function tcpctx2(where)
-    local rec = ratchet.socket.parse_uri(where, dns)
+    local rec = ratchet.socket.parse_uri(where, dns, "ipv6", "ipv4")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -35,7 +35,7 @@ function zmqctx1(where)
     local socket = ratchet.zmqsocket.new(t)
     socket:bind(e)
 
-    r:attach(zmqctx2, "zmq:rep:tcp://127.0.0.1:10026")
+    kernel:attach(zmqctx2, "zmq:rep:tcp://127.0.0.1:10026")
 
     -- Portion being tested.
     --

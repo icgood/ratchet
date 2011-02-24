@@ -313,6 +313,61 @@ static void query_finished_txt (struct dns_ctx *ctx, struct dns_rr_txt *result, 
 
 /* }}} */
 
+/* {{{ check_already_ipv6() */
+static int check_already_ipv6 (lua_State *L, const char *data)
+{
+	if (0 == strcmp ("*", data))
+	{
+		lua_createtable (L, 1, 0);
+		lua_pushlightuserdata (L, (void *) &in6addr_any);
+		lua_rawseti (L, -2, 1);
+		lua_setfield (L, -2, "ipv6");
+		return 1;
+	}
+
+	struct in6_addr *addr = (struct in6_addr *) lua_newuserdata (L, sizeof (struct in6_addr));
+	if (inet_pton (AF_INET6, data, addr) > 0)
+	{
+		lua_createtable (L, 1, 0);
+		lua_insert (L, -2);
+		lua_rawseti (L, -2, 1);
+		lua_setfield (L, -2, "ipv6");
+		return 1;
+	}
+
+	lua_pop (L, 1);
+	return 0;
+}
+/* }}} */
+
+/* {{{ check_already_ipv4() */
+static int check_already_ipv4 (lua_State *L, const char *data)
+{
+	if (0 == strcmp ("*", data))
+	{
+		lua_createtable (L, 1, 0);
+		struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
+		addr->s_addr = INADDR_ANY;
+		lua_rawseti (L, -2, 1);
+		lua_setfield (L, -2, "ipv4");
+		return 1;
+	}
+
+	struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
+	if (inet_pton (AF_INET, data, addr) > 0)
+	{
+		lua_createtable (L, 1, 0);
+		lua_insert (L, -2);
+		lua_rawseti (L, -2, 1);
+		lua_setfield (L, -2, "ipv4");
+		return 1;
+	}
+
+	lua_pop (L, 1);
+	return 0;
+}
+/* }}} */
+
 /* {{{ reset_timeouts() */
 static void reset_timeouts (lua_State *L, struct dns_ctx *ctx)
 {
@@ -506,14 +561,7 @@ static int mydns_submit (lua_State *L)
 
 	if (query_type & QUERY_V6)
 	{
-		if (0 == strcmp ("*", data))
-		{
-			lua_createtable (L, 1, 0);
-			lua_pushlightuserdata (L, (void *) &in6addr_any);
-			lua_rawseti (L, -2, 1);
-			lua_setfield (L, -2, "ipv6");
-		}
-		else
+		if (!check_already_ipv6 (L, data))
 		{
 			struct dns_query *query = dns_submit_a6 (ctx, data, 0, query_finished_a6, L);
 			if (!query)
@@ -526,15 +574,7 @@ static int mydns_submit (lua_State *L)
 
 	if (query_type & QUERY_V4)
 	{
-		if (0 == strcmp ("*", data))
-		{
-			lua_createtable (L, 1, 0);
-			struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
-			addr->s_addr = INADDR_ANY;
-			lua_rawseti (L, -2, 1);
-			lua_setfield (L, -2, "ipv4");
-		}
-		else
+		if (!check_already_ipv4 (L, data))
 		{
 			struct dns_query *query = dns_submit_a4 (ctx, data, 0, query_finished_a4, L);
 			if (!query)
