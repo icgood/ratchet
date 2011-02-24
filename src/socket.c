@@ -127,10 +127,11 @@ static int rsock_type_and_info_from_uri (lua_State *L)
 	}
 
 	/* Check for form: tcp://127.0.0.1
-	 * or: tcp://01:02:03:04:05:06:07:08 */
+	 * or: tcp://01:02:03:04:05:06:07:08
+	 * Use port 80 as the fallback. */
 	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+(.*)$"))
 	{
-		lua_pushnil (L);	/* Send nil as the port/service no matter what. */
+		lua_pushinteger (L, 80);
 		return 3;
 	}
 
