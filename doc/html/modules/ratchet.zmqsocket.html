@@ -104,7 +104,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#parse_uri">parse_uri</a>&nbsp;(uri)</td>
+	<td class="name" nowrap><a href="#prepare_uri">prepare_uri</a>&nbsp;(uri)</td>
 	<td class="summary">URI schema handler for TCP connection strings.</td>
 	</tr>
 
@@ -292,7 +292,7 @@ a new zmqsocket object.
 
 
 
-<dt><a name="parse_uri"></a><strong>parse_uri</strong>&nbsp;(uri)</dt>
+<dt><a name="prepare_uri"></a><strong>prepare_uri</strong>&nbsp;(uri)</dt>
 <dd>
 URI schema handler for TCP connection strings. Strings must with "zmq", followed by a ":", followed by a ZeroMQ socket type (e.g. "PAIR"), followed by a ":", followed by something suitable to be passed to zmq_connect() or zmq_bind() as an endpoint. See the manual page for complete details.
 
@@ -312,7 +312,7 @@ URI schema handler for TCP connection strings. Strings must with "zmq", followed
 
 
 <h3>Return value:</h3>
-the socket type followed by the endpoint.
+table containing keys "type" and "endpoint" useful in creation and usage of zmqsocket objects.
 
 
 

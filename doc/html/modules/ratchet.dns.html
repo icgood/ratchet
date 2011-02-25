@@ -89,7 +89,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#submit">submit</a>&nbsp;(self, data, ...)</td>
+	<td class="name" nowrap><a href="#submit">submit</a>&nbsp;(self, data, types)</td>
 	<td class="summary">Performs a DNS query on the given data.</td>
 	</tr>
 
@@ -168,9 +168,9 @@ a new dns object.
 
 
 
-<dt><a name="submit"></a><strong>submit</strong>&nbsp;(self, data, ...)</dt>
+<dt><a name="submit"></a><strong>submit</strong>&nbsp;(self, data, types)</dt>
 <dd>
-Performs a DNS query on the given data. If the results are not immediately available, the current thread will pause until they are. The types of queries are given as extra parameters, if none are given, the default query type is used. See the manual for complete details.
+Performs a DNS query on the given data. If the results are not immediately available, the current thread will pause until they are. If a table is not given for <code>type</code> or the table is tempty, the default query type(s) are used. See the manual for complete details.
 
 
 <h3>Parameters</h3>
@@ -185,7 +185,7 @@ Performs a DNS query on the given data. If the results are not immediately avail
 	</li>
 	
 	<li>
-	  ...: strings containing the query types, e.g. "ipv6" or "mx".
+	  types: optional table of strings containing the query types, e.g. "ipv6" or "mx".
 	</li>
 	
 </ul>
