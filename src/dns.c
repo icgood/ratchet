@@ -39,6 +39,10 @@
 #define QUERY_TXT 8
 #define QUERY_PTR 16
 
+#ifndef DNS_DEFAULT_QUERY
+#define DNS_DEFAULT_QUERY QUERY_V6
+#endif
+
 #ifndef DNS_MAX_TIMEOUT
 #define DNS_MAX_TIMEOUT 0
 #endif
@@ -387,14 +391,32 @@ static int get_query_type (lua_State *L, int index)
 		QUERY_MX, QUERY_TXT, QUERY_PTR
 	};
 
-	int i, ret = howlst[luaL_checkoption (L, index, "ipv6", lst)];
-	for (i=index+1; ; i++)
+	int i, j, ret = 0;
+	for (i=1; ; i++)
 	{
-		if (lua_isstring (L, i))
-			ret |= howlst[luaL_checkoption (L, i, NULL, lst)];
+		lua_rawgeti (L, index, i);
+		if (lua_isstring (L, -1))
+		{
+			const char *type = lua_tostring (L, -1);
+			for (j=0; lst[j] != NULL; j++)
+			{
+				if (0 == strcmp (lst[j], type))
+				{
+					ret |= howlst[j];
+					break;
+				}
+			}
+			if (lst[j] == NULL)
+				return luaL_error (L, "invalid query type given: %s", type);
+			lua_pop (L, 1);
+		}
 		else
 			break;
 	}
+	lua_pop (L, 1);
+
+	if (!ret)
+		ret = DNS_DEFAULT_QUERY;
 
 	return ret;
 }

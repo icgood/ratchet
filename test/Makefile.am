@@ -21,7 +21,7 @@ TESTS = test_listen_connect.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
 
-EXTRA_DIST = $(TESTS)
+EXTRA_DIST = $(TESTS) test_config.lua
 
 if HAVE_SOCKET
 XFAIL_TESTS +=  
