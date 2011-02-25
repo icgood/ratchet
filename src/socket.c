@@ -277,8 +277,8 @@ static int rsock_build_udp_info (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_build_unix_info() */
-static int rsock_build_unix_info (lua_State *L)
+/* {{{ rsock_prepare_unix() */
+static int rsock_prepare_unix (lua_State *L)
 {
 	const char *path = luaL_checkstring (L, 1);
 	lua_settop (L, 1);
@@ -643,8 +643,8 @@ static int rsock_rawrecv (lua_State *L)
 	"end\n"
 /* }}} */
 
-/* {{{ parse_uri() */
-#define rsock_parse_uri "return function (uri, dns, ...)\n" \
+/* {{{ prepare_uri() */
+#define rsock_prepare_uri "return function (uri, dns, ...)\n" \
 	"	local class = ratchet.socket\n" \
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \
@@ -655,10 +655,24 @@ static int rsock_rawrecv (lua_State *L)
 	"		return class.build_udp_info(dnsrec, port)\n" \
 	"	\n" \
 	"	elseif schema == 'unix' then\n" \
-	"		return class.build_unix_info(dest)\n" \
+	"		return class.prepare_unix(dest)\n" \
 	"	else\n" \
 	"		error('unrecognized URI string: ' .. uri)\n" \
 	"	end\n" \
+	"end\n"
+/* }}} */
+
+/* {{{ prepare_tcp() */
+#define rsock_prepare_tcp "return function (host, port, dns, ...)\n" \
+	"	local dnsrec = dns:submit(host, ...)\n" \
+	"	return ratchet.socket.build_tcp_info(dnsrec, port)\n" \
+	"end\n"
+/* }}} */
+
+/* {{{ prepare_udp() */
+#define rsock_prepare_udp "return function (host, port, dns, ...)\n" \
+	"	local dnsrec = dns:submit(host, ...)\n" \
+	"	return ratchet.socket.build_udp_info(dnsrec, port)\n" \
 	"end\n"
 /* }}} */
 
@@ -678,14 +692,16 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
 		{"build_tcp_info", rsock_build_tcp_info},
 		{"build_udp_info", rsock_build_udp_info},
-		{"build_unix_info", rsock_build_unix_info},
+		{"prepare_unix", rsock_prepare_unix},
 		{NULL}
 	};
 
 	/* Static functions in the ratchet.socket namespace. */
 	static const struct luafunc luafuncs[] = {
 		/* Documented methods. */
-		{"parse_uri", rsock_parse_uri},
+		{"prepare_uri", rsock_prepare_uri},
+		{"prepare_tcp", rsock_prepare_tcp},
+		{"prepare_udp", rsock_prepare_udp},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

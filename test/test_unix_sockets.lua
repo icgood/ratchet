@@ -1,7 +1,7 @@
 require "ratchet"
 
 function ctx1(where)
-    local rec = ratchet.socket.parse_uri(where)
+    local rec = ratchet.socket.prepare_uri(where)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -26,7 +26,7 @@ function ctx2(socket)
 end
 
 function ctx3(where)
-    local rec = ratchet.socket.parse_uri(where)
+    local rec = ratchet.socket.prepare_uri(where)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 

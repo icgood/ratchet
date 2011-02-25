@@ -2,7 +2,7 @@ require "ratchet"
 require "test_config"
 
 function ctx1(where)
-    local rec = ratchet.socket.parse_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -20,7 +20,7 @@ function ctx1(where)
 end
 
 function ctx2(where)
-    local rec = ratchet.socket.parse_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 

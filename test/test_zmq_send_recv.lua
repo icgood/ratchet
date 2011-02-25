@@ -1,9 +1,9 @@
 require "ratchet"
 
 function ctx1(where)
-    local t, e = ratchet.zmqsocket.parse_uri(where)
-    local socket = ratchet.zmqsocket.new(t)
-    socket:bind(e)
+    local rec = ratchet.zmqsocket.prepare_uri(where)
+    local socket = ratchet.zmqsocket.new(rec.type)
+    socket:bind(rec.endpoint)
 
     kernel:attach(ctx2, "zmq:rep:tcp://127.0.0.1:10025")
 
@@ -15,9 +15,9 @@ function ctx1(where)
 end
 
 function ctx2(where)
-    local t, e = ratchet.zmqsocket.parse_uri(where)
-    local socket = ratchet.zmqsocket.new(t)
-    socket:connect(e)
+    local rec = ratchet.zmqsocket.prepare_uri(where)
+    local socket = ratchet.zmqsocket.new(rec.type)
+    socket:connect(rec.endpoint)
 
     -- Portion being tested.
     --

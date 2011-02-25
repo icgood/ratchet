@@ -133,20 +133,22 @@ static int rzmq_new (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rzmq_parse_uri() */
-static int rzmq_parse_uri (lua_State *L)
+/* {{{ rzmq_prepare_uri() */
+static int rzmq_prepare_uri (lua_State *L)
 {
 	luaL_checkstring (L, 1);
 	lua_settop (L, 1);
+
+	lua_createtable (L, 0, 2);
 
 	/* Check for form: schema:TYPE:endpoint
 	 * example: zmq:PAIR:tcp://localhost:10025 */
 	if (strmatch (L, 1, "^zmq%:(.-)%:(.*)$"))
 	{
-		lua_getfield (L, 2, "upper");
-		lua_pushvalue (L, 2);
-		lua_call (L, 1, 1);
+		lua_getfield (L, 3, "upper");
 		lua_pushvalue (L, 3);
+		lua_call (L, 1, 1);
+		lua_pushvalue (L, 4);
 	}
 
 	else
@@ -155,7 +157,11 @@ static int rzmq_parse_uri (lua_State *L)
 		lua_pushvalue (L, 1);
 	}
 
-	return 2;
+	lua_setfield (L, 2, "endpoint");
+	lua_setfield (L, 2, "type");
+	lua_settop (L, 2);
+
+	return 1;
 }
 /* }}} */
 
@@ -384,7 +390,7 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 	/* Static functions in the ratchet.zmqsocket namespace. */
 	static const luaL_Reg funcs[] = {
 		{"new", rzmq_new},
-		{"parse_uri", rzmq_parse_uri},
+		{"prepare_uri", rzmq_prepare_uri},
 		{NULL}
 	};
 
