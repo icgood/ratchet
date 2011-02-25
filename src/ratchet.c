@@ -75,7 +75,7 @@ static int setup_persistance_tables (lua_State *L)
 	/* Set up a weak-key table to track what threads a thread is waiting on. */
 	lua_newtable (L);
 	lua_newtable (L);
-	lua_pushliteral (L, "kv");
+	lua_pushliteral (L, "k");
 	lua_setfield (L, -2, "__mode");
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "waiting_on");
@@ -161,9 +161,7 @@ static void end_thread_persist (lua_State *L, int index)
 		lua_pushnil (L);
 		lua_rawset (L, -3);
 	}
-	lua_pop (L, 1);
-
-	lua_pop (L, 1);
+	lua_pop (L, 2);
 }
 /* }}} */
 
@@ -510,7 +508,7 @@ static int ratchet_loop (lua_State *L)
 			lua_pop (L, 2);
 			break;
 		}
-		else lua_pop (L, 3);
+		else lua_pop (L, 4);
 
 		/* Call event loop, break if we're out of events. */
 		int ret = event_base_loop (e_b, 0);
