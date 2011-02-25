@@ -15,8 +15,9 @@ function new(type)
 --  zmq_connect() or zmq_bind() as an endpoint. See the manual page for
 --  complete details.
 --  @param uri the URI connection string.
---  @return the socket type followed by the endpoint.
-function parse_uri(uri)
+--  @return table containing keys "type" and "endpoint" useful in creation
+--          and usage of zmqsocket objects.
+function prepare_uri(uri)
 
 --- Returns the internal socket file descriptor.
 --  @param self the zmqsocket object.

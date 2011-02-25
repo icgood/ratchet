@@ -25,10 +25,43 @@ function from_fd(fd)
 --  page for complete details.
 --  @param uri the URI connection string.
 --  @param dns ratchet.dns object, for URIs that require it.
---  @param ... DNS query types to use, e.g. "ipv6". See ratchet.dns.
+--  @param types optional table of DNS query types to pass to
+--               <code>dns:submit()</code>. See ratchet.dns.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function parse_uri(uri, dns, ...)
+function prepare_uri(uri, dns, types)
+
+--- Prepares TCP socket information. On success, the returned object
+--  contains all necessary data to create and bind/connect a new socket object.
+--  See the manual page for complete details.
+--  @param host queried by DNS for new TCP connection.
+--  @param port destination port number for new TCP connection.
+--  @param dns ratchet.dns object, for <code>host</code>s that require it.
+--  @param types optional table of DNS query types to pass to
+--               <code>dns:submit()</code>. See ratchet.dns.
+--  @return Table of information useful in creating a new socket, or nil on
+--          failure followed by an error. See the manual for details.
+function prepare_tcp(host, port, dns, types)
+
+--- Prepares UDP socket information. On success, the returned object
+--  contains all necessary data to create and bind/connect a new socket object.
+--  See the manual page for complete details.
+--  @param host queried by DNS for new UDP connection.
+--  @param port destination port number for new UDP connection.
+--  @param dns ratchet.dns object, for <code>host</code>s that require it.
+--  @param types optional table of DNS query types to pass to
+--               <code>dns:submit()</code>. See ratchet.dns.
+--  @return Table of information useful in creating a new socket, or nil on
+--          failure followed by an error. See the manual for details.
+function prepare_udp(host, port, dns, types)
+
+--- Prepares UNIX socket information. On success, the returned object
+--  contains all necessary data to create and bind/connect a new socket object.
+--  See the manual page for complete details.
+--  @param path file-path to connect/create UNIX socket.
+--  @return Table of information useful in creating a new socket, or nil on
+--          failure followed by an error. See the manual for details.
+function prepare_udp(path)
 
 --- Returns the internal socket file descriptor.
 --  @param self the socket object.

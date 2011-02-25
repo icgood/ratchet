@@ -20,17 +20,18 @@ function new(ratchet)
 function get_fd(self)
 
 --- Performs a DNS query on the given data. If the results are not immediately
---  available, the current thread will pause until they are. The types of queries
---  are given as extra parameters, if none are given, the default query type is
---  used. See the manual for complete details.
+--  available, the current thread will pause until they are. If a table is not
+--  given for <code>type</code> or the table is tempty, the default query type(s)
+--  are used. See the manual for complete details.
 --  @param self the dns object.
 --  @param data a string of the domain name or IP address to query against.
---  @param ... strings containing the query types, e.g. "ipv6" or "mx".
+--  @param types optional table of strings containing the query types, e.g.
+--               "ipv6" or "mx".
 --  @return a table keyed on the given query types containing the query results.
 --          If a query type failed, the table key will be suffixed with "_error"
 --          (e.g. "ipv6_error") and will contain a string form of the error type.
 --          If the entire query submission failed, no table is returned, instead
 --          nil followed by an error message.
-function submit(self, data, ...)
+function submit(self, data, types)
 
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:
