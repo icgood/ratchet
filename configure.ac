@@ -14,7 +14,6 @@ AC_CONFIG_HEADERS([config.h])
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -46,6 +45,12 @@ AC_ARG_ENABLE([timerfd], [AS_HELP_STRING([--disable-timerfd],
 	      [use_timerfd="$enableval"], [use_timerfd=yes])
 
 #####################
+# Configure options: --disable-openssl[=no]
+AC_ARG_ENABLE([openssl], [AS_HELP_STRING([--disable-openssl],
+	      				 [disable usage of openssl libraries (default no)])],
+	      [use_openssl="$enableval"], [use_openssl=yes])
+
+#####################
 # Checks for libraries.
 
 # Lua
@@ -74,6 +79,20 @@ else
 	AC_DEFINE([HAVE_LIBEVENT], [1])
 fi
 AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
+
+# OpenSSL
+AC_DEFINE([HAVE_OPENSSL], [0], [Define to 1 if you have the openssl library.])
+if test "x${use_openssl}" != "xno"; then
+	AX_CHECK_OPENSSL([have_openssl=yes], [have_openssl=no])
+	if test "x${have_openssl}" != "xyes"; then
+		AC_MSG_ERROR([OpenSSL libraries required for building (or --disable-openssl).])
+	else
+		AC_DEFINE([HAVE_OPENSSL], [1])
+	fi
+else
+	AC_MSG_NOTICE([OpenSSL will not be included in the ratchet library.])
+fi
+AM_CONDITIONAL([HAVE_OPENSSL], [test "x${have_openssl}" = "xyes"])
 
 # UDNS
 AC_DEFINE([HAVE_UDNS], [0], [Define to 1 if you have the udns library.])
