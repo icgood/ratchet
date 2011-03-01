@@ -111,6 +111,55 @@ static void query_finished (lua_State *L, struct dns_ctx *ctx)
 }
 /* }}} */
 
+/* {{{ insert_mx_priority_sorted() */
+static void insert_mx_priority_sorted (lua_State *L, int index, int priority)
+{
+	int i, j;
+
+	lua_getfield (L, index, "priorities");
+
+	for (i=1; ; i++)
+	{
+		lua_rawgeti (L, -1, i);
+		if (lua_isnil (L, -1))
+		{
+			lua_pop (L, 1);
+			lua_pushinteger (L, priority);
+			lua_rawseti (L, -2, i);
+			break;
+		}
+
+		int n = (int) lua_tointeger (L, -1);
+		if (n == priority)
+		{
+			lua_pop (L, 1);
+			break;
+		}
+		else if (n > priority)
+		{
+			for (j=i+1; ; j++)
+			{
+				lua_rawgeti (L, -2, j);
+				lua_pushvalue (L, -2);
+				lua_rawseti (L, -4, j);
+				lua_remove (L, -2);
+				if (lua_isnil (L, -1))
+					break;
+			}
+			lua_pop (L, 1);
+			
+			lua_pushinteger (L, priority);
+			lua_rawseti (L, -2, i);
+			break;
+		}
+
+		lua_pop (L, 1);
+	}
+
+	lua_pop (L, 1);
+}
+/* }}} */
+
 /* {{{ query_finished_XXX() */
 
 /* {{{ query_finished_a4() */
@@ -192,6 +241,12 @@ static void query_finished_mx (struct dns_ctx *ctx, struct dns_rr_mx *result, vo
 	}
 
 	lua_newtable (L);
+	lua_newtable (L);
+	lua_setfield (L, -2, "priorities");
+	lua_pushinteger (L, result->dnsmx_nrr);
+	lua_setfield (L, -2, "n");
+	luaL_getmetatable (L, "ratchet_dns_mx_meta");
+	lua_setmetatable (L, -2);
 
 	for (i=0; i<result->dnsmx_nrr; i++)
 	{
@@ -203,6 +258,8 @@ static void query_finished_mx (struct dns_ctx *ctx, struct dns_rr_mx *result, vo
 			lua_pushstring (L, result->dnsmx_mx[i].name);
 			lua_rawseti (L, -2, 1);
 			lua_rawseti (L, -2, result->dnsmx_mx[i].priority);
+
+			insert_mx_priority_sorted (L, -1, result->dnsmx_mx[i].priority);
 		}
 		else
 		{
@@ -679,6 +736,46 @@ static int mydns_submit (lua_State *L)
 }
 /* }}} */
 
+/* {{{ mydns_mx_get_i() */
+static int mydns_mx_get_i (lua_State *L)
+{
+	luaL_checktype (L, 1, LUA_TTABLE);
+	int n = luaL_checkint (L, 2);
+
+	lua_getfield (L, 1, "n");
+	int max_n = lua_tonumber (L, -1);
+	lua_pop (L, 1);
+	if (n <= 0 || n > max_n)
+		return 0;
+
+	int i, j, k=1;
+	lua_getfield (L, 1, "priorities");
+	for (i=1; ; i++)
+	{
+		lua_rawgeti (L, -1, i);
+		if (lua_isnil (L, -1))
+			break;
+
+		int p = lua_tonumber (L, -1);
+		lua_pop (L, 1);
+		lua_rawgeti (L, 1, p);
+		for (j=1; ; j++)
+		{
+			lua_rawgeti (L, -1, j);
+			if (lua_isnil (L, -1))
+				break;
+			if (k++ == n)
+				return 1;
+			lua_pop (L, 1);
+		}
+		lua_pop (L, 2);
+	}
+	lua_pop (L, 2);
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Lua-implemented Functions ------------------------------------------- */
 
 /* {{{ wait() */
@@ -756,6 +853,14 @@ int luaopen_ratchet_dns (lua_State *L)
 	lua_setfield (L, -2, "__index");
 	luaI_openlib (L, NULL, metameths, 0);
 	register_luafuncs (L, -1, luametameths);
+	lua_pop (L, 1);
+
+	/* Set up metatable for MX results. */
+	luaL_newmetatable (L, "ratchet_dns_mx_meta");
+	lua_createtable (L, 0, 1);
+	lua_pushcfunction (L, mydns_mx_get_i);
+	lua_setfield (L, -2, "get_i");
+	lua_setfield (L, -2, "__index");
 	lua_pop (L, 1);
 
 	return 1;
