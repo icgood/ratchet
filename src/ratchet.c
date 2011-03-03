@@ -486,6 +486,7 @@ static int ratchet_unpause (lua_State *L)
 static int ratchet_loop (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
+	lua_settop (L, 1);
 
 	while (1)
 	{
@@ -504,11 +505,8 @@ static int ratchet_loop (lua_State *L)
 		lua_getfield (L, -1, "foreground");
 		lua_pushnil (L);
 		if (lua_next (L, -2) == 0)
-		{
-			lua_pop (L, 2);
 			break;
-		}
-		else lua_pop (L, 4);
+		lua_settop (L, 1);
 
 		/* Call event loop, break if we're out of events. */
 		int ret = event_base_loop (e_b, 0);
@@ -517,6 +515,7 @@ static int ratchet_loop (lua_State *L)
 		else if (ret > 0)
 			break;
 	}
+	lua_settop (L, 1);
 
 	/* Clear all background threads. */
 	lua_getfenv (L, 1);

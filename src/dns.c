@@ -408,8 +408,13 @@ static void reset_timeouts (lua_State *L, struct dns_ctx *ctx)
 
 	/* Unpause dns thread, if it's paused. */
 	lua_getfield (L, -1, "thread");
-	if (lua_status (lua_tothread (L, -1)) == LUA_YIELD)
+	lua_State *L1 = lua_tothread (L, -1);
+	if (lua_status (L1) == LUA_YIELD)
 	{
+		/* This thread would be waiting on I/O, which leaves two
+		 * values on the stack. */
+		lua_settop (L1, 0);
+
 		/* Prepare to call ratchet:unpause(). */
 		lua_getfield (L, -2, "ratchet");
 		lua_getfield (L, -1, "unpause");
@@ -729,6 +734,12 @@ static int mydns_submit (lua_State *L)
 	if (queries > 0)
 	{
 		reset_timeouts (L, ctx);
+
+		/* So that the stack only contains the two desired values. */
+		lua_replace (L, 2);
+		lua_replace (L, 1);
+		lua_settop (L, 2);
+
 		return lua_yield (L, 2);
 	}
 	else
