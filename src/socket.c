@@ -26,6 +26,7 @@
 #include <lualib.h>
 
 #include <sys/types.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -33,7 +34,7 @@
 #include <netdb.h>
 #include <errno.h>
 
-#include "ratchet.h"
+#include "luaopens.h"
 #include "misc.h"
 #include "sockopt.h"
 
@@ -101,7 +102,7 @@ static int rsock_from_fd (lua_State *L)
 /* {{{ rsock_type_and_info_from_uri() */
 static int rsock_type_and_info_from_uri (lua_State *L)
 {
-	const char *uri = luaL_checkstring (L, 1);
+	luaL_checkstring (L, 1);
 	lua_settop (L, 1);
 
 	/* Check for form: schema://[127.0.0.1]:25
@@ -297,7 +298,7 @@ static int rsock_prepare_unix (lua_State *L)
 	struct sockaddr_un *addr = (struct sockaddr_un *) lua_newuserdata (L, sizeof (struct sockaddr_un));
 	addr->sun_family = AF_UNIX;
 	strncpy (addr->sun_path, path, UNIX_PATH_MAX-1);
-	addr->sun_path[UNIX_PATH_MAX] = '\0';
+	addr->sun_path[UNIX_PATH_MAX-1] = '\0';
 	lua_setfield (L, 2, "addr");
 
 	return 1;
@@ -644,7 +645,7 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ prepare_uri() */
-#define rsock_prepare_uri "return function (uri, dns, ...)\n" \
+#define rsock_prepare_uri "return function (uri, ...)\n" \
 	"	local class = ratchet.socket\n" \
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \

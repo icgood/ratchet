@@ -33,10 +33,10 @@ AC_ARG_ENABLE([zeromq], [AS_HELP_STRING([--disable-zeromq],
 	      [use_zeromq="$enableval"], [use_zeromq=yes])
 
 #####################
-# Configure options: --disable-udns[=no]
-AC_ARG_ENABLE([udns], [AS_HELP_STRING([--disable-udns],
-	                              [disable usage of UDNS libraries (default no)])],
-	      [use_udns="$enableval"], [use_udns=yes])
+# Configure options: --disable-dns[=no]
+AC_ARG_ENABLE([dns], [AS_HELP_STRING([--disable-dns],
+	                             [disable usage of dns libraries (default no)])],
+	      [use_dns="$enableval"], [use_dns=yes])
 
 #####################
 # Configure options: --disable-timerfd[=no]
@@ -94,21 +94,14 @@ else
 fi
 AM_CONDITIONAL([HAVE_OPENSSL], [test "x${have_openssl}" = "xyes"])
 
-# UDNS
-AC_DEFINE([HAVE_UDNS], [0], [Define to 1 if you have the udns library.])
-if test "x${use_udns}" != "xno"; then
-	AC_CHECK_HEADER([udns.h], [have_udns=yes], [have_udns=no])
-	AC_CHECK_HEADER([arpa/inet.h], [have_udns=yes], [have_udns=no])
-	AC_SEARCH_LIBS([dns_init], [udns], [], [have_udns=no])
-	if test "x${have_udns}" != "xyes"; then
-		AC_MSG_ERROR([UDNS libraries required for building (or --disable-udns).])
-	else
-		AC_DEFINE([HAVE_UDNS], [1])
-	fi
+# DNS
+AC_DEFINE([HAVE_DNS], [0], [Define to 1 if you have the dns library.])
+if test "x${use_dns}" != "xno"; then
+	AC_DEFINE([HAVE_DNS], [1])
 else
-	AC_MSG_NOTICE([UDNS will not be included in the ratchet library.])
+	AC_MSG_NOTICE([dns will not be included in the ratchet library.])
 fi
-AM_CONDITIONAL([HAVE_UDNS], [test "x${have_udns}" = "xyes"])
+AM_CONDITIONAL([HAVE_DNS], [test "x${use_dns}" = "xyes"])
 
 # ZeroMQ 2.1.0+
 have_zmq=no
@@ -212,5 +205,6 @@ AC_FUNC_STRERROR_R
 #####################
 AC_CONFIG_FILES([Makefile
 		 src/Makefile
+		 src/libdns/Makefile
 		 test/Makefile])
 AC_OUTPUT

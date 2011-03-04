@@ -35,7 +35,7 @@ XFAIL_TESTS += test_listen_connect.lua \
 	       test_sockopt.lua
 endif
 
-if HAVE_UDNS
+if HAVE_DNS
 XFAIL_TESTS +=  
 else
 XFAIL_TESTS += test_listen_connect.lua \

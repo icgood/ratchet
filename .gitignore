@@ -23,7 +23,6 @@ INSTALL
 Makefile
 .deps/
 .libs/
-test/ratchet.so
 *.in
 *.la
 *.lo

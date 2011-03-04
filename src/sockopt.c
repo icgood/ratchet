@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <string.h>
 #if HAVE_NET_IF_H
 #include <net/if.h>
 #endif
@@ -199,7 +200,6 @@ static int rsockopt_set_linger (lua_State *L, int fd, int opt, int valindex)
 	val.l_linger = lua_tointeger (L, -1);
 	lua_pop (L, 1);
 
-	socklen_t val_len = sizeof (val);
 	int ret = setsockopt (fd, SOL_SOCKET, opt, &val, sizeof (val));
 	if (ret == 0)
 		return 0;
@@ -246,7 +246,6 @@ static int rsockopt_set_timeval (lua_State *L, int fd, int opt, int valindex)
 	val.tv_usec = lua_tointeger (L, -1);
 	lua_pop (L, 1);
 
-	socklen_t val_len = sizeof (val);
 	int ret = setsockopt (fd, SOL_SOCKET, opt, &val, sizeof (val));
 	if (ret == 0)
 		return 0;

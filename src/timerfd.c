@@ -27,11 +27,12 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <sys/timerfd.h>
 #include <string.h>
 #include <errno.h>
 
-#include "ratchet.h"
+#include "luaopens.h"
 #include "misc.h"
 
 #define timerfd_fd(L, i) (int *) luaL_checkudata (L, i, "ratchet_timerfd_meta")

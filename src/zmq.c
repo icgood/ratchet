@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <zmq.h>
 
-#include "ratchet.h"
+#include "luaopens.h"
 #include "misc.h"
 
 #ifndef RATCHET_ZMQ_IO_THREADS
@@ -78,6 +78,8 @@ static int gc_zmq_context (lua_State *L)
 {
 	void **ctx = (void **) lua_touserdata (L, 1);
 	zmq_term (*ctx);
+
+	return 0;
 }
 /* }}} */
 

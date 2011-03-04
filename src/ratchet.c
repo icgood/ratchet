@@ -30,11 +30,13 @@
 #include <netdb.h>
 #include <string.h>
 
-#include "ratchet.h"
+#include "luaopens.h"
 #include "misc.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
 #define get_thread(L, index, s) luaL_checktype (L, index, LUA_TTHREAD); lua_State *s = lua_tothread (L, index)
+
+const char *ratchet_version (void);
 
 /* {{{ return_first_upvalue() */
 static int return_first_upvalue (lua_State *L)
@@ -296,7 +298,7 @@ static int ratchet_get_method (lua_State *L)
 /* {{{ ratchet_set_error_handler() */
 static int ratchet_set_error_handler (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	luaL_checkany (L, 2);
 	int nargs = lua_gettop (L) - 1;
 	int i;
@@ -433,7 +435,7 @@ static int ratchet_running_thread (lua_State *L)
 /* {{{ ratchet_timer() */
 static int ratchet_timer (lua_State *L)
 {
-	struct event_base *e_b = get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	if (lua_pushthread (L))
 		return luaL_error (L, "timer cannot be called from main thread");
 	lua_pop (L, 1);
@@ -530,7 +532,7 @@ static int ratchet_loop (lua_State *L)
 /* {{{ ratchet_start_threads_ready() */
 static int ratchet_start_threads_ready (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 	
 	lua_getfenv (L, 1);
@@ -563,7 +565,7 @@ static int ratchet_start_threads_ready (lua_State *L)
 /* {{{ ratchet_start_threads_done_waiting() */
 static int ratchet_start_threads_done_waiting (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 
 	lua_getfenv (L, 1);
@@ -648,7 +650,7 @@ static int ratchet_run_thread (lua_State *L)
 /* {{{ ratchet_yield_thread() */
 static int ratchet_yield_thread (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
 
 	int nrets = lua_gettop (L1);
@@ -684,7 +686,7 @@ static int ratchet_yield_thread (lua_State *L)
 /* {{{ ratchet_handle_thread_error() */
 static int ratchet_handle_thread_error (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
 
 	/* Get the error handler call stack table. */
