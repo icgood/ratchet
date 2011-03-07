@@ -186,6 +186,9 @@ static int parse_rr_mx (lua_State *L, struct dns_rr *rr, struct dns_packet *answ
 	if (error)
 		return luaL_error (L, "dns_mx_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
+	luaL_getmetatable (L, "ratchet_dns_mx_meta");
+	lua_setmetatable (L, -2);
+
 	lua_getfield (L, -1, "priorities");
 	if (lua_isnil (L, -1))
 	{
@@ -219,6 +222,12 @@ static int parse_rr_mx (lua_State *L, struct dns_rr *rr, struct dns_packet *answ
 			lua_pop (L, 1);
 		}
 	}
+	lua_pop (L, 1);
+
+	/* Increment n. */
+	lua_getfield (L, -1, "n");
+	lua_pushinteger (L, lua_tointeger (L, -1) + 1);
+	lua_setfield (L, -3, "n");
 	lua_pop (L, 1);
 
 	return 0;
@@ -594,6 +603,65 @@ static int setup_dns_hosts (lua_State *L)
 
 /* }}} */
 
+/* {{{ ratchet_dns_mx_meta */
+
+/* {{{ mydns_mx_get_i() */
+static int mydns_mx_get_i (lua_State *L)
+{
+	luaL_checktype (L, 1, LUA_TTABLE);
+	int n = luaL_checkint (L, 2);
+
+	lua_getfield (L, 1, "n");
+	int max_n = lua_tonumber (L, -1);
+	lua_pop (L, 1);
+	if (n <= 0 || n > max_n)
+		return 0;
+
+	int i, j, k=1;
+	lua_getfield (L, 1, "priorities");
+	for (i=1; ; i++)
+	{
+		lua_rawgeti (L, -1, i);
+		if (lua_isnil (L, -1))
+			break;
+
+		int p = lua_tonumber (L, -1);
+		lua_pop (L, 1);
+		lua_rawgeti (L, 1, p);
+		for (j=1; ; j++)
+		{
+			lua_rawgeti (L, -1, j);
+			if (lua_isnil (L, -1))
+				break;
+			if (k++ == n)
+				return 1;
+			lua_pop (L, 1);
+		}
+		lua_pop (L, 2);
+	}
+	lua_pop (L, 2);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ setup_dns_mx() */
+static int setup_dns_mx (lua_State *L)
+{
+	/* Set up metatable for MX results. */
+	luaL_newmetatable (L, "ratchet_dns_mx_meta");
+	lua_createtable (L, 0, 1);
+	lua_pushcfunction (L, mydns_mx_get_i);
+	lua_setfield (L, -2, "get_i");
+	lua_setfield (L, -2, "__index");
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
+/* }}} */
+
 /* {{{ ratchet_dns_meta */
 
 #define get_dns_res(L, i) (*(struct dns_resolver **) luaL_checkudata (L, i, "ratchet_dns_meta"))
@@ -849,10 +917,11 @@ int luaopen_ratchet_dns (lua_State *L)
 	int rets = 0;
 
 	rets += setup_dns (L);
+	rets += setup_dns_mx (L);
 	rets += setup_dns_resolv_conf (L);
 	rets += setup_dns_hosts (L);
 
-	return 1;
+	return rets;
 }
 /* }}} */
 

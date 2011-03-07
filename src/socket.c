@@ -664,15 +664,15 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ prepare_tcp() */
-#define rsock_prepare_tcp "return function (host, port, dns, ...)\n" \
-	"	local dnsrec = dns:submit(host, ...)\n" \
+#define rsock_prepare_tcp "return function (host, port, ...)\n" \
+	"	local dnsrec = ratchet.dns.query_all(host, ...)\n" \
 	"	return ratchet.socket.build_tcp_info(dnsrec, port)\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ prepare_udp() */
-#define rsock_prepare_udp "return function (host, port, dns, ...)\n" \
-	"	local dnsrec = dns:submit(host, ...)\n" \
+#define rsock_prepare_udp "return function (host, port, ...)\n" \
+	"	local dnsrec = ratchet.dns.query_all(host, ...)\n" \
 	"	return ratchet.socket.build_udp_info(dnsrec, port)\n" \
 	"end\n"
 /* }}} */
