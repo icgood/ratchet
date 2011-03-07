@@ -28,6 +28,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
 
 #include "luaopens.h"
 #include "misc.h"
@@ -273,7 +274,7 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 /* {{{ parse_rr_txt() */
 static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
 {
-	lua_Number size = luaL_optnumber (L, 3, (lua_Number) DNS_TXT_MINDATA);
+	lua_Number size = luaL_optnumber (L, 4, (lua_Number) DNS_TXT_MINDATA);
 
 	struct dns_txt rec;
 	dns_txt_init (&rec, (size_t) size);
@@ -325,6 +326,62 @@ static int parse_rr (lua_State *L, struct dns_rr *rr, struct dns_packet *answer,
 //		return parse_rr_sshfp (L, rr, answer, i);
 
 	return luaL_error (L, "unimplemented DNS_T_*: %d", (int) rr->type);
+}
+/* }}} */
+
+/* }}} */
+
+/* {{{ check_special_XXXX() */
+
+/* {{{ check_special_a() */
+static int check_special_a (lua_State *L, const char *data)
+{
+	if (0 == strcmp ("*", data))
+	{
+		struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
+		addr->s_addr = INADDR_ANY;
+		return 1;
+	}
+
+	struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
+	if (inet_pton (AF_INET, data, addr) > 0)
+		return 1;
+	else
+		lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ check_special_aaaa() */
+static int check_special_aaaa (lua_State *L, const char *data)
+{
+	if (0 == strcmp ("*", data))
+	{
+		lua_pushlightuserdata (L, (void *) &in6addr_any);
+		return 1;
+	}
+
+	struct in6_addr *addr = (struct in6_addr *) lua_newuserdata (L, sizeof (struct in6_addr));
+	if (inet_pton (AF_INET6, data, addr) > 0)
+		return 1;
+	else
+		lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ check_special() */
+static int check_special (lua_State *L, const char *data, enum dns_type type)
+{
+	if (type == DNS_T_A)
+		return check_special_a (L, data);
+
+	else if (type == DNS_T_AAAA)
+		return check_special_aaaa (L, data);
+
+	return 0;
 }
 /* }}} */
 
@@ -600,23 +657,23 @@ static int mydns_get_timeout (lua_State *L)
 	"	while not dns:is_query_done() do\n" \
 	"		coroutine.yield('read', dns)\n" \
 	"	end\n" \
-	"	return dns:parse_answer(type, extra)\n" \
+	"	return dns:parse_answer(data, type, extra)\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ mydns_query_all() */
 #define mydns_query_all "return function (data, types, extra, ...)\n" \
-	"	local answers = {}\n" \
+	"	local dnsobjs, answers = {}, {}\n" \
 	"	for i, t in ipairs(types) do\n" \
-	"		rawset(answers, t, ratchet.dns.new(...))\n" \
-	"		rawget(answers, t):submit_query(data, t)\n" \
+	"		local dnsobj = ratchet.dns.new(...)\n" \
+	"		rawset(dnsobjs, t, dnsobj)\n" \
+	"		dnsobj:submit_query(data, t)\n" \
 	"	end\n" \
-	"	for i, t in ipairs(types) do\n" \
-	"		local dnsobj = rawget(answers, t)\n" \
+	"	for t, dnsobj in pairs(dnsobjs) do\n" \
 	"		while not dnsobj:is_query_done() do\n" \
 	"			coroutine.yield('read', dnsobj)\n" \
 	"		end\n" \
-	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(t, extra)\n" \
+	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(data, t, extra)\n" \
 	"	end\n" \
 	"	return answers\n" \
 	"end\n"
@@ -656,10 +713,11 @@ static int mydns_is_query_done (lua_State *L)
 static int mydns_parse_answer (lua_State *L)
 {
 	struct dns_resolver *res = get_dns_res (L, 1);
-	enum dns_type type = get_query_type (L, 2);
+	const char *data = luaL_checkstring (L, 2);
+	enum dns_type type = get_query_type (L, 3);
 	int error = 0;
 
-	lua_settop (L, 3);
+	lua_settop (L, 4);
 
 	struct dns_packet *answer = dns_res_fetch (res, &error);
 	if (!answer)
@@ -681,9 +739,16 @@ static int mydns_parse_answer (lua_State *L)
 
 	if (!found)
 	{
-		lua_pushnil (L);
-		lua_pushliteral (L, "Requested RR not found in answer packet");
-		return 2;
+		/* Check for specials. */
+		if (check_special (L, data, type))
+			lua_rawseti (L, -2, 1);
+		else
+		{
+			/* Query failed. */
+			lua_pushnil (L);
+			lua_pushliteral (L, "Requested RR not found in answer packet");
+			return 2;
+		}
 	}
 	
 	return 1;
