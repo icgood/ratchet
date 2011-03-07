@@ -871,7 +871,7 @@ int luaopen_ratchet (lua_State *L)
 	luaopen_ratchet_zmqsocket (L);
 	lua_setfield (L, -2, "zmqsocket");
 #endif
-#if HAVE_UDNS
+#if HAVE_DNS
 	luaopen_ratchet_dns (L);
 	lua_setfield (L, -2, "dns");
 #endif

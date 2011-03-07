@@ -649,10 +649,10 @@ static int rsock_rawrecv (lua_State *L)
 	"	local class = ratchet.socket\n" \
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \
-	"		local dnsrec = dns:submit(dest, ...)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest, ...)\n" \
 	"		return class.build_tcp_info(dnsrec, port)\n" \
 	"	elseif schema == 'udp' then\n" \
-	"		local dnsrec = dns:submit(dest, ...)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest, ...)\n" \
 	"		return class.build_udp_info(dnsrec, port)\n" \
 	"	\n" \
 	"	elseif schema == 'unix' then\n" \

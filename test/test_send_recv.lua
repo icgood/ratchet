@@ -2,7 +2,7 @@ require "ratchet"
 require "test_config"
 
 function ctx1(where)
-    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -27,7 +27,7 @@ function ctx2(socket)
 end
 
 function ctx3(where)
-    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -43,7 +43,6 @@ function ctx3(where)
 end
 
 kernel = ratchet.new()
-dns = ratchet.dns.new(kernel)
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 

@@ -28,7 +28,6 @@ function ctx2(where)
 end
 
 kernel = ratchet.new()
-dns = ratchet.dns.new(kernel)
 kernel:attach(ctx1, "zmq:req:tcp://127.0.0.1:10025")
 kernel:loop()
 

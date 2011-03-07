@@ -2,7 +2,7 @@ require "ratchet"
 require "test_config"
 
 function tcpctx1(where)
-    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -20,7 +20,7 @@ function tcpctx1(where)
 end
 
 function tcpctx2(where)
-    local rec = ratchet.socket.prepare_uri(where, dns, dns_types)
+    local rec = ratchet.socket.prepare_uri(where, dns_types)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -59,7 +59,6 @@ function zmqctx2(where)
 end
 
 kernel = ratchet.new()
-dns = ratchet.dns.new(kernel)
 kernel:attach(tcpctx1, "tcp://*:10025")
 kernel:attach(zmqctx1, "zmq:req:tcp://*:10026")
 kernel:loop()

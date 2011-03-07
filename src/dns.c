@@ -201,7 +201,7 @@ static int parse_rr_mx (lua_State *L, struct dns_rr *rr, struct dns_packet *answ
 	{
 		lua_createtable (L, 1, 0);
 		lua_pushstring (L, rec.host);
-		lua_rawseti (L, -1, 1);
+		lua_rawseti (L, -2, 1);
 		lua_rawseti (L, -3, (int) rec.preference);
 	}
 	else
@@ -273,7 +273,7 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 /* {{{ parse_rr_txt() */
 static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
 {
-	lua_Number size = luaL_optnumber (L, 4, (lua_Number) DNS_TXT_MINDATA);
+	lua_Number size = luaL_optnumber (L, 3, (lua_Number) DNS_TXT_MINDATA);
 
 	struct dns_txt rec;
 	dns_txt_init (&rec, (size_t) size);
@@ -349,7 +349,7 @@ static struct dns_resolv_conf *load_resolv_conf (lua_State *L, int index)
 	}
 	else
 		luaL_checktype (L, index, LUA_TTABLE);
-
+	
 	/* Create new resconf object. */
 	resconf = dns_resconf_open (&error);
 	if (!resconf)
@@ -378,6 +378,8 @@ static struct dns_resolv_conf *load_resolv_conf (lua_State *L, int index)
 /* {{{ myresconf_new() */
 static int myresconf_new (lua_State *L)
 {
+	lua_settop (L, 1);
+
 	struct dns_resolv_conf **new = (struct dns_resolv_conf **) lua_newuserdata (L, sizeof (struct dns_resolv_conf *));
 	*new = load_resolv_conf (L, 1);
 
@@ -480,6 +482,8 @@ static struct dns_hosts *load_hosts (lua_State *L, int index)
 /* {{{ myhosts_new() */
 static int myhosts_new (lua_State *L)
 {
+	lua_settop (L, 1);
+
 	struct dns_hosts **new = (struct dns_hosts **) lua_newuserdata (L, sizeof (struct dns_hosts *));
 	*new = load_hosts (L, 1);
 
@@ -541,15 +545,14 @@ static int setup_dns_hosts (lua_State *L)
 /* {{{ mydns_new() */
 static int mydns_new (lua_State *L)
 {
-	struct dns_resolv_conf *resconf = (struct dns_resolv_conf *) arg_or_registry (L, 1, DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
-	struct dns_hosts *hosts = (struct dns_hosts *) arg_or_registry (L, 1, DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
-	resconf->options.recurse = lua_toboolean (L, 3);
+	lua_settop (L, 3);
+	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
+	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
 
 	struct dns_resolver **new = (struct dns_resolver **) lua_newuserdata (L, sizeof (struct dns_resolver *));
-	struct dns_hints *(*hints)() = (lua_toboolean (L, 4) ? &dns_hints_root : &dns_hints_local);
 	int error = 0;
 
-	*new = dns_res_open (resconf, hosts, dns_hints_mortal (hints(resconf, &error)), NULL, dns_opts (), &error);
+	*new = dns_res_open (resconf, hosts, dns_hints_mortal (dns_hints_local (resconf, &error)), NULL, dns_opts (), &error);
 	if (!*new)
 		return luaL_error (L, "dns_res_open: %s", dns_strerror (error));
 
@@ -591,13 +594,31 @@ static int mydns_get_timeout (lua_State *L)
 /* }}} */
 
 /* {{{ mydns_query() */
-#define mydns_query "return function (...)\n" \
-	"	local dns = ratchet.dns.new(select(4, ...))\n" \
-	"	dns:submit_query(...)\n" \
-	"	while not dns:is_query_done()\n" \
+#define mydns_query "return function (data, type, extra, ...)\n" \
+	"	local dns = ratchet.dns.new(...)\n" \
+	"	dns:submit_query(data, type)\n" \
+	"	while not dns:is_query_done() do\n" \
 	"		coroutine.yield('read', dns)\n" \
 	"	end\n" \
-	"	return dns:parse_answer(...)\n" \
+	"	return dns:parse_answer(type, extra)\n" \
+	"end\n"
+/* }}} */
+
+/* {{{ mydns_query_all() */
+#define mydns_query_all "return function (data, types, extra, ...)\n" \
+	"	local answers = {}\n" \
+	"	for i, t in ipairs(types) do\n" \
+	"		rawset(answers, t, ratchet.dns.new(...))\n" \
+	"		rawget(answers, t):submit_query(data, t)\n" \
+	"	end\n" \
+	"	for i, t in ipairs(types) do\n" \
+	"		local dnsobj = rawget(answers, t)\n" \
+	"		while not dnsobj:is_query_done() do\n" \
+	"			coroutine.yield('read', dnsobj)\n" \
+	"		end\n" \
+	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(t, extra)\n" \
+	"	end\n" \
+	"	return answers\n" \
 	"end\n"
 /* }}} */
 
@@ -635,11 +656,10 @@ static int mydns_is_query_done (lua_State *L)
 static int mydns_parse_answer (lua_State *L)
 {
 	struct dns_resolver *res = get_dns_res (L, 1);
-	luaL_checkstring (L, 2);
-	enum dns_type type = get_query_type (L, 3);
+	enum dns_type type = get_query_type (L, 2);
 	int error = 0;
 
-	lua_settop (L, 4);
+	lua_settop (L, 3);
 
 	struct dns_packet *answer = dns_res_fetch (res, &error);
 	if (!answer)
@@ -655,7 +675,7 @@ static int mydns_parse_answer (lua_State *L)
 	struct dns_rr rr;
 	dns_rr_foreach (&rr, answer, .sort = &dns_rr_i_packet)
 	{
-		if (type == rr.type)
+		if (DNS_S_ANSWER == rr.section && type == rr.type)
 			parse_rr (L, &rr, answer, ++found);
 	}
 
@@ -685,6 +705,7 @@ static int setup_dns (lua_State *L)
 	const struct luafunc luafuncs[] = {
 		/* Documented methods. */
 		{"query", mydns_query},
+		{"query_all", mydns_query_all},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
