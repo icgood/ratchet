@@ -25,6 +25,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <math.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -34,9 +35,7 @@
 #include "misc.h"
 #include "libdns/dns.h"
 
-#ifndef DNS_POLL_TIMEOUT
-#define DNS_POLL_TIMEOUT 1.0
-#endif
+#define DNS_GET_POLL_TIMEOUT(n) (pow (2.0, (double) n))
 
 #ifndef DNS_QUERY_DEFAULT
 #ifndef DNS_QUERY_IPV6_DEFAULT
@@ -605,6 +604,7 @@ static int mydns_new (lua_State *L)
 	lua_settop (L, 3);
 	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
 	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
+	lua_Number expire_timeout = luaL_optnumber (L, 3, (lua_Number) 10.0);
 
 	struct dns_resolver **new = (struct dns_resolver **) lua_newuserdata (L, sizeof (struct dns_resolver *));
 	int error = 0;
@@ -615,6 +615,13 @@ static int mydns_new (lua_State *L)
 
 	luaL_getmetatable (L, "ratchet_dns_meta");
 	lua_setmetatable (L, -2);
+
+	lua_createtable (L, 0, 2);
+	lua_pushinteger (L, 0);
+	lua_setfield (L, -2, "tries");
+	lua_pushnumber (L, expire_timeout);
+	lua_setfield (L, -2, "expire_timeout");
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -643,8 +650,13 @@ static int mydns_get_fd (lua_State *L)
 /* {{{ mydns_get_timeout() */
 static int mydns_get_timeout (lua_State *L)
 {
-	double timeout = DNS_POLL_TIMEOUT;
-	lua_pushnumber (L, (lua_Number) timeout);
+	(void) get_dns_res (L, 1);
+
+	lua_getfenv (L, 1);
+	lua_getfield (L, -1, "tries");
+	int tries = (int) lua_tointeger (L, -1);
+	lua_pop (L, 2);
+	lua_pushnumber (L, (lua_Number) (DNS_GET_POLL_TIMEOUT (tries)));
 
 	return 1;
 }
@@ -700,10 +712,28 @@ static int mydns_is_query_done (lua_State *L)
 	struct dns_resolver *res = get_dns_res (L, 1);
 
 	int error = dns_res_check (res);
-	if (error == EAGAIN)
-		lua_pushboolean (L, 0);
-	else
+	if (error != EAGAIN)
 		lua_pushboolean (L, 1);
+	else
+	{
+		lua_getfenv (L, 1);
+		lua_getfield (L, -1, "tries");
+		int tries = (int) lua_tointeger (L, -1);
+		lua_getfield (L, -2, "expire_timeout");
+		double et = (double) lua_tonumber (L, -1);
+		lua_pop (L, 2);
+
+		double elapsed = (double) dns_res_elapsed (res);
+		if (elapsed >= et)
+			lua_pushboolean (L, 1);
+		else
+		{
+			lua_pushinteger (L, tries+1);
+			lua_setfield (L, -2, "tries");
+			
+			lua_pushboolean (L, 0);
+		}
+	}
 
 	return 1;
 }
