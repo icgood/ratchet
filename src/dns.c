@@ -748,6 +748,9 @@ static int mydns_get_timeout (lua_State *L)
 /* {{{ mydns_query_all() */
 #define mydns_query_all "return function (data, types, ...)\n" \
 	"	local dnsobjs, answers = {}, {}\n" \
+	"	if not types then\n" \
+	"		types = ratchet.dns.default_types\n" \
+	"	end\n" \
 	"	for i, t in ipairs(types) do\n" \
 	"		local dnsobj = ratchet.dns.new(...)\n" \
 	"		rawset(dnsobjs, t, dnsobj)\n" \
@@ -906,6 +909,14 @@ static int setup_dns (lua_State *L)
 	/* Set up the ratchet.dns namespace functions. */
 	luaI_openlib (L, "ratchet.dns", funcs, 0);
 	register_luafuncs (L, -1, luafuncs);
+
+	/* Set up {'ipv6', 'ipv4'} as the default query types. */
+	lua_createtable (L, 2, 0);
+	lua_pushliteral (L, "ipv6");
+	lua_rawseti (L, -2, 1);
+	lua_pushliteral (L, "ipv4");
+	lua_rawseti (L, -2, 2);
+	lua_setfield (L, -2, "default_types");
 
 	return 1;
 }

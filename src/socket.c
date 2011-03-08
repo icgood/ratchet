@@ -645,14 +645,14 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ prepare_uri() */
-#define rsock_prepare_uri "return function (uri, ...)\n" \
+#define rsock_prepare_uri "return function (uri)\n" \
 	"	local class = ratchet.socket\n" \
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \
-	"		local dnsrec = ratchet.dns.query_all(dest, ...)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
 	"		return class.build_tcp_info(dnsrec, port)\n" \
 	"	elseif schema == 'udp' then\n" \
-	"		local dnsrec = ratchet.dns.query_all(dest, ...)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
 	"		return class.build_udp_info(dnsrec, port)\n" \
 	"	\n" \
 	"	elseif schema == 'unix' then\n" \
@@ -664,15 +664,15 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ prepare_tcp() */
-#define rsock_prepare_tcp "return function (host, port, ...)\n" \
-	"	local dnsrec = ratchet.dns.query_all(host, ...)\n" \
+#define rsock_prepare_tcp "return function (host, port)\n" \
+	"	local dnsrec = ratchet.dns.query_all(host)\n" \
 	"	return ratchet.socket.build_tcp_info(dnsrec, port)\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ prepare_udp() */
-#define rsock_prepare_udp "return function (host, port, ...)\n" \
-	"	local dnsrec = ratchet.dns.query_all(host, ...)\n" \
+#define rsock_prepare_udp "return function (host, port)\n" \
+	"	local dnsrec = ratchet.dns.query_all(host)\n" \
 	"	return ratchet.socket.build_udp_info(dnsrec, port)\n" \
 	"end\n"
 /* }}} */

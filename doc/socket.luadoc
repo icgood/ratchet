@@ -24,36 +24,27 @@ function from_fd(fd)
 --  The parser is capable of creating TCP, UDP, and Unix sockets. See the manual
 --  page for complete details.
 --  @param uri the URI connection string.
---  @param dns ratchet.dns object, for URIs that require it.
---  @param types optional table of DNS query types to pass to
---               <code>dns:submit()</code>. See ratchet.dns.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_uri(uri, dns, types)
+function prepare_uri(uri)
 
 --- Prepares TCP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
 --  See the manual page for complete details.
 --  @param host queried by DNS for new TCP connection.
 --  @param port destination port number for new TCP connection.
---  @param dns ratchet.dns object, for <code>host</code>s that require it.
---  @param types optional table of DNS query types to pass to
---               <code>dns:submit()</code>. See ratchet.dns.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_tcp(host, port, dns, types)
+function prepare_tcp(host, port)
 
 --- Prepares UDP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
 --  See the manual page for complete details.
 --  @param host queried by DNS for new UDP connection.
 --  @param port destination port number for new UDP connection.
---  @param dns ratchet.dns object, for <code>host</code>s that require it.
---  @param types optional table of DNS query types to pass to
---               <code>dns:submit()</code>. See ratchet.dns.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_udp(host, port, dns, types)
+function prepare_udp(host, port)
 
 --- Prepares UNIX socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.

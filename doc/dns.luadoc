@@ -1,37 +1,28 @@
 
---- Provides a system for querying DNS for information such as A/AAAA, PTR, MX, and
---  TXT records. Specifically, this module allows creation of an object that runs
---  as a background ratchet thread handling all DNS resolution requests. If a
---  request is not immediately ready, the requesting thread will be paused and
---  reawoken when the results are in.
+--- Provides a system for querying DNS for information such as A/AAAA, PTR, MX,
+--  and TXT records. While there is a class-based system internally, that API is
+--  currently hidden by namespace functions that call everything necessary.
 module "ratchet.dns"
 
---- Creates a new dns object and attaches itself to the given ratchet thread
---  manager. A reference to this object must be accessible anywhere requests need
---  to be made.
---  @param ratchet the ratchet object to attach to. This must be the same object
---                 that all threads using the dns object are attached to.
---  @return a new dns object.
-function new(ratchet)
+--- Queries for results for one type of query for the given data. Until the
+--  results come in, this function will pause the calling thread. The return
+--  value is a table whose contents are defined by the type of query. See manual
+--  for complete details.
+--  @param data The hostname, IP, or special-case to query against.
+--  @param type The type of query, e.g. "ipv4" or "mx".
+--  @return Table with results, or nil followed by an error message.
+function query(data, type)
 
---- Returns the internal socket file descriptor.
---  @param self the dns object.
---  @return a file descriptor.
-function get_fd(self)
-
---- Performs a DNS query on the given data. If the results are not immediately
---  available, the current thread will pause until they are. If a table is not
---  given for <code>type</code> or the table is tempty, the default query type(s)
---  are used. See the manual for complete details.
---  @param self the dns object.
---  @param data a string of the domain name or IP address to query against.
---  @param types optional table of strings containing the query types, e.g.
---               "ipv6" or "mx".
---  @return a table keyed on the given query types containing the query results.
---          If a query type failed, the table key will be suffixed with "_error"
---          (e.g. "ipv6_error") and will contain a string form of the error type.
---          If the entire query submission failed, no table is returned, instead
---          nil followed by an error message.
-function submit(self, data, types)
+--- Queries for results for many types of query for the given data. Until all
+--  results come in, this function will pause the calling thread. This call
+--  attempts to perform these lookups in parallel, with a file descriptor for
+--  each query type. The return value is a table  keyed on either the query
+--  types or the query type suffixed with "_error". The values will either
+--  be a table of results or an error message, respectively. See manual for
+--  complete details.
+--  @param data The hostname, IP, or special-case to query against.
+--  @param types Table with types of queries, e.g. "ipv4" or "mx".
+--  @return Table with results, or nil followed by an error message.
+function query_all(data, types)
 
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:
