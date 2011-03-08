@@ -47,6 +47,7 @@
 
 #define DNS_RESOLV_CONF_DEFAULT "ratchet_dns_resolv_conf_default"
 #define DNS_HOSTS_DEFAULT "ratchet_dns_hosts_default"
+#define DNS_TXT_SIZE_REGISTER "ratchet_dns_txt_size"
 
 /* {{{ arg_or_registry() */
 static void *arg_or_registry (lua_State *L, int index, const char *reg_default, const char *checkudata)
@@ -282,10 +283,13 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 /* {{{ parse_rr_txt() */
 static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
 {
-	lua_Number size = luaL_optnumber (L, 4, (lua_Number) DNS_TXT_MINDATA);
+	lua_getfield (L, LUA_REGISTRYINDEX, DNS_TXT_SIZE_REGISTER);
+	size_t size = (size_t) lua_tonumber (L, -1);
+	if (size == 0)
+		size = DNS_TXT_MINDATA;
 
 	struct dns_txt rec;
-	dns_txt_init (&rec, (size_t) size);
+	dns_txt_init (&rec, size);
 	int error = dns_txt_parse (&rec, rr, answer);
 	if (error)
 		return luaL_error (L, "dns_txt_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
@@ -731,18 +735,18 @@ static int mydns_get_timeout (lua_State *L)
 /* }}} */
 
 /* {{{ mydns_query() */
-#define mydns_query "return function (data, type, extra, ...)\n" \
+#define mydns_query "return function (data, type, ...)\n" \
 	"	local dns = ratchet.dns.new(...)\n" \
 	"	dns:submit_query(data, type)\n" \
 	"	while not dns:is_query_done() do\n" \
 	"		coroutine.yield('read', dns)\n" \
 	"	end\n" \
-	"	return dns:parse_answer(data, type, extra)\n" \
+	"	return dns:parse_answer(data, type)\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ mydns_query_all() */
-#define mydns_query_all "return function (data, types, extra, ...)\n" \
+#define mydns_query_all "return function (data, types, ...)\n" \
 	"	local dnsobjs, answers = {}, {}\n" \
 	"	for i, t in ipairs(types) do\n" \
 	"		local dnsobj = ratchet.dns.new(...)\n" \
@@ -753,7 +757,7 @@ static int mydns_get_timeout (lua_State *L)
 	"		while not dnsobj:is_query_done() do\n" \
 	"			coroutine.yield('read', dnsobj)\n" \
 	"		end\n" \
-	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(data, t, extra)\n" \
+	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(data, t)\n" \
 	"	end\n" \
 	"	return answers\n" \
 	"end\n"
@@ -815,7 +819,7 @@ static int mydns_parse_answer (lua_State *L)
 	enum dns_type type = get_query_type (L, 3);
 	int error = 0;
 
-	lua_settop (L, 4);
+	lua_settop (L, 3);
 
 	struct dns_packet *answer = dns_res_fetch (res, &error);
 	if (!answer)
