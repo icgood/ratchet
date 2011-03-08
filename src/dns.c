@@ -96,6 +96,47 @@ static enum dns_type get_query_type (lua_State *L, int index)
 }
 /* }}} */
 
+/* {{{ query_name() */
+static const char *query_name (enum dns_type type)
+{
+	if (type == DNS_T_A)
+		return "A";
+
+	else if (type == DNS_T_AAAA)
+		return "AAAA";
+
+	else if (type == DNS_T_MX)
+		return "MX";
+
+	else if (type == DNS_T_NS)
+		return "NS";
+
+	else if (type == DNS_T_CNAME)
+		return "CNAME";
+
+	else if (type == DNS_T_SOA)
+		return "SOA";
+
+	else if (type == DNS_T_SRV)
+		return "SRV";
+
+	else if (type == DNS_T_PTR)
+		return "PTR";
+
+	else if (type == DNS_T_TXT)
+		return "TXT";
+
+	else if (type == DNS_T_SPF)
+		return "SPF";
+
+	else if (type == DNS_T_SSHFP)
+		return "SSHFP";
+
+	else
+		return "*unknown*";
+}
+/* }}} */
+
 /* {{{ parse_XXX() */
 
 /* {{{ parse_rr_a() */
@@ -851,7 +892,11 @@ static int mydns_parse_answer (lua_State *L)
 		{
 			/* Query failed. */
 			lua_pushnil (L);
-			lua_pushliteral (L, "Requested RR not found in answer packet");
+			lua_pushvalue (L, 2);
+			lua_pushliteral (L, " has no ");
+			lua_pushstring (L, query_name (type));
+			lua_pushliteral (L, " record");
+			lua_concat (L, 4);
 			return 2;
 		}
 	}
