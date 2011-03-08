@@ -129,7 +129,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_tcp">prepare_tcp</a>&nbsp;(host, port, dns, types)</td>
+	<td class="name" nowrap><a href="#prepare_tcp">prepare_tcp</a>&nbsp;(host, port)</td>
 	<td class="summary">Prepares TCP socket information.</td>
 	</tr>
 
@@ -144,7 +144,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_uri">prepare_uri</a>&nbsp;(uri, dns, types)</td>
+	<td class="name" nowrap><a href="#prepare_uri">prepare_uri</a>&nbsp;(uri)</td>
 	<td class="summary">URI parser for socket connection strings.</td>
 	</tr>
 
@@ -486,7 +486,7 @@ a new socket object.
 
 
 
-<dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port, dns, types)</dt>
+<dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port)</dt>
 <dd>
 Prepares TCP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details.
 
@@ -502,14 +502,6 @@ Prepares TCP socket information. On success, the returned object contains all ne
 	  port: destination port number for new TCP connection.
 	</li>
 	
-	<li>
-	  dns: ratchet.dns object, for <code>host</code>s that require it.
-	</li>
-	
-	<li>
-	  types: optional table of DNS query types to pass to <code>dns:submit()</code>. See ratchet.dns.
-	</li>
-	
 </ul>
 
 
@@ -585,7 +577,7 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 
 
-<dt><a name="prepare_uri"></a><strong>prepare_uri</strong>&nbsp;(uri, dns, types)</dt>
+<dt><a name="prepare_uri"></a><strong>prepare_uri</strong>&nbsp;(uri)</dt>
 <dd>
 URI parser for socket connection strings. On success, the returned object contains all necessary data to create and bind/connect a new socket object. The parser is capable of creating TCP, UDP, and Unix sockets. See the manual page for complete details.
 
@@ -595,14 +587,6 @@ URI parser for socket connection strings. On success, the returned object contai
 	
 	<li>
 	  uri: the URI connection string.
-	</li>
-	
-	<li>
-	  dns: ratchet.dns object, for URIs that require it.
-	</li>
-	
-	<li>
-	  types: optional table of DNS query types to pass to <code>dns:submit()</code>. See ratchet.dns.
 	</li>
 	
 </ul>
