@@ -778,6 +778,7 @@ static int mydns_get_timeout (lua_State *L)
 /* {{{ mydns_query() */
 #define mydns_query "return function (data, type, ...)\n" \
 	"	local dns = ratchet.dns.new(...)\n" \
+	"	coroutine.yield('write', dns)\n" \
 	"	dns:submit_query(data, type)\n" \
 	"	while not dns:is_query_done() do\n" \
 	"		coroutine.yield('read', dns)\n" \
@@ -795,6 +796,7 @@ static int mydns_get_timeout (lua_State *L)
 	"	for i, t in ipairs(types) do\n" \
 	"		local dnsobj = ratchet.dns.new(...)\n" \
 	"		rawset(dnsobjs, t, dnsobj)\n" \
+	"		coroutine.yield('write', dnsobj)\n" \
 	"		dnsobj:submit_query(data, t)\n" \
 	"	end\n" \
 	"	for t, dnsobj in pairs(dnsobjs) do\n" \
