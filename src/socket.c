@@ -38,12 +38,6 @@
 #include "misc.h"
 #include "sockopt.h"
 
-struct socket_data
-{
-	int fd;
-	double timeout;
-};
-
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
 #endif
@@ -52,8 +46,12 @@ struct socket_data
 #define DEFAULT_TCPUDP_PORT 80
 #endif
 
-#define socket_fd(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->fd)
-#define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_socket_meta"))->timeout)
+#define socket_fd(L, i) (*((int *) luaL_checkudata (L, i, "ratchet_socket_meta")))
+
+#if HAVE_OPENSSL
+int rsock_get_encryption (lua_State *L);
+int rsock_encrypt (lua_State *L);
+#endif
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
@@ -64,17 +62,21 @@ static int rsock_new (lua_State *L)
 	int socktype = luaL_optint (L, 2, SOCK_STREAM);
 	int protocol = luaL_optint (L, 3, 0);
 
-	struct socket_data *sd = (struct socket_data *) lua_newuserdata (L, sizeof (struct socket_data));
-	sd->fd = socket (family, socktype, protocol);
-	if (sd->fd < 0)
+	int *fd = (int *) lua_newuserdata (L, sizeof (int));
+	*fd = socket (family, socktype, protocol);
+	if (*fd < 0)
 		return handle_perror (L);
-	sd->timeout = -1.0;
 
-	if (set_nonblocking (sd->fd) < 0)
+	if (set_nonblocking (*fd) < 0)
 		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
+
+	lua_createtable (L, 0, 1);
+	lua_pushnumber (L, (lua_Number) -1.0);
+	lua_setfield (L, -2, "timeout");
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -83,17 +85,21 @@ static int rsock_new (lua_State *L)
 /* {{{ rsock_from_fd() */
 static int rsock_from_fd (lua_State *L)
 {
-	struct socket_data *sd = (struct socket_data *) lua_newuserdata (L, sizeof (struct socket_data));
-	sd->fd = luaL_checkint (L, 1);
-	if (sd->fd < 0)
+	int *fd = (int *) lua_newuserdata (L, sizeof (int));
+	*fd = luaL_checkint (L, 1);
+	if (*fd < 0)
 		return handle_perror (L);
-	sd->timeout = -1.0;
 
-	if (set_nonblocking (sd->fd) < 0)
+	if (set_nonblocking (*fd) < 0)
 		return handle_perror (L);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
+
+	lua_createtable (L, 0, 1);
+	lua_pushnumber (L, (lua_Number) -1.0);
+	lua_setfield (L, -2, "timeout");
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -310,9 +316,10 @@ static int rsock_prepare_unix (lua_State *L)
 /* {{{ rsock_gc() */
 static int rsock_gc (lua_State *L)
 {
-	int fd = socket_fd (L, 1);
-	if (fd >= 0)
-		close (fd);
+	int *fd = &socket_fd (L, 1);
+	if (*fd >= 0)
+		close (*fd);
+	*fd = -1;
 
 	return 0;
 }
@@ -371,8 +378,10 @@ static int rsock_get_fd (lua_State *L)
 /* {{{ rsock_get_timeout() */
 static int rsock_get_timeout (lua_State *L)
 {
-	double timeout = socket_timeout (L, 1);
-	lua_pushnumber (L, timeout);
+	(void) socket_fd (L, 1);
+
+	lua_getfenv (L, 1);
+	lua_getfield (L, -1, "timeout");
 	return 1;
 }
 /* }}} */
@@ -380,9 +389,13 @@ static int rsock_get_timeout (lua_State *L)
 /* {{{ rsock_set_timeout() */
 static int rsock_set_timeout (lua_State *L)
 {
-	double new_timeout = luaL_checknumber (L, 2);
-	double *timeout = &socket_timeout (L, 1);
-	*timeout = new_timeout;
+	(void) socket_fd (L, 1);
+	luaL_checknumber (L, 2);
+
+	lua_getfenv (L, 1);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, -2, "timeout");
+
 	return 0;
 }
 /* }}} */
@@ -612,27 +625,60 @@ static int rsock_rawrecv (lua_State *L)
 /* ---- Lua-implemented Functions ------------------------------------------- */
 
 /* {{{ send() */
+#if HAVE_OPENSSL
+#define rsock_send "return function (self, ...)\n" \
+	"	local enc = self:get_encryption()\n" \
+	"	if enc then\n" \
+	"		return enc:write(...)\n" \
+	"	elseif coroutine.yield('write', self) then\n" \
+	"		return self:rawsend(...)\n" \
+	"	end\n" \
+	"end\n"
+#else
 #define rsock_send "return function (self, ...)\n" \
 	"	if coroutine.yield('write', self) then\n" \
 	"		return self:rawsend(...)\n" \
 	"	end\n" \
 	"end\n"
+#endif
 /* }}} */
 
 /* {{{ recv() */
+#if HAVE_OPENSSL
+#define rsock_recv "return function (self, ...)\n" \
+	"	local enc = self:get_encryption()\n" \
+	"	if enc then\n" \
+	"		return enc:read(...)\n" \
+	"	elseif coroutine.yield('read', self) then\n" \
+	"		return self:rawrecv(...)\n" \
+	"	end\n" \
+	"end\n"
+#else
 #define rsock_recv "return function (self, ...)\n" \
 	"	if coroutine.yield('read', self) then\n" \
 	"		return self:rawrecv(...)\n" \
 	"	end\n" \
 	"end\n"
+#endif
 /* }}} */
 
 /* {{{ accept() */
+#if HAVE_OPENSSL
+#define rsock_accept "return function (self, ...)\n" \
+	"	local enc = self:get_encryption()\n" \
+	"	if enc then\n" \
+	"		return enc:accept(...)\n" \
+	"	elseif coroutine.yield('read', self) then\n" \
+	"		return self:rawaccept(...)\n" \
+	"	end\n" \
+	"end\n"
+#else
 #define rsock_accept "return function (self, ...)\n" \
 	"	if coroutine.yield('read', self) then\n" \
 	"		return self:rawaccept(...)\n" \
 	"	end\n" \
 	"end\n"
+#endif
 /* }}} */
 
 /* {{{ connect() */
@@ -721,6 +767,10 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"get_fd", rsock_get_fd},
 		{"get_timeout", rsock_get_timeout},
 		{"set_timeout", rsock_set_timeout},
+#if HAVE_OPENSSL
+		{"get_encryption", rsock_get_encryption},
+		{"encrypt", rsock_encrypt},
+#endif
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
 		{"check_ok", rsock_check_ok},

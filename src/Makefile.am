@@ -17,6 +17,10 @@ if HAVE_TIMERFD
 allsources += timerfd.c
 endif
 
+if HAVE_OPENSSL
+allsources += ssl.c
+endif
+
 if ENABLE_DEVEL
 include_HEADERS = ratchet.h
 
@@ -29,6 +33,11 @@ if HAVE_DNS
 libratchet_la_LIBADD = libdns/libdns.la
 endif
 libratchet_la_CFLAGS = -std=gnu99 -Wall -Wno-unused-function -Wno-unused-label
+libratchet_la_LDFLAGS = 
+if HAVE_OPENSSL
+libratchet_la_CFLAGS += $(OPENSSL_INCLUDES)
+libratchet_la_LDFLAGS += $(OPENSSL_LDFLAGS) $(OPENSSL_LIBS)
+endif
 libratchet_la_SOURCES = $(allsources)
 
 if ENABLE_MODULE
