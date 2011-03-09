@@ -547,11 +547,8 @@ static int rsock_rawaccept (lua_State *L)
 	/* Create the new socket object from file descriptor. */
 	lua_getfield (L, lua_upvalueindex (1), "from_fd");
 	lua_pushinteger (L, clientfd);
-	lua_call (L, 1, 2);
-	if (lua_isnil (L, -2))
-		return 2;
+	lua_call (L, 1, 1);
 
-	lua_pop (L, 1);	/* Pop the placeholder for the error msg. */
 	lua_pushvalue (L, 2);
 
 	return 2;
@@ -663,30 +660,19 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ accept() */
-#if HAVE_OPENSSL
-#define rsock_accept "return function (self, ...)\n" \
-	"	local enc = self:get_encryption()\n" \
-	"	if enc then\n" \
-	"		return enc:accept(...)\n" \
-	"	elseif coroutine.yield('read', self) then\n" \
-	"		return self:rawaccept(...)\n" \
-	"	end\n" \
-	"end\n"
-#else
 #define rsock_accept "return function (self, ...)\n" \
 	"	if coroutine.yield('read', self) then\n" \
 	"		return self:rawaccept(...)\n" \
 	"	end\n" \
 	"end\n"
-#endif
 /* }}} */
 
 /* {{{ connect() */
 #define rsock_connect "return function (self, ...)\n" \
-		"if not self:rawconnect(...) then\n" \
-			"coroutine.yield('write', self)\n" \
-		"end\n" \
-		"return self:check_ok()\n" \
+	"	if not self:rawconnect(...) then\n" \
+	"		coroutine.yield('write', self)\n" \
+	"	end\n" \
+	"	return self:check_ok()\n" \
 	"end\n"
 /* }}} */
 

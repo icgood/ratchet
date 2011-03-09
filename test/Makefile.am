@@ -14,12 +14,21 @@ TESTS = test_listen_connect.lua \
 	test_shutdown.lua \
 	test_unix_sockets.lua \
 	test_event_timeout.lua \
+	test_ssl_listen_connect.lua \
+	test_ssl_send_recv.lua \
 	test_zmq_send_recv.lua \
 	test_multi_protocol.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
+
+if HAVE_OPENSSL
+XFAIL_TESTS +=
+else
+XFAIL_TESTS += test_ssl_listen_connect.lua \
+	       test_ssl_send_recv.lua
+endif
 
 if HAVE_SOCKET
 XFAIL_TESTS +=  

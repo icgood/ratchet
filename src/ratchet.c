@@ -867,6 +867,10 @@ int luaopen_ratchet (lua_State *L)
 	luaopen_ratchet_socket (L);
 	lua_setfield (L, -2, "socket");
 #endif
+#if HAVE_OPENSSL
+	luaopen_ratchet_ssl (L);
+	lua_setfield (L, -2, "ssl");
+#endif
 #if HAVE_ZMQ
 	luaopen_ratchet_zmqsocket (L);
 	lua_setfield (L, -2, "zmqsocket");
