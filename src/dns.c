@@ -796,7 +796,6 @@ static int mydns_get_timeout (lua_State *L)
 	"	for i, t in ipairs(types) do\n" \
 	"		local dnsobj = ratchet.dns.new(...)\n" \
 	"		rawset(dnsobjs, t, dnsobj)\n" \
-	"		coroutine.yield('write', dnsobj)\n" \
 	"		dnsobj:submit_query(data, t)\n" \
 	"	end\n" \
 	"	for t, dnsobj in pairs(dnsobjs) do\n" \

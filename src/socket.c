@@ -140,23 +140,27 @@ static int rsock_type_and_info_from_uri (lua_State *L)
 static int rsock_build_tcp_info (lua_State *L)
 {
 	luaL_checktype (L, 1, LUA_TTABLE);
-	int port = luaL_checkint (L, 2);
-	lua_settop (L, 2);
+	luaL_checkstring (L, 2);
+	int port = luaL_checkint (L, 3);
+	lua_settop (L, 3);
 
 	lua_createtable (L, 0, 4);
 
 	lua_pushinteger (L, SOCK_STREAM);
-	lua_setfield (L, 3, "socktype");
+	lua_setfield (L, 4, "socktype");
 
 	lua_pushinteger (L, 0);
-	lua_setfield (L, 3, "protocol");
+	lua_setfield (L, 4, "protocol");
+
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 4, "host");
 
 	/* Check first for IPv6. */
 	lua_getfield (L, 1, "ipv6");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET6);
-		lua_setfield (L, 3, "family");
+		lua_setfield (L, 4, "family");
 
 		lua_rawgeti (L, -1, 1);
 		lua_remove (L, -2);
@@ -170,7 +174,7 @@ static int rsock_build_tcp_info (lua_State *L)
 			addr->sin6_port = htons (port);
 			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
 
-			lua_setfield (L, 3, "addr");
+			lua_setfield (L, 4, "addr");
 			lua_pop (L, 1);
 
 			return 1;
@@ -184,7 +188,7 @@ static int rsock_build_tcp_info (lua_State *L)
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET);
-		lua_setfield (L, 3, "family");
+		lua_setfield (L, 4, "family");
 
 		lua_rawgeti (L, -1, 1);
 		lua_remove (L, -2);
@@ -198,7 +202,7 @@ static int rsock_build_tcp_info (lua_State *L)
 			addr->sin_port = htons (port);
 			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
 
-			lua_setfield (L, 3, "addr");
+			lua_setfield (L, 4, "addr");
 			lua_pop (L, 1);
 
 			return 1;
@@ -215,23 +219,27 @@ static int rsock_build_tcp_info (lua_State *L)
 static int rsock_build_udp_info (lua_State *L)
 {
 	luaL_checktype (L, 1, LUA_TTABLE);
-	int port = luaL_checkint (L, 2);
-	lua_settop (L, 2);
+	luaL_checkstring (L, 2);
+	int port = luaL_checkint (L, 3);
+	lua_settop (L, 3);
 
-	lua_createtable (L, 0, 4);
+	lua_createtable (L, 0, 5);
 
 	lua_pushinteger (L, SOCK_DGRAM);
-	lua_setfield (L, 3, "socktype");
+	lua_setfield (L, 4, "socktype");
 
 	lua_pushinteger (L, 0);
-	lua_setfield (L, 3, "protocol");
+	lua_setfield (L, 4, "protocol");
+
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 4, "host");
 
 	/* Check first for IPv6. */
 	lua_getfield (L, 1, "ipv6");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET6);
-		lua_setfield (L, 3, "family");
+		lua_setfield (L, 4, "family");
 
 		lua_rawgeti (L, -1, 1);
 		if (!lua_isnil (L, -1))
@@ -244,7 +252,7 @@ static int rsock_build_udp_info (lua_State *L)
 			addr->sin6_port = htons (port);
 			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
 
-			lua_setfield (L, 3, "addr");
+			lua_setfield (L, 4, "addr");
 			lua_pop (L, 1);
 
 			return 1;
@@ -258,7 +266,7 @@ static int rsock_build_udp_info (lua_State *L)
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET);
-		lua_setfield (L, 3, "family");
+		lua_setfield (L, 4, "family");
 
 		lua_rawgeti (L, -1, 1);
 		if (!lua_isnil (L, -1))
@@ -271,7 +279,7 @@ static int rsock_build_udp_info (lua_State *L)
 			addr->sin_port = htons (port);
 			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
 
-			lua_setfield (L, 3, "addr");
+			lua_setfield (L, 4, "addr");
 			lua_pop (L, 1);
 
 			return 1;
@@ -682,10 +690,10 @@ static int rsock_rawrecv (lua_State *L)
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \
 	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
-	"		return class.build_tcp_info(dnsrec, port)\n" \
+	"		return class.build_tcp_info(dnsrec, dest, port)\n" \
 	"	elseif schema == 'udp' then\n" \
 	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
-	"		return class.build_udp_info(dnsrec, port)\n" \
+	"		return class.build_udp_info(dnsrec, dest, port)\n" \
 	"	\n" \
 	"	elseif schema == 'unix' then\n" \
 	"		return class.prepare_unix(dest)\n" \
@@ -698,14 +706,14 @@ static int rsock_rawrecv (lua_State *L)
 /* {{{ prepare_tcp() */
 #define rsock_prepare_tcp "return function (host, port)\n" \
 	"	local dnsrec = ratchet.dns.query_all(host)\n" \
-	"	return ratchet.socket.build_tcp_info(dnsrec, port)\n" \
+	"	return ratchet.socket.build_tcp_info(dnsrec, host, port)\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ prepare_udp() */
 #define rsock_prepare_udp "return function (host, port)\n" \
 	"	local dnsrec = ratchet.dns.query_all(host)\n" \
-	"	return ratchet.socket.build_udp_info(dnsrec, port)\n" \
+	"	return ratchet.socket.build_udp_info(dnsrec, host, port)\n" \
 	"end\n"
 /* }}} */
 

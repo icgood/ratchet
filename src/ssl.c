@@ -56,56 +56,23 @@ static int password_cb (char *buf, int size, int rwflag, void *userdata)
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
-/* {{{ rssl_new() */
-static int rssl_new (lua_State *L)
+/* {{{ rssl_ctx_new() */
+static int rssl_ctx_new (lua_State *L)
 {
-	const char *keyfile = luaL_checkstring (L, 1);
-	const char *password = luaL_optstring (L, 2, NULL);
-	const char *ca_file = luaL_optstring (L, 3, NULL);
-	const char *ca_path = luaL_optstring (L, 4, NULL);
-	if (!ca_file && !ca_path)
-		return luaL_argerror (L, 3, "CA-file or CA-path required");
-	const char *random = luaL_optstring (L, 5, NULL);
-	int depth = luaL_optint (L, 6, 1);
-	int rand_max_bytes = luaL_optint (L, 7, 1048576);
-
-	SSL_METHOD *meth;
+	SSL_METHOD *meth = SSLv3_method ();
 	SSL_CTX *ctx;
 
+	/* Check for override of SSL_METHOD. */
+	if (!lua_isnoneornil (L, 1))
+	{
+		luaL_checktype (L, 1, LUA_TLIGHTUSERDATA);
+		meth = (SSL_METHOD *) lua_topointer (L, 1);
+	}
+
 	/* Create context. */
-	meth = SSLv3_method ();
 	ctx = SSL_CTX_new (meth);
 	if (!ctx)
 		return luaL_error (L, "Creation of SSL_CTX object failed");
-
-	/* Load keys and certificates. */
-	if (!SSL_CTX_use_certificate_chain_file (ctx, keyfile))
-		return luaL_error (L, "Could not read certificate chain file: %s", keyfile);
-	SSL_CTX_set_default_passwd_cb (ctx, password_cb);
-	SSL_CTX_set_default_passwd_cb_userdata (ctx, password);
-	if (!SSL_CTX_use_PrivateKey_file (ctx, keyfile, SSL_FILETYPE_PEM))
-		return luaL_error (L, "Could not read key file: %s", keyfile);
-
-	/* Load the CAs we trust. */
-	if (!SSL_CTX_load_verify_locations (ctx, ca_file, ca_path))
-	{
-		if (ca_path && ca_file)
-			return luaL_error (L, "Could not read CA locations: %s %s", ca_file, ca_path);
-		else if (ca_path)
-			return luaL_error (L, "Could not read CA path: %s", ca_path);
-		else
-			return luaL_error (L, "Could not read CA file: %s", ca_file);
-	}
-	SSL_CTX_set_verify_depth (ctx, depth);
-
-	/* Load randomness. */
-	char buffer[2048];
-	if (!random)
-		random = RAND_file_name (buffer, 2048);
-	if (!random)
-		return luaL_argerror (L, 5, "Could not find default random file");
-	if (!RAND_load_file (random, rand_max_bytes))
-		return luaL_error (L, "Could not load randomness: %s", random);
 
 	/* Set up Lua object. */
 	SSL_CTX **new = (SSL_CTX **) lua_newuserdata (L, sizeof (SSL_CTX *));
@@ -173,6 +140,117 @@ static int rssl_ctx_create_session (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rssl_ctx_load_certs() */
+static int rssl_ctx_load_certs (lua_State *L)
+{
+	SSL_CTX *ctx = *(SSL_CTX **) luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	const char *certchainfile = luaL_checkstring (L, 2);
+	const char *privkeyfile = luaL_optstring (L, 3, certchainfile);
+	const char *password = luaL_optstring (L, 4, NULL);
+
+	/* Load keys and certificates. */
+	if (!SSL_CTX_use_certificate_chain_file (ctx, certchainfile))
+		return luaL_error (L, "Could not read certificate chain file: %s", certchainfile);
+	if (password)
+	{
+		SSL_CTX_set_default_passwd_cb (ctx, password_cb);
+		SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) password);
+	}
+	if (!SSL_CTX_use_PrivateKey_file (ctx, privkeyfile, SSL_FILETYPE_PEM))
+		return luaL_error (L, "Could not read key file: %s", privkeyfile);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rssl_ctx_load_cas() */
+static int rssl_ctx_load_cas (lua_State *L)
+{
+	SSL_CTX *ctx = *(SSL_CTX **) luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	const char *ca_path = luaL_optstring (L, 2, NULL);
+	const char *ca_file = luaL_optstring (L, 3, NULL);
+	if (!ca_file && !ca_path)
+		return luaL_argerror (L, 2, "Path to trusted CAs required.");
+	int depth = luaL_optint (L, 4, 1);
+
+	/* Load the CAs we trust. */
+	if (!SSL_CTX_load_verify_locations (ctx, ca_file, ca_path))
+	{
+		if (ca_path && ca_file)
+			return luaL_error (L, "Could not read CA locations: %s %s", ca_file, ca_path);
+		else if (ca_path)
+			return luaL_error (L, "Could not read CA path: %s", ca_path);
+		else
+			return luaL_error (L, "Could not read CA file: %s", ca_file);
+	}
+	SSL_CTX_set_verify_depth (ctx, depth);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rssl_ctx_load_randomness() */
+static int rssl_ctx_load_randomness (lua_State *L)
+{
+	luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	const char *random = luaL_optstring (L, 2, NULL);
+	int rand_max_bytes = luaL_optint (L, 3, 1048576);
+
+	/* Load randomness. */
+	char buffer[LUAL_BUFFERSIZE];
+	if (!random)
+		random = RAND_file_name (buffer, LUAL_BUFFERSIZE);
+	if (!random)
+		return luaL_argerror (L, 5, "Could not find default random file");
+	if (!RAND_load_file (random, rand_max_bytes))
+		return luaL_error (L, "Could not load randomness: %s", random);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rssl_ctx_load_dh_params() */
+static int rssl_ctx_load_dh_params (lua_State *L)
+{
+	SSL_CTX *ctx = *(SSL_CTX **) luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	const char *file = luaL_checkstring (L, 2);
+
+	BIO *bio = BIO_new_file (file, "r");
+	if (!bio)
+		return luaL_error (L, "Could not open DH params file: %s", file);
+
+	DH *ret = PEM_read_bio_DHparams (bio, NULL, NULL, NULL);
+	BIO_free (bio);
+	if (!ret)
+		return luaL_error (L, "Could not read DH params file: %s", file);
+
+	if (SSL_CTX_set_tmp_dh (ctx, ret) < 0)
+		return luaL_error (L, "Could not set DH params: %s", file);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rssl_ctx_generate_tmp_rsa() */
+static int rssl_ctx_generate_tmp_rsa (lua_State *L)
+{
+	SSL_CTX *ctx = *(SSL_CTX **) luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	int bits = luaL_optint (L, 2, 512);
+	unsigned long e = (unsigned long) luaL_optlong (L, 3, RSA_F4);
+
+	RSA *rsa = RSA_generate_key (bits, e, NULL, NULL);
+	if (!rsa)
+		return luaL_error (L, "Could not generate a %d-bit RSA key", bits);
+
+	if (!SSL_CTX_set_tmp_rsa (ctx, rsa))
+		return luaL_error (L, "Could not set set temporary RSA key");
+
+	RSA_free (rsa);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ rssl_session_gc() */
 static int rssl_session_gc (lua_State *L)
 {
@@ -197,6 +275,40 @@ static int rssl_session_get_engine (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rssl_session_check_certificate_chain() */
+static int rssl_session_check_certificate_chain (lua_State *L)
+{
+	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+	const char *host = luaL_checkstring (L, 2);
+	luaL_Buffer buffer;
+
+	luaL_buffinit (L, &buffer);
+	char *prepped = luaL_prepbuffer (&buffer);
+
+	if (SSL_get_verify_result (session) != X509_V_OK)
+		return luaL_error (L, "Certificate does not verify");
+
+	X509 *peer = SSL_get_peer_certificate (session);
+	if (!peer)
+		return luaL_error (L, "Could not get peer certificate");
+	int ret = X509_NAME_get_text_by_NID (X509_get_subject_name (peer), NID_commonName, prepped, LUAL_BUFFERSIZE);
+
+	if (ret >= 0)
+	{
+		luaL_addsize (&buffer, (size_t) ret);
+		luaL_pushresult (&buffer);
+	}
+	else
+		lua_pushliteral (L, "");
+
+	if (!lua_equal (L, 2, -1))
+		return luaL_error (L, "Peer certificate common name does not match host: [%s] != [%s]", lua_tostring (L, -1), host);
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ rssl_session_rawread() */
 static int rssl_session_rawread (lua_State *L)
 {
@@ -207,7 +319,7 @@ static int rssl_session_rawread (lua_State *L)
 	char *prepped = luaL_prepbuffer (&buffer);
 
 	int ret = SSL_read (session, prepped, LUAL_BUFFERSIZE);
-	int error = SSL_get_error (session, ret);
+	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
@@ -231,6 +343,7 @@ static int rssl_session_rawread (lua_State *L)
 			return 2;
 
 		default:
+			error = ERR_get_error ();
 			return luaL_error (L, "SSL_read: %s", ERR_error_string (error, NULL));
 	}
 
@@ -246,7 +359,7 @@ static int rssl_session_rawwrite (lua_State *L)
 	const char *data = luaL_checklstring (L, 2, &size);
 
 	int ret = SSL_write (session, data, (int) size);
-	int error = SSL_get_error (session, ret);
+	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
@@ -264,6 +377,7 @@ static int rssl_session_rawwrite (lua_State *L)
 			return 2;
 
 		default:
+			error = ERR_get_error ();
 			return luaL_error (L, "SSL_write: %s", ERR_error_string (error, NULL));
 	}
 
@@ -277,7 +391,7 @@ static int rssl_session_rawshutdown (lua_State *L)
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
 	int ret = SSL_shutdown (session);
-	int error = SSL_get_error (session, ret);
+	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
@@ -295,6 +409,7 @@ static int rssl_session_rawshutdown (lua_State *L)
 			return 2;
 
 		default:
+			error = ERR_get_error ();
 			return luaL_error (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
 	}
 
@@ -302,13 +417,13 @@ static int rssl_session_rawshutdown (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rssl_session_rawhandshake_connect() */
-static int rssl_session_rawhandshake_connect (lua_State *L)
+/* {{{ rssl_session_rawconnect() */
+static int rssl_session_rawconnect (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
 	int ret = SSL_connect (session);
-	int error = SSL_get_error (session, ret);
+	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
@@ -326,6 +441,7 @@ static int rssl_session_rawhandshake_connect (lua_State *L)
 			return 2;
 
 		default:
+			error = ERR_get_error ();
 			return luaL_error (L, "SSL_connect: %s", ERR_error_string (error, NULL));
 	}
 
@@ -333,13 +449,13 @@ static int rssl_session_rawhandshake_connect (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rssl_session_rawhandshake_accept() */
-static int rssl_session_rawhandshake_accept (lua_State *L)
+/* {{{ rssl_session_rawaccept() */
+static int rssl_session_rawaccept (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
 	int ret = SSL_accept (session);
-	int error = SSL_get_error (session, ret);
+	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
@@ -357,6 +473,7 @@ static int rssl_session_rawhandshake_accept (lua_State *L)
 			return 2;
 
 		default:
+			error = ERR_get_error ();
 			return luaL_error (L, "SSL_accept: %s", ERR_error_string (error, NULL));
 	}
 
@@ -393,19 +510,10 @@ int rsock_encrypt (lua_State *L)
 	lua_pushvalue (L, 1);
 	lua_pushlightuserdata (L, bio);
 	lua_call (L, 3, 1);
-	SSL *session = *(SSL **) lua_topointer (L, -1);
 
 	lua_getfenv (L, 1);
 	lua_pushvalue (L, -2);
 	lua_setfield (L, -2, "ssl");
-	lua_pop (L, 1);
-
-	/* Check if need to initiate TLS/SSL handshake. */
-	lua_getfield (L, 1, "SO_ACCEPTCONN");
-	if (lua_toboolean (L, -1))
-		SSL_set_accept_state (session);
-	else
-		SSL_set_connect_state (session);
 	lua_pop (L, 1);
 
 	return 1;
@@ -438,10 +546,10 @@ int rsock_encrypt (lua_State *L)
 	"end\n"
 /* }}} */
 
-/* {{{ handshake_connect() */
-#define rssl_session_handshake_connect "return function (self, ...)\n" \
+/* {{{ connect() */
+#define rssl_session_connect "return function (self, ...)\n" \
 	"	repeat\n" \
-	"		local ret, yield_on = self:rawhandshake_connect(...)\n" \
+	"		local ret, yield_on = self:rawconnect(...)\n" \
 	"		if not yield_on then\n" \
 	"			return ret\n" \
 	"		end\n" \
@@ -449,10 +557,10 @@ int rsock_encrypt (lua_State *L)
 	"end\n"
 /* }}} */
 
-/* {{{ handshake_accept() */
-#define rssl_session_handshake_accept "return function (self, ...)\n" \
+/* {{{ accept() */
+#define rssl_session_accept "return function (self, ...)\n" \
 	"	repeat\n" \
-	"		local ret, yield_on = self:rawhandshake_accept(...)\n" \
+	"		local ret, yield_on = self:rawaccept(...)\n" \
 	"		if not yield_on then\n" \
 	"			return ret\n" \
 	"		end\n" \
@@ -477,13 +585,18 @@ int rsock_encrypt (lua_State *L)
 int luaopen_ratchet_ssl (lua_State *L)
 {
 	static const luaL_Reg funcs[] = {
-		{"new", rssl_new},
+		{"new", rssl_ctx_new},
 		{NULL}
 	};
 
 	static const luaL_Reg ctxmeths[] = {
 		/* Documented methods. */
 		{"create_session", rssl_ctx_create_session},
+		{"load_certs", rssl_ctx_load_certs},
+		{"load_cas", rssl_ctx_load_cas},
+		{"load_randomness", rssl_ctx_load_randomness},
+		{"load_dh_params", rssl_ctx_load_dh_params},
+		{"generate_tmp_rsa", rssl_ctx_generate_tmp_rsa},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
@@ -496,12 +609,13 @@ int luaopen_ratchet_ssl (lua_State *L)
 	static const luaL_Reg sslmeths[] = {
 		/* Documented methods. */
 		{"get_engine", rssl_session_get_engine},
+		{"check_certificate_chain", rssl_session_check_certificate_chain},
 		/* Undocumented, helper methods. */
 		{"rawread", rssl_session_rawread},
 		{"rawwrite", rssl_session_rawwrite},
 		{"rawshutdown", rssl_session_rawshutdown},
-		{"rawhandshake_connect", rssl_session_rawhandshake_connect},
-		{"rawhandshake_accept", rssl_session_rawhandshake_accept},
+		{"rawconnect", rssl_session_rawconnect},
+		{"rawaccept", rssl_session_rawaccept},
 		{NULL}
 	};
 
@@ -510,8 +624,8 @@ int luaopen_ratchet_ssl (lua_State *L)
 		{"read", rssl_session_read},
 		{"write", rssl_session_write},
 		{"shutdown", rssl_session_shutdown},
-		{"handshake_connect", rssl_session_handshake_connect},
-		{"handshake_accept", rssl_session_handshake_accept},
+		{"connect", rssl_session_connect},
+		{"accept", rssl_session_accept},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

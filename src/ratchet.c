@@ -726,6 +726,19 @@ static int ratchet_wait_for_write (lua_State *L)
 	int fd = get_fd_from_object (L, 3);
 	double timeout = get_timeout_from_object (L, 3);
 
+	/* Error for invalid fd. */
+	if (fd < 0)
+	{
+		lua_pushfstring (L1, "Invalid file descriptor: %d", fd);
+
+		lua_getfield (L, 1, "handle_thread_error");
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_call (L, 2, 0);
+
+		return 0;
+	}
+
 	/* Build timeout data. */
 	struct timeval tv;
 	int use_tv = gettimeval (timeout, &tv);
@@ -757,6 +770,19 @@ static int ratchet_wait_for_read (lua_State *L)
 	get_thread (L, 2, L1);
 	int fd = get_fd_from_object (L, 3);
 	double timeout = get_timeout_from_object (L, 3);
+
+	/* Error for invalid fd. */
+	if (fd < 0)
+	{
+		lua_pushfstring (L1, "Invalid file descriptor: %d", fd);
+
+		lua_getfield (L, 1, "handle_thread_error");
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_call (L, 2, 0);
+
+		return 0;
+	}
 
 	/* Build timeout data. */
 	struct timeval tv;
