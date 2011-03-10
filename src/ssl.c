@@ -279,31 +279,34 @@ static int rssl_session_get_engine (lua_State *L)
 static int rssl_session_check_certificate_chain (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
-	const char *host = luaL_checkstring (L, 2);
-	luaL_Buffer buffer;
-
-	luaL_buffinit (L, &buffer);
-	char *prepped = luaL_prepbuffer (&buffer);
+	const char *host = luaL_optstring (L, 2, NULL);
 
 	if (SSL_get_verify_result (session) != X509_V_OK)
 		return luaL_error (L, "Certificate does not verify");
 
-	X509 *peer = SSL_get_peer_certificate (session);
-	if (!peer)
-		return luaL_error (L, "Could not get peer certificate");
-	int ret = X509_NAME_get_text_by_NID (X509_get_subject_name (peer), NID_commonName, prepped, LUAL_BUFFERSIZE);
-
-	if (ret >= 0)
+	if (host)
 	{
-		luaL_addsize (&buffer, (size_t) ret);
-		luaL_pushresult (&buffer);
-	}
-	else
-		lua_pushliteral (L, "");
+		luaL_Buffer buffer;
+		luaL_buffinit (L, &buffer);
+		char *prepped = luaL_prepbuffer (&buffer);
 
-	if (!lua_equal (L, 2, -1))
-		return luaL_error (L, "Peer certificate common name does not match host: [%s] != [%s]", lua_tostring (L, -1), host);
-	lua_pop (L, 1);
+		X509 *peer = SSL_get_peer_certificate (session);
+		if (!peer)
+			return luaL_error (L, "Could not get peer certificate");
+		int ret = X509_NAME_get_text_by_NID (X509_get_subject_name (peer), NID_commonName, prepped, LUAL_BUFFERSIZE);
+
+		if (ret >= 0)
+		{
+			luaL_addsize (&buffer, (size_t) ret);
+			luaL_pushresult (&buffer);
+		}
+		else
+			lua_pushliteral (L, "");
+
+		if (!lua_equal (L, 2, -1))
+			return luaL_error (L, "Peer certificate common name does not match host: [%s] != [%s]", lua_tostring (L, -1), host);
+		lua_pop (L, 1);
+	}
 
 	return 0;
 }
@@ -626,6 +629,8 @@ int luaopen_ratchet_ssl (lua_State *L)
 		{"shutdown", rssl_session_shutdown},
 		{"connect", rssl_session_connect},
 		{"accept", rssl_session_accept},
+		{"client_handshake", rssl_session_connect},
+		{"server_handshake", rssl_session_accept},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

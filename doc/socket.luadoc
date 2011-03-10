@@ -98,6 +98,19 @@ function accept(self)
 --  @return true if the connection succeeded, false otherwise.
 function connect(self, sockaddr)
 
+--- Creates and attaches an encryption session to the socket, based on the
+--  given context. Once this session is created, it handles all calls to the
+--  send()/recv() methods.
+--  @param self the socket object.
+--  @param context a ratchet.ssl context object.
+--  @return the new encryption session for the socket.
+function encrypt(self, context)
+
+--- Returns the current encryption session for the socket.
+--  @param self the socket object.
+--  @return the encryption session, or nil if unencrypted.
+function get_encryption(self)
+
 --- Attempts to send the given data across the socket, pausing the thread until
 --  it is able to do so.
 --  @param self the socket object.

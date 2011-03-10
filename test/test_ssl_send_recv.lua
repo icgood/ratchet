@@ -20,7 +20,7 @@ function ctx1(where)
     client:send("yet")
 
     local enc = client:encrypt(ssl)
-    enc:accept()
+    enc:server_handshake()
 
     client:send("hello")
     local data = client:recv()
@@ -45,7 +45,7 @@ function ctx2(where)
     assert(data == "yet")
 
     local enc = socket:encrypt(ssl)
-    enc:connect()
+    enc:client_handshake()
     enc:check_certificate_chain(rec.host)
 
     local data = socket:recv()

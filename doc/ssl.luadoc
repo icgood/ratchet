@@ -1,0 +1,56 @@
+
+--- The ssl library provides an SSL encryption context. This context can be used
+--  by sockets other other encrypted sessions, so that certain initialization
+--  only needs to happen once.
+module "ratchet.ssl"
+
+--- Creates a new SSL encryption context.
+--  @param method optional SSL method light userdata, defaults to SSLv3.
+--  @return a new ssl context object.
+function new(method)
+
+--- Creates a new SSL session object using the context. The session is
+--  initialized using BIO objects to abstract the communication layer.
+--  @param self the ssl context object.
+--  @param engine the communication engine object.
+--  @param rbio the abstract BIO object for reading.
+--  @param wbio the abstract BIO object for writing, defaults to rbio.
+--  @return a new ssl session object.
+function create_session(self, engine, rbio, wbio)
+
+--- Loads a certificate chain and private key, optionally using a password
+--  to decrypt the private key file.
+--  @param self the ssl context object.
+--  @param certchainfile file containing the certificate chain.
+--  @param privkeyfile file containing the, possibly encrypted, private key.
+--  @param password optional password to decrypt private key.
+function load_certs(self, certchainfile, privkeyfile, password)
+
+--- Loads the certificate authorities used to verify remote certificates.
+--  Either ca_path or ca_file must be given.
+--  @param self the ssl context object.
+--  @param ca_path path to a directory containing trusted CA files.
+--  @param ca_file path to a file containing trusted CA info.
+--  @param depth optional maximum depth for certificate chain, default 1.
+function load_cas(self, ca_path, ca_file, depth)
+
+--- Loads randomness, from a dependably random source. Typically this is
+--  "/dev/urandom". The default action, if randomfile is not given, is to
+--  check the RANDFILE environment variable or a ~/.rnd file if one exists.
+--  @param self the ssl context object.
+--  @param randomfile path to a file with random bytes.
+--  @param max_bytes maximum bytes to read from file, default 1 Mb.
+function load_randomness(self, randomfile, max_bytes)
+
+--- Loads DH parameters from a file.
+--  @param self the ssl context object.
+--  @param file path to a PEM file with DH parameters.
+function load_dh_params(self, file)
+
+--- Generates an ephemeral RSA key.
+--  @param self the ssl context object.
+--  @param bits optional bit-size to generate for, default 512.
+--  @param e exponent for generation, default RSA_F4.
+function generate_tmp_rsa(self, bits, e)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

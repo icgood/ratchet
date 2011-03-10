@@ -1,0 +1,52 @@
+
+--- The ssl.session library provides an SSL encryption session. This session
+--  will apply to one encrypted session, such as a socket. These objects are
+--  not created directly, but are returned by ssl:create_session().
+module "ratchet.ssl.session"
+
+--- Returns the communication engine powering the encrypted session, generally
+--  a socket object.
+--  @param self the ssl session object.
+--  @return the communication engine object.
+function get_engine(self)
+
+--- Checks the remote peer's certificate against the trusted CAs, and optionally
+--  checks that Common-Name field of the certificate matches the given host. If
+--  either check fails, an error is raised.
+--  @param self the ssl session object.
+--  @param host optional host to compare against common name field.
+function check_certificate_chain(self, host)
+
+--- Initiates the encryption handshake for the server-side connection, e.g. the
+--  socket returned by accept().
+--  @param self the ssl session object.
+function server_handshake(self)
+
+--- Initiates the encryption handshake for the client-side connection, e.g. the
+--  socket that ran connect().
+--  @param self the ssl session object.
+function client_handshake(self)
+
+--- Initiates a clean shutdown of the encryption session.
+--  @param the ssl session object.
+function shutdown(self)
+
+--- Reads data on the encrypted session. This method is rarely called directly,
+--  as it is usually called by the communication engine itself. For example,
+--  with socket objects, calling recv() after encrypt() will actually call this
+--  method. The return value will be an empty string if the other side has
+--  shutdown.
+--  @param self the ssl session object.
+--  @return string of data received on the session, or nil on timeout.
+function read(self)
+
+--- Writes data on the encrypted session. This method is rarely called directly,
+--  as it is usually called by the communication engine itself. For example,
+--  with socket objects, calling send() after encrypt() will actually call this
+--  method.
+--  @param self the ssl session object.
+--  @param data the data to send on the session.
+--  @return true if sent successfully, nil on timeout.
+function write(self, data)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
