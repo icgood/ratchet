@@ -45,6 +45,14 @@
 	<li><strong>ratchet.socket</strong></li>
 	
 	<li>
+		<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
 	</li>
 
@@ -104,8 +112,18 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#encrypt">encrypt</a>&nbsp;(self, context)</td>
+	<td class="summary">Creates and attaches an encryption session to the socket, based on the given context.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#from_fd">from_fd</a>&nbsp;(fd)</td>
 	<td class="summary">Returns a new socket object, using the given file descriptor.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#get_encryption">get_encryption</a>&nbsp;(self)</td>
+	<td class="summary">Returns the current encryption session for the socket.</td>
 	</tr>
 
 	<tr>
@@ -332,6 +350,39 @@ true if the connection succeeded, false otherwise.
 
 
 
+<dt><a name="encrypt"></a><strong>encrypt</strong>&nbsp;(self, context)</dt>
+<dd>
+Creates and attaches an encryption session to the socket, based on the given context. Once this session is created, it handles all calls to the send()/recv() methods.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socket object.
+	</li>
+	
+	<li>
+	  context: a ratchet.ssl context object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the new encryption session for the socket.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="from_fd"></a><strong>from_fd</strong>&nbsp;(fd)</dt>
 <dd>
 Returns a new socket object, using the given file descriptor. This is particularly useful when sockets are returned by the accept() system call.
@@ -353,6 +404,35 @@ Returns a new socket object, using the given file descriptor. This is particular
 
 <h3>Return value:</h3>
 a new socket object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_encryption"></a><strong>get_encryption</strong>&nbsp;(self)</dt>
+<dd>
+Returns the current encryption session for the socket.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socket object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the encryption session, or nil if unencrypted.
 
 
 
