@@ -54,23 +54,40 @@ static int password_cb (char *buf, int size, int rwflag, void *userdata)
 }
 /* }}} */
 
+/* {{{ setup_ssl_methods() */
+#define setup_ssl_method_field(n) lua_pushlightuserdata (L, n ## _ ## method); lua_setfield (L, -2, #n) 
+void setup_ssl_methods (lua_State *L)
+{
+	setup_ssl_method_field (SSLv2);
+	setup_ssl_method_field (SSLv2_server);
+	setup_ssl_method_field (SSLv2_client);
+	setup_ssl_method_field (SSLv3);
+	setup_ssl_method_field (SSLv3_server);
+	setup_ssl_method_field (SSLv3_client);
+	setup_ssl_method_field (TLSv1);
+	setup_ssl_method_field (TLSv1_server);
+	setup_ssl_method_field (TLSv1_client);
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ rssl_ctx_new() */
 static int rssl_ctx_new (lua_State *L)
 {
-	SSL_METHOD *meth = SSLv3_method ();
+	typedef SSL_METHOD *(*ssl_meth) (void);
+	ssl_meth meth = SSLv3_method;
 	SSL_CTX *ctx;
 
-	/* Check for override of SSL_METHOD. */
+	/* Check for override of default method. */
 	if (!lua_isnoneornil (L, 1))
 	{
 		luaL_checktype (L, 1, LUA_TLIGHTUSERDATA);
-		meth = (SSL_METHOD *) lua_topointer (L, 1);
+		meth = (ssl_meth) lua_topointer (L, 1);
 	}
 
 	/* Create context. */
-	ctx = SSL_CTX_new (meth);
+	ctx = SSL_CTX_new (meth ());
 	if (!ctx)
 		return luaL_error (L, "Creation of SSL_CTX object failed");
 
@@ -656,6 +673,8 @@ int luaopen_ratchet_ssl (lua_State *L)
 	lua_pop (L, 1);
 
 	luaI_openlib (L, "ratchet.ssl", funcs, 0);
+
+	setup_ssl_methods (L);
 
 	/* Global system initialization. */
 	SSL_library_init ();

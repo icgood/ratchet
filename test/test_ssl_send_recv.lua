@@ -59,10 +59,10 @@ function ctx2(where)
     counter = counter + 2
 end
 
-ssl1 = ratchet.ssl.new()
+ssl1 = ratchet.ssl.new(ratchet.ssl.SSLv3_server)
 ssl1:load_certs("cert.pem")
 
-ssl2 = ratchet.ssl.new()
+ssl2 = ratchet.ssl.new(ratchet.ssl.SSLv3_client)
 ssl2:load_cas(nil, "cert.pem")
 
 kernel = ratchet.new()
