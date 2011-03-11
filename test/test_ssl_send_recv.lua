@@ -19,7 +19,7 @@ function ctx1(where)
     assert(data == "not encrypted")
     client:send("yet")
 
-    local enc = client:encrypt(ssl)
+    local enc = client:encrypt(ssl1)
     enc:server_handshake()
 
     client:send("hello")
@@ -44,7 +44,7 @@ function ctx2(where)
     local data = socket:recv()
     assert(data == "yet")
 
-    local enc = socket:encrypt(ssl)
+    local enc = socket:encrypt(ssl2)
     enc:client_handshake()
     enc:check_certificate_chain(rec.host)
 
@@ -59,12 +59,11 @@ function ctx2(where)
     counter = counter + 2
 end
 
-ssl = ratchet.ssl.new()
-ssl:load_certs("cert.pem")
-ssl:load_cas(nil, "cert.pem")
---ssl:load_randomness("/dev/urandom")
---ssl:load_dh_params("dh_param.pem")
---ssl:generate_tmp_rsa()
+ssl1 = ratchet.ssl.new()
+ssl1:load_certs("cert.pem")
+
+ssl2 = ratchet.ssl.new()
+ssl2:load_cas(nil, "cert.pem")
 
 kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
