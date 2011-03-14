@@ -11,11 +11,13 @@ module "ratchet.ssl.session"
 function get_engine(self)
 
 --- Checks the remote peer's certificate against the trusted CAs, and optionally
---  checks that Common-Name field of the certificate matches the given host. If
---  either check fails, an error is raised.
+--  checks that Common-Name field of the certificate matches the given host.
 --  @param self the ssl session object.
---  @param host optional host to compare against common name field.
-function check_certificate_chain(self, host)
+--  @param host optional host to compare against "Common Name" field(s).
+--  @return a boolean if the peer provided a certificate, a boolean if the
+--          peer's certificate verified, and a boolean if host is provided and
+--          matches the certificate's "Common Name" field(s).
+function verify_certificate(self, host)
 
 --- Initiates the encryption handshake for the server-side connection, e.g. the
 --  socket returned by accept().
