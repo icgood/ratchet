@@ -46,7 +46,9 @@ function ctx2(where)
 
     local enc = socket:encrypt(ssl2)
     enc:client_handshake()
-    enc:check_certificate_chain(rec.host)
+
+    local got_cert, verified, host_matched = enc:verify_certificate(rec.host)
+    assert(got_cert and verified and host_matched)
 
     local data = socket:recv()
     assert(data == "hello")

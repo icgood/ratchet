@@ -157,6 +157,31 @@ static int rssl_ctx_create_session (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rssl_ctx_set_verify_mode() */
+static int rssl_ctx_set_verify_mode (lua_State *L)
+{
+	SSL_CTX *ctx = *(SSL_CTX **) luaL_checkudata (L, 1, "ratchet_ssl_ctx_meta");
+	static const char *lst[] = {
+		"none",
+		"peer",
+		"fail",
+		"once",
+		NULL
+	};
+	static const int modelst[] = {
+		SSL_VERIFY_NONE,
+		SSL_VERIFY_PEER,
+		SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+		SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE
+	};
+	int mode = modelst[luaL_checkoption (L, 2, "peer", lst)];
+
+	SSL_CTX_set_verify (ctx, mode, NULL);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ rssl_ctx_load_certs() */
 static int rssl_ctx_load_certs (lua_State *L)
 {
@@ -292,40 +317,67 @@ static int rssl_session_get_engine (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rssl_session_check_certificate_chain() */
-static int rssl_session_check_certificate_chain (lua_State *L)
+/* {{{ rssl_session_verify_certificate() */
+static int rssl_session_verify_certificate (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
-	const char *host = luaL_optstring (L, 2, NULL);
+	size_t host_len;
+	const char *host = luaL_optlstring (L, 2, NULL, &host_len);
 
+	/* Check if we even got a certificate form peer. */
+	X509 *peer = SSL_get_peer_certificate (session);
+	if (!peer)
+	{
+		lua_pushboolean (L, 0);
+		return 1;
+	}
+	else
+		lua_pushboolean (L, 1);
+
+	/* Verify certificate against authorities. */
 	if (SSL_get_verify_result (session) != X509_V_OK)
-		return luaL_error (L, "Certificate does not verify");
+	{
+		X509_free (peer);
+		lua_pushboolean (L, 0);
+		return 2;
+	}
+	else
+		lua_pushboolean (L, 1);
 
+	/* Check the "Common Name" fields from the peer certificate. */
 	if (host)
 	{
-		luaL_Buffer buffer;
-		luaL_buffinit (L, &buffer);
-		char *prepped = luaL_prepbuffer (&buffer);
+		X509_NAME *peername = X509_get_subject_name (peer);
 
-		X509 *peer = SSL_get_peer_certificate (session);
-		if (!peer)
-			return luaL_error (L, "Could not get peer certificate");
-		int ret = X509_NAME_get_text_by_NID (X509_get_subject_name (peer), NID_commonName, prepped, LUAL_BUFFERSIZE);
-
-		if (ret >= 0)
+		int i = -1, found = 0;
+		while (1)
 		{
-			luaL_addsize (&buffer, (size_t) ret);
-			luaL_pushresult (&buffer);
+			i = X509_NAME_get_index_by_NID (peername, NID_commonName, i);
+			if (i == -1)
+				break;
+
+			X509_NAME_ENTRY *entry = X509_NAME_get_entry (peername, i);
+			ASN1_STRING *data = X509_NAME_ENTRY_get_data (entry);
+
+			if (host_len != (size_t) ASN1_STRING_length (data))
+			{
+				X509_free (peer);
+				lua_pushboolean (L, 0);
+				return 3;
+			}
+			else if (0 == memcmp (host, ASN1_STRING_data (data), host_len))
+				found = 1;
 		}
-		else
-			lua_pushliteral (L, "");
+		X509_free (peer);
 
-		if (!lua_equal (L, 2, -1))
-			return luaL_error (L, "Peer certificate common name does not match host: [%s] != [%s]", lua_tostring (L, -1), host);
-		lua_pop (L, 1);
+		lua_pushboolean (L, found);
+		return 3;
 	}
-
-	return 0;
+	else
+	{
+		X509_free (peer);
+		return 2;
+	}
 }
 /* }}} */
 
@@ -612,6 +664,7 @@ int luaopen_ratchet_ssl (lua_State *L)
 	static const luaL_Reg ctxmeths[] = {
 		/* Documented methods. */
 		{"create_session", rssl_ctx_create_session},
+		{"set_verify_mode", rssl_ctx_set_verify_mode},
 		{"load_certs", rssl_ctx_load_certs},
 		{"load_cas", rssl_ctx_load_cas},
 		{"load_randomness", rssl_ctx_load_randomness},
@@ -629,7 +682,7 @@ int luaopen_ratchet_ssl (lua_State *L)
 	static const luaL_Reg sslmeths[] = {
 		/* Documented methods. */
 		{"get_engine", rssl_session_get_engine},
-		{"check_certificate_chain", rssl_session_check_certificate_chain},
+		{"verify_certificate", rssl_session_verify_certificate},
 		/* Undocumented, helper methods. */
 		{"rawread", rssl_session_rawread},
 		{"rawwrite", rssl_session_rawwrite},
