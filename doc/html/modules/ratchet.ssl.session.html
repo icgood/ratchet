@@ -87,11 +87,6 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#check_certificate_chain">check_certificate_chain</a>&nbsp;(self, host)</td>
-	<td class="summary">Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host.</td>
-	</tr>
-
-	<tr>
 	<td class="name" nowrap><a href="#client_handshake">client_handshake</a>&nbsp;(self)</td>
 	<td class="summary">Initiates the encryption handshake for the client-side connection, e.g.</td>
 	</tr>
@@ -117,6 +112,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#verify_certificate">verify_certificate</a>&nbsp;(self, host)</td>
+	<td class="summary">Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#write">write</a>&nbsp;(self, data)</td>
 	<td class="summary">Writes data on the encrypted session.</td>
 	</tr>
@@ -135,36 +135,6 @@
 
 <h2><a name="functions"></a>Functions</h2>
 <dl class="function">
-
-
-
-<dt><a name="check_certificate_chain"></a><strong>check_certificate_chain</strong>&nbsp;(self, host)</dt>
-<dd>
-Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host. If either check fails, an error is raised.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ssl session object.
-	</li>
-	
-	<li>
-	  host: optional host to compare against common name field.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
 
 
 
@@ -300,6 +270,39 @@ Initiates a clean shutdown of the encryption session.
 
 
 
+
+
+
+</dd>
+
+
+
+
+<dt><a name="verify_certificate"></a><strong>verify_certificate</strong>&nbsp;(self, host)</dt>
+<dd>
+Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+	<li>
+	  host: optional host to compare against "Common Name" field(s).
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a boolean if the peer provided a certificate, a boolean if the peer's certificate verified, and a boolean if host is provided and matches the certificate's "Common Name" field(s).
 
 
 

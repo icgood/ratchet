@@ -121,6 +121,11 @@
 	<td class="summary">Creates a new SSL encryption context.</td>
 	</tr>
 
+	<tr>
+	<td class="name" nowrap><a href="#set_verify_mode">set_verify_mode</a>&nbsp;(self, mode)</td>
+	<td class="summary">Sets a new verification mode for the peer.</td>
+	</tr>
+
 </table>
 
 
@@ -374,6 +379,36 @@ Creates a new SSL encryption context.
 
 <h3>Return value:</h3>
 a new ssl context object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="set_verify_mode"></a><strong>set_verify_mode</strong>&nbsp;(self, mode)</dt>
+<dd>
+Sets a new verification mode for the peer. If mode is "none", the peer is not asked to provide a certificate. If mode is "peer", the peer should provide a certificate if one is available. A mode of "once" is like "peer" except the peer is only asked on the first handshake. A mode of "fail" will cause a handshake error if the peer does not provide a certificate.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl context object.
+	</li>
+	
+	<li>
+	  mode: the new verify mode.
+	</li>
+	
+</ul>
+
+
+
+
+
 
 
 
