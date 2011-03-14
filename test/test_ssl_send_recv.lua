@@ -22,6 +22,8 @@ function ctx1(where)
     local enc = client:encrypt(ssl1)
     enc:server_handshake()
 
+    assert("AES256-SHA" == enc:get_cipher())
+
     client:send("hello")
     local data = client:recv()
     assert(data == "world")
@@ -49,6 +51,9 @@ function ctx2(where)
 
     local got_cert, verified, host_matched = enc:verify_certificate(rec.host)
     assert(got_cert and verified and host_matched)
+
+    assert("AES256-SHA" == enc:get_cipher())
+    assert("CN=localhost,O=SliMTA,ST=Virginia,C=US" == enc:get_rfc2253())
 
     local data = socket:recv()
     assert(data == "hello")

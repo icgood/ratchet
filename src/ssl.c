@@ -381,6 +381,48 @@ static int rssl_session_verify_certificate (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rssl_session_get_rfc2253() */
+static int rssl_session_get_rfc2253 (lua_State *L)
+{
+	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+
+	X509 *peer = SSL_get_peer_certificate (session);
+	if (peer)
+	{
+		X509_NAME *peername = X509_get_subject_name (peer);
+
+		BIO *mem = BIO_new (BIO_s_mem ());
+		X509_NAME_print_ex (mem, peername, 0, XN_FLAG_RFC2253);
+
+		luaL_Buffer buffer;
+		luaL_buffinit (L, &buffer);
+		char *prepped = luaL_prepbuffer (&buffer);
+		int ret = BIO_read (mem, prepped, LUAL_BUFFERSIZE);
+		luaL_addsize (&buffer, (size_t) ret);
+		luaL_pushresult (&buffer);
+
+		BIO_free (mem);
+
+		X509_free (peer);
+	}
+	else
+		lua_pushnil (L);
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ rssl_session_get_cipher() */
+static int rssl_session_get_cipher (lua_State *L)
+{
+	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+
+	lua_pushstring (L, SSL_get_cipher (session));
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ rssl_session_rawread() */
 static int rssl_session_rawread (lua_State *L)
 {
@@ -683,6 +725,8 @@ int luaopen_ratchet_ssl (lua_State *L)
 		/* Documented methods. */
 		{"get_engine", rssl_session_get_engine},
 		{"verify_certificate", rssl_session_verify_certificate},
+		{"get_rfc2253", rssl_session_get_rfc2253},
+		{"get_cipher", rssl_session_get_cipher},
 		/* Undocumented, helper methods. */
 		{"rawread", rssl_session_rawread},
 		{"rawwrite", rssl_session_rawwrite},

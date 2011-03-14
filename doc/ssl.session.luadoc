@@ -19,6 +19,16 @@ function get_engine(self)
 --          matches the certificate's "Common Name" field(s).
 function verify_certificate(self, host)
 
+--- Gets the current SSL cipher.
+--  @param self the ssl session object.
+--  @return current cipher name.
+function get_cipher(self)
+
+--- Gets a RFC 2253 string representation of the remote peer certificate.
+--  @param self the ssl session object.
+--  @return see RFC 2253.
+function get_rfc2253(self)
+
 --- Initiates the encryption handshake for the server-side connection, e.g. the
 --  socket returned by accept().
 --  @param self the ssl session object.
