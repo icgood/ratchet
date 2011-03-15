@@ -53,7 +53,7 @@ function ctx2(where)
     assert(got_cert and verified and host_matched)
 
     assert("AES256-SHA" == enc:get_cipher())
-    assert("CN=localhost,O=SliMTA,ST=Virginia,C=US" == enc:get_rfc2253())
+    assert("CN=localhost" == enc:get_rfc2253())
 
     local data = socket:recv()
     assert(data == "hello")

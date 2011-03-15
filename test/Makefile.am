@@ -21,9 +21,16 @@ TESTS = test_listen_connect.lua \
 	test_callable_object.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
+EXTRA_DIST = $(TESTS)
+
+check_DATA = 
+CLEANFILES = 
 
 if HAVE_OPENSSL
-XFAIL_TESTS +=
+check_DATA += cert.pem
+CLEANFILES += cert.pem
+cert.pem:
+	openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout $@ -out $@ > /dev/null
 else
 XFAIL_TESTS += test_ssl_send_recv.lua
 endif

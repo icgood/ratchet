@@ -21,6 +21,7 @@ m4/ltversion.m4
 m4/lt~obsolete.m4
 INSTALL
 Makefile
+test/cert.pem
 .deps/
 .libs/
 *.in
