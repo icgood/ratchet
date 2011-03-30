@@ -92,8 +92,18 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#get_cipher">get_cipher</a>&nbsp;(self)</td>
+	<td class="summary">Gets the current SSL cipher.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#get_engine">get_engine</a>&nbsp;(self)</td>
 	<td class="summary">Returns the communication engine powering the encrypted session, generally a socket object.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#get_rfc2253">get_rfc2253</a>&nbsp;(self)</td>
+	<td class="summary">Gets a RFC 2253 string representation of the remote peer certificate.</td>
 	</tr>
 
 	<tr>
@@ -164,6 +174,35 @@ Initiates the encryption handshake for the client-side connection, e.g. the sock
 
 
 
+<dt><a name="get_cipher"></a><strong>get_cipher</strong>&nbsp;(self)</dt>
+<dd>
+Gets the current SSL cipher.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+current cipher name.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="get_engine"></a><strong>get_engine</strong>&nbsp;(self)</dt>
 <dd>
 Returns the communication engine powering the encrypted session, generally a socket object.
@@ -185,6 +224,35 @@ Returns the communication engine powering the encrypted session, generally a soc
 
 <h3>Return value:</h3>
 the communication engine object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_rfc2253"></a><strong>get_rfc2253</strong>&nbsp;(self)</dt>
+<dd>
+Gets a RFC 2253 string representation of the remote peer certificate.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+see RFC 2253.
 
 
 
