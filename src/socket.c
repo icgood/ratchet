@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <arpa/inet.h>
 #include <math.h>
 #include <netdb.h>
 #include <errno.h>
@@ -52,6 +53,34 @@
 int rsock_get_encryption (lua_State *L);
 int rsock_encrypt (lua_State *L);
 #endif
+
+/* {{{ push_inet_ntop() */
+static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
+{
+	if (addr->sa_family == AF_INET)
+	{
+		char buffer[INET_ADDRSTRLEN];
+		struct in_addr *in = &((struct sockaddr_in *) addr)->sin_addr;
+		if (!inet_ntop (AF_INET, in, buffer, INET_ADDRSTRLEN))
+			return handle_perror (L);
+		lua_pushstring (L, buffer);
+	}
+
+	else if (addr->sa_family == AF_INET6)
+	{
+		char buffer[INET6_ADDRSTRLEN];
+		struct in6_addr *in = &((struct sockaddr_in6 *) addr)->sin6_addr;
+		if (!inet_ntop (AF_INET6, in, buffer, INET6_ADDRSTRLEN))
+			return handle_perror (L);
+		lua_pushstring (L, buffer);
+	}
+
+	else
+		lua_pushnil (L);
+
+	return 1;
+}
+/* }}} */
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
@@ -531,13 +560,12 @@ static int rsock_rawconnect (lua_State *L)
 /* {{{ rsock_rawaccept() */
 static int rsock_rawaccept (lua_State *L)
 {
-	lua_settop (L, 1);
 	int sockfd = socket_fd (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
-	struct sockaddr *addr = (struct sockaddr *) lua_newuserdata (L, (size_t) addr_len);
+	struct sockaddr_storage addr;
 
-	int clientfd = accept (sockfd, addr, &addr_len);
+	int clientfd = accept (sockfd, (struct sockaddr *) &addr, &addr_len);
 	if (clientfd == -1)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -557,7 +585,7 @@ static int rsock_rawaccept (lua_State *L)
 	lua_pushinteger (L, clientfd);
 	lua_call (L, 1, 1);
 
-	lua_pushvalue (L, 2);
+	push_inet_ntop (L, (struct sockaddr *) &addr);
 
 	return 2;
 }
@@ -685,14 +713,14 @@ static int rsock_rawrecv (lua_State *L)
 /* }}} */
 
 /* {{{ prepare_uri() */
-#define rsock_prepare_uri "return function (uri)\n" \
+#define rsock_prepare_uri "return function (uri, query_types)\n" \
 	"	local class = ratchet.socket\n" \
 	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
 	"	if schema == 'tcp' then\n" \
-	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest, query_types)\n" \
 	"		return class.build_tcp_info(dnsrec, dest, port)\n" \
 	"	elseif schema == 'udp' then\n" \
-	"		local dnsrec = ratchet.dns.query_all(dest)\n" \
+	"		local dnsrec = ratchet.dns.query_all(dest, query_types)\n" \
 	"		return class.build_udp_info(dnsrec, dest, port)\n" \
 	"	\n" \
 	"	elseif schema == 'unix' then\n" \
