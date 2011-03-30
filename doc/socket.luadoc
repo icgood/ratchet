@@ -87,8 +87,8 @@ function listen(self, backlog)
 --- Pauses the current thread until a new connection to the socket is
 --  attempted. The current socket MUST have called listen().
 --  @param self the socket object.
---  @return a new socket object for the connection, followed by a sockaddr
---          userdata object with its information.
+--  @return a new socket object for the connection, followed by a string with
+--          the IP address of the connecting host.
 function accept(self)
 
 --- Attempts a connection to the given sockaddr and pauses the thread until it
