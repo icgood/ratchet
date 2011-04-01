@@ -49,6 +49,8 @@
 #define DNS_HOSTS_DEFAULT "ratchet_dns_hosts_default"
 #define DNS_TXT_SIZE_REGISTER "ratchet_dns_txt_size"
 
+size_t dns_ptr_qname(void *dst, size_t lim, int af, void *addr);
+
 /* {{{ arg_or_registry() */
 static void *arg_or_registry (lua_State *L, int index, const char *reg_default, const char *checkudata)
 {
@@ -440,6 +442,44 @@ static int check_special (lua_State *L, const char *data, enum dns_type type)
 
 /* }}} */
 
+/* {{{ ensure_arpa_string() */
+static const char *ensure_arpa_string (lua_State *L, int index)
+{
+	const char *data = lua_tostring (L, index);
+
+	if (!strstr (data, "arpa"))
+	{
+		union { struct in_addr a; struct in6_addr a6; } addr;
+		union { struct dns_a a; struct dns_aaaa a6; } dns_addr;
+
+		if (inet_pton (AF_INET, data, &addr.a) > 0)
+		{
+			char qname[DNS_D_MAXNAME + 1];
+			memcpy (&dns_addr.a.addr, &addr.a, sizeof (struct in_addr));
+			if (dns_ptr_qname (qname, DNS_D_MAXNAME+1, AF_INET, &dns_addr.a) > 0)
+			{
+				lua_pushstring (L, qname);
+				lua_replace (L, index);
+				return lua_tostring (L, 2);
+			}
+		}
+		else if (inet_pton (AF_INET6, data, &addr.a6) > 0)
+		{
+			char qname[DNS_D_MAXNAME + 1];
+			memcpy (&dns_addr.a6.addr, &addr.a6, sizeof (struct in6_addr));
+			if (dns_ptr_qname (qname, DNS_D_MAXNAME+1, AF_INET6, &dns_addr.a6) > 0)
+			{
+				lua_pushstring (L, qname);
+				lua_replace (L, index);
+				return lua_tostring (L, 2);
+			}
+		}
+	}
+	
+	return data;
+}
+/* }}} */
+
 /* {{{ ratchet_dns_resolv_conf_meta */
 
 /* {{{ load_resolv_conf() */
@@ -813,6 +853,9 @@ static int mydns_submit_query (lua_State *L)
 	struct dns_resolver *res = get_dns_res (L, 1);
 	const char *data = luaL_checkstring (L, 2);
 	enum dns_type type = get_query_type (L, 3);
+
+	if (type == DNS_T_PTR)
+		data = ensure_arpa_string (L, 2);
 
 	int error = dns_res_submit (res, data, type, DNS_C_IN);
 	if (error)

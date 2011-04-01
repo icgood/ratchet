@@ -10,7 +10,9 @@ function ctx1(where)
     ctx2("tcp://localhost:10025")
 
     local client, from = socket:accept()
-    assert(from == "127.0.0.1")
+
+    local ptr = ratchet.dns.query(from, "ptr")
+    assert(ptr and ptr[1] == "localhost.")
 end
 
 function ctx2(where)
