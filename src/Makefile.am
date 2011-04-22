@@ -42,12 +42,19 @@ endif
 libratchet_la_SOURCES = $(allsources)
 
 if ENABLE_MODULE
-lualibdir = @LUA_CPATH@
+lualibdir = @MODULE_PATH@
 lualib_LTLIBRARIES = ratchet.la
 ratchet_la_LDFLAGS = -module -avoid-version -shared
 ratchet_la_LIBADD = libratchet.la
 endif
 
+SUBDIRS =
+
 if HAVE_DNS
-SUBDIRS = libdns
+SUBDIRS += libdns
 endif
+
+if ENABLE_HTTP
+SUBDIRS += http
+endif
+

@@ -41,14 +41,30 @@ AC_ARG_ENABLE([dns], [AS_HELP_STRING([--disable-dns],
 #####################
 # Configure options: --disable-timerfd[=no]
 AC_ARG_ENABLE([timerfd], [AS_HELP_STRING([--disable-timerfd],
-	      				 [disable usage of timerfd calls (default no)])],
+	                                 [disable usage of timerfd calls (default no)])],
 	      [use_timerfd="$enableval"], [use_timerfd=yes])
 
 #####################
 # Configure options: --disable-openssl[=no]
 AC_ARG_ENABLE([openssl], [AS_HELP_STRING([--disable-openssl],
-	      				 [disable usage of openssl libraries (default no)])],
+	                                 [disable usage of openssl libraries (default no)])],
 	      [use_openssl="$enableval"], [use_openssl=yes])
+
+#####################
+# Configure options: --with-lua-cpath=CPATH
+AC_ARG_WITH([lua-cpath], [AS_HELP_STRING([--with-lua-cpath=CPATH],
+	                                 [Install Lua C modules to CPATH])])
+if test "x${with_lua_cpath}" == "x"; then
+	with_lua_cpath="`pkg-config lua --variable=INSTALL_CMOD`"
+fi
+
+#####################
+# Configure options: --with-lua-lpath=LPATH
+AC_ARG_WITH([lua-lpath], [AS_HELP_STRING([--with-lua-lpath=LPATH],
+	                                 [Install Lua modules to LPATH])])
+if test "x${with_lua_lpath}" == "x"; then
+	with_lua_lpath="`pkg-config lua --variable=INSTALL_LMOD`"
+fi
 
 #####################
 # Checks for libraries.
@@ -160,25 +176,43 @@ if test -n "$BUFSIZ"; then
 fi
 
 #####################
-# Configure options: --disable-devel.
-AC_ARG_ENABLE([devel], [AS_HELP_STRING([--enable-devel@<:@=yes@:>@],
-				       [install development headers and libraries.])],
+# Configure options: --disable-devel
+AC_ARG_ENABLE([devel], [AS_HELP_STRING([--disable-devel],
+	                               [do not install development headers and libraries.])],
 	      [enable_devel="${enableval}"], [enable_devel=yes])
 AM_CONDITIONAL([ENABLE_DEVEL], [test "x${enable_devel}" != "xno"])
 
 #####################
-# Configure options: --disable-module.
-AC_ARG_ENABLE([module], [AS_HELP_STRING([--enable-module@<:@=CPATH@:>@],
-					[install Lua interpreter module to CPATH, which uses pkg-config for default.])],
+# Configure options: --disable-module
+AC_ARG_ENABLE([module], [AS_HELP_STRING([--enable-module@<:@=PATH@:>@],
+	                                [install Lua interpreter module to Lua C module installation path, or PATH if given.])],
 	      [enable_module="${enableval%/}"], [enable_module=yes])
-if test "x${enable_module}" == "xyes"; then
-	enable_module="`pkg-config lua --variable=INSTALL_CMOD`"
-fi
-if test "x${enable_module}" == "x"; then
-	AC_MSG_ERROR([Please provide --enable-module=CPATH with Lua module directory.])
+if test "x${enable_module}" != "xno"; then
+	if test "x${enable_module}" == "xyes"; then
+		enable_module="$with_lua_cpath"
+	fi
+	if test "x${enable_module}" == "x"; then
+		AC_MSG_ERROR([Please provide PATH or --with-lua-cpath=CPATH.])
+	fi
 fi
 AM_CONDITIONAL([ENABLE_MODULE], [test "x${enable_module}" != "xno"])
-AC_SUBST([LUA_CPATH], ["$enable_module"])
+AC_SUBST([MODULE_PATH], ["$enable_module"])
+
+#####################
+# Configure options: --disable-http
+AC_ARG_ENABLE([http], [AS_HELP_STRING([--enable-http@<:@=PATH@:>@],
+	                              [install Lua HTTP modules to Lua module installation path, or PATH if given.])],
+	      [enable_http="${enableval%/}"], [enable_http=yes])
+if test "x${enable_http}" != "xno"; then
+	if test "x${enable_http}" == "xyes"; then
+		enable_http="$with_lua_lpath"
+	fi
+	if test "x${enable_http}" == "x"; then
+		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
+	fi
+fi
+AM_CONDITIONAL([ENABLE_HTTP], [test "x${enable_http}" != "xno"])
+AC_SUBST([HTTP_PATH], ["$enable_http"])
 
 #####################
 # Checks for header files.
@@ -204,7 +238,8 @@ AC_FUNC_STRERROR_R
 
 #####################
 AC_CONFIG_FILES([Makefile
-		 src/Makefile
-		 src/libdns/Makefile
-		 test/Makefile])
+	         src/Makefile
+	         src/http/Makefile
+	         src/libdns/Makefile
+	         test/Makefile])
 AC_OUTPUT
