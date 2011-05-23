@@ -46,16 +46,16 @@
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
-	<li><strong>ratchet.http.server</strong></li>
-	
+	<li>
+		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+	</li>
+
 	<li>
 		<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
 	</li>
 
-	<li>
-		<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
-	</li>
-
+	<li><strong>ratchet.smtp.server</strong></li>
+	
 	<li>
 		<a href="../modules/ratchet.socket.html">ratchet.socket</a>
 	</li>
@@ -91,9 +91,9 @@
 
 <div id="content">
 
-<h1>Module <code>ratchet.http.server</code></h1>
+<h1>Module <code>ratchet.smtp.server</code></h1>
 
-<p>This library provides server-side capabilities for an HTTP service. Currently the server only supports HTTP/1.0, with no current plans to support 1.1 or higher, as it is only provided for convenience and as an example of using the ratchet libraries.</p>
+<p>This library provides server-side capabilities for an SMTP server. Currently the server will advertize the 8BITMIME, PIPELINING, and ENHANCEDSTATUSCODES extensions and is capable of handling arbitrary, custom commands as well. It is provided for convenience and as an example of using the ratchet libraries.</p>
 
 
 
@@ -104,12 +104,12 @@
 
 	<tr>
 	<td class="name" nowrap><a href="#handle">handle</a>&nbsp;(self)</td>
-	<td class="summary">Receives an HTTP query, calls the corresponding handler, and returns the results.</td>
+	<td class="summary">Sends a banner and starts listening for and responding to SMTP commands from the client.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, from, send_size)</td>
-	<td class="summary">Creates a new HTTP server object.</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, send_size)</td>
+	<td class="summary">Creates a new SMTP server object.</td>
 	</tr>
 
 </table>
@@ -131,14 +131,14 @@
 
 <dt><a name="handle"></a><strong>handle</strong>&nbsp;(self)</dt>
 <dd>
-Receives an HTTP query, calls the corresponding handler, and returns the results.
+Sends a banner and starts listening for and responding to SMTP commands from the client. This function continues until the client sends a QUIT command.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  self: The http.server object.
+	  self: the smtp.server object.
 	</li>
 	
 </ul>
@@ -155,24 +155,20 @@ Receives an HTTP query, calls the corresponding handler, and returns the results
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, from, send_size)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, send_size)</dt>
 <dd>
-Creates a new HTTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
+Creates a new SMTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  socket: Used as the underlying socket for the query, under the assumption that encryption has been established as needed and no other I/O has taken place.
+	  socket: Used as the underlying socket for the session, under the assumption that no I/O has taken place, except possibly encryption if not using STARTTLS.
 	</li>
 	
 	<li>
-	  handlers: Table whose keys correspond to supported HTTP commands. The command is called as a method of this table, e.g. handlers:GET(...), with the arguments being the URI, headers, data, and source address.
-	</li>
-	
-	<li>
-	  from: Passed as the last argument to a handler function, typically used to send the source address of the connection (the second value returned by accept()).
+	  handlers: Table whose keys correspond to supported SMTP commands. The command is called as a method of this table, e.g. handlers:MAIL(...), with the first argument being a reply table that the method can use to set the "code" and "message" keys to control the response. See the manual for more details.
 	</li>
 	
 	<li>
@@ -187,7 +183,7 @@ Creates a new HTTP server object. A new object should be created with this funct
 
 
 <h3>Return value:</h3>
-a new http.server object.
+a new smtp.server object.
 
 
 
