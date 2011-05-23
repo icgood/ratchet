@@ -253,6 +253,8 @@ function smtp_extensions:parse_string(str)
             self:add(line:match(pattern))
         end
     end
+
+    return header or str
 end
 -- }}}
 

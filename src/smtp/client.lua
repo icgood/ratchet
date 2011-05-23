@@ -56,7 +56,7 @@ function ehlo(self, ehlo_as)
     self:recv_batch()
     if ehlo.code == "250" then
         self.extensions:reset()
-        self.extensions:parse_string(ehlo.message)
+        ehlo.message = self.extensions:parse_string(ehlo.message)
     end
 
     return ehlo
