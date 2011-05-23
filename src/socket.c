@@ -82,6 +82,27 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 }
 /* }}} */
 
+/* {{{ call_tracer() */
+static int call_tracer (lua_State *L, int index, const char *type, int args)
+{
+	lua_getfenv (L, index);
+	lua_getfield (L, -1, "tracer");
+	if (!lua_toboolean (L, -1))
+	{
+		lua_pop (L, 2+args);
+		return 0;
+	}
+	lua_remove (L, -2);
+	lua_insert (L, -args-1);
+	lua_pushstring (L, type);
+	lua_insert (L, -args-1);
+
+	lua_call (L, args+1, 0);
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ rsock_new() */
@@ -479,6 +500,9 @@ static int rsock_bind (lua_State *L)
 	if (ret < 0)
 		return handle_perror (L);
 
+	lua_pushvalue (L, 2);
+	call_tracer (L, 1, "bind", 1);
+
 	lua_pushboolean (L, 1);
 	return 1;
 }
@@ -493,6 +517,8 @@ static int rsock_listen (lua_State *L)
 	int ret = listen (sockfd, backlog);
 	if (ret < 0)
 		return handle_perror (L);
+
+	call_tracer (L, 1, "listen", 0);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -511,6 +537,9 @@ static int rsock_shutdown (lua_State *L)
 	if (ret == -1)
 		return handle_perror (L);
 
+	lua_pushvalue (L, 2);
+	call_tracer (L, 1, "shutdown", 1);
+
 	lua_pushboolean (L, 1);
 	return 1;
 }
@@ -528,8 +557,24 @@ static int rsock_close (lua_State *L)
 		return handle_perror (L);
 	*fd = -1;
 
+	call_tracer (L, 1, "close", 0);
+
 	lua_pushboolean (L, 1);
 	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_set_tracer() */
+static int rsock_set_tracer (lua_State *L)
+{
+	(void) socket_fd (L, 1);
+	lua_settop (L, 2);
+
+	lua_getfenv (L, 1);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, -2, "tracer");
+
+	return 0;
 }
 /* }}} */
 
@@ -552,6 +597,9 @@ static int rsock_rawconnect (lua_State *L)
 	}
 	else
 		lua_pushboolean (L, 1);
+
+	lua_pushvalue (L, 2);
+	call_tracer (L, 1, "connect", 1);
 
 	return 1;
 }
@@ -587,6 +635,9 @@ static int rsock_rawaccept (lua_State *L)
 
 	push_inet_ntop (L, (struct sockaddr *) &addr);
 
+	lua_pushvalue (L, -1);
+	call_tracer (L, 1, "accept", 1);
+
 	return 2;
 }
 /* }}} */
@@ -616,6 +667,9 @@ static int rsock_rawsend (lua_State *L)
 		else
 			return handle_perror (L);
 	}
+
+	lua_pushvalue (L, 2);
+	call_tracer (L, 1, "send", 1);
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -650,6 +704,9 @@ static int rsock_rawrecv (lua_State *L)
 
 	luaL_addsize (&buffer, (size_t) ret);
 	luaL_pushresult (&buffer);
+
+	lua_pushvalue (L, -1);
+	call_tracer (L, 1, "recv", 1);
 
 	return 1;
 }
@@ -765,7 +822,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{NULL}
 	};
 
-	/* Static functions in the ratchet.socket namespace. */
+	/* Static Lua functions in the ratchet.socket namespace. */
 	static const struct luafunc luafuncs[] = {
 		/* Documented methods. */
 		{"prepare_uri", rsock_prepare_uri},
@@ -798,6 +855,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"check_ok", rsock_check_ok},
 		{"shutdown", rsock_shutdown},
 		{"close", rsock_close},
+		{"set_tracer", rsock_set_tracer},
 		/* Undocumented, helper methods. */
 		{"rawconnect", rsock_rawconnect},
 		{"rawaccept", rsock_rawaccept},

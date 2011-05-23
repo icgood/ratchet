@@ -19,6 +19,7 @@ TESTS = test_listen_connect.lua \
 	test_multi_protocol.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
+	test_http_get.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
 EXTRA_DIST = $(TESTS)
@@ -65,6 +66,14 @@ XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_zmq_send_recv.lua \
 	       test_multi_protocol.lua
+endif
+
+if ENABLE_HTTP
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.http.client"] = loadfile("../src/http/client.lua")' \
+                     -e 'package.preload["ratchet.http.server"] = loadfile("../src/http/server.lua")'
+XFAIL_TESTS +=
+else
+XFAIL_TESTS += test_http_get.lua
 endif
 
 endif
