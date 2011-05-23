@@ -58,3 +58,7 @@ if ENABLE_HTTP
 SUBDIRS += http
 endif
 
+if ENABLE_SMTP
+SUBDIRS += smtp
+endif
+

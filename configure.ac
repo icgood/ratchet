@@ -215,6 +215,22 @@ AM_CONDITIONAL([ENABLE_HTTP], [test "x${enable_http}" != "xno"])
 AC_SUBST([HTTP_PATH], ["$enable_http"])
 
 #####################
+# Configure options: --disable-smtp
+AC_ARG_ENABLE([smtp], [AS_HELP_STRING([--enable-smtp@<:@=PATH@:>@],
+	                              [install Lua SMTP modules to Lua module installation path, or PATH if given.])],
+	      [enable_smtp="${enableval%/}"], [enable_smtp=yes])
+if test "x${enable_smtp}" != "xno"; then
+	if test "x${enable_smtp}" == "xyes"; then
+		enable_smtp="$with_lua_lpath"
+	fi
+	if test "x${enable_smtp}" == "x"; then
+		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
+	fi
+fi
+AM_CONDITIONAL([ENABLE_SMTP], [test "x${enable_smtp}" != "xno"])
+AC_SUBST([SMTP_PATH], ["$enable_smtp"])
+
+#####################
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h strings.h errno.h limits.h])
 AC_CHECK_HEADERS([netdb.h sys/ioctl.h sys/socket.h sys/resource.h sys/uio.h])
@@ -240,6 +256,7 @@ AC_FUNC_STRERROR_R
 AC_CONFIG_FILES([Makefile
 	         src/Makefile
 	         src/http/Makefile
+	         src/smtp/Makefile
 	         src/libdns/Makefile
 	         test/Makefile])
 AC_OUTPUT

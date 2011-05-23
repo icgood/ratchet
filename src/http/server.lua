@@ -1,16 +1,15 @@
 
--- Create module, but keep global namespace.
-local globals = _G
-module("ratchet.http.server")
-local http_server = globals.getfenv()
-globals.setfenv(1, globals)
+require "package"
+local common = require "ratchet.http.common"
 
-http_server.__index = http_server
+module("ratchet.http.server", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ http_server.new()
-function http_server.new(socket, from, handlers, send_size)
+-- {{{ new()
+function new(socket, from, handlers, send_size)
     local self = {}
-    setmetatable(self, http_server)
+    setmetatable(self, class)
 
     self.socket = socket
     self.from = from
@@ -23,50 +22,19 @@ function http_server.new(socket, from, handlers, send_size)
 end
 -- }}}
 
--- {{{ http_server:build_header_string()
-function http_server:build_header_string(headers)
-    local ret = ""
-    for name, value in pairs(headers) do
-        for i, each in ipairs(value) do
-            ret = ret .. name .. ": " .. tostring(each) .. "\r\n"
-        end
-    end
-    return ret
-end
--- }}}
-
--- {{{ http_server:parse_header_string()
-function http_server:parse_header_string(data, start)
-    local headers = {}
-    repeat
-        local name, value
-        name, value, start = data:match("^(.-):%s+(.-)\r\n()", start)
-        if name then
-            local key = name:lower()
-            if not headers[key] then
-                headers[key] = {value}
-            else
-                table.insert(headers[key], value)
-            end
-        end
-    until not name
-    return headers, start
-end
--- }}}
-
--- {{{ http_server:build_response_and_headers()
-function http_server:build_response_and_headers(response)
+-- {{{ build_response_and_headers()
+function build_response_and_headers(self, response)
     local ret = "HTTP/1.0 " .. response.code .. " " .. response.message .. "\r\n"
     if response.headers and #response.headers then
-        ret = ret .. self:build_header_string(response.headers)
+        ret = ret .. common.build_header_string(response.headers)
     end
     ret = ret .. "\r\n"
     return ret
 end
 -- }}}
 
--- {{{ http_server:slow_send()
-function http_server:slow_send(socket, request, data)
+-- {{{ slow_send()
+function slow_send(self, socket, request, data)
     -- The purpose of this function is to avoid concatenating with data.
 
     while #request > self.send_size do
@@ -89,8 +57,8 @@ function http_server:slow_send(socket, request, data)
 end
 -- }}}
 
--- {{{ http_server:send_response()
-function http_server:send_response(response)
+-- {{{ send_response()
+function send_response(self, response)
     local response_str = self:build_response_and_headers(response)
     self:slow_send(self.socket, response_str, response.data)
     self.socket:shutdown("both")
@@ -98,8 +66,8 @@ function http_server:send_response(response)
 end
 -- }}}
 
--- {{{ http_server:parse_request_so_far()
-function http_server:parse_request_so_far(so_far, unparsed_i, request)
+-- {{{ parse_request_so_far()
+function parse_request_so_far(self, so_far, unparsed_i, request)
     local i
 
     if not request.command or not request.uri then
@@ -120,7 +88,7 @@ function http_server:parse_request_so_far(so_far, unparsed_i, request)
         local hdr_pattern = "^(.-\r\n)\r\n()"
         local hdrs, i = so_far:match(hdr_pattern, unparsed_i)
         if i then
-            request.headers = self:parse_header_string(hdrs)
+            request.headers = common.parse_header_string(hdrs)
             unparsed_i = i
         else
             hdr_pattern = "^\r\n()"
@@ -154,8 +122,8 @@ function http_server:parse_request_so_far(so_far, unparsed_i, request)
 end
 -- }}}
 
--- {{{ http_server:get_request()
-function http_server:get_request()
+-- {{{ get_request()
+function get_request(self)
     local request = {}
     local so_far = ""
     local unparsed_i = 1
@@ -176,8 +144,8 @@ function http_server:get_request()
 end
 -- }}}
 
--- {{{ http_server:handle()
-function http_server:handle()
+-- {{{ handle()
+function handle(self)
     local req = self:get_request()
 
     local cmd_handler

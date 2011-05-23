@@ -20,6 +20,7 @@ TESTS = test_listen_connect.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
 	test_http_get.lua \
+	test_smtp.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
 EXTRA_DIST = $(TESTS)
@@ -70,10 +71,20 @@ endif
 
 if ENABLE_HTTP
 TESTS_ENVIRONMENT += -e 'package.preload["ratchet.http.client"] = loadfile("../src/http/client.lua")' \
-                     -e 'package.preload["ratchet.http.server"] = loadfile("../src/http/server.lua")'
+                     -e 'package.preload["ratchet.http.server"] = loadfile("../src/http/server.lua")' \
+                     -e 'package.preload["ratchet.http.common"] = loadfile("../src/http/common.lua")'
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_http_get.lua
+endif
+
+if ENABLE_SMTP
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.smtp.client"] = loadfile("../src/smtp/client.lua")' \
+                     -e 'package.preload["ratchet.smtp.server"] = loadfile("../src/smtp/server.lua")' \
+                     -e 'package.preload["ratchet.smtp.common"] = loadfile("../src/smtp/common.lua")'
+XFAIL_TESTS +=
+else
+XFAIL_TESTS += test_smtp.lua
 endif
 
 endif

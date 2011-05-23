@@ -1,4 +1,3 @@
-require "io"
 require "ratchet"
 require "ratchet.http.client"
 require "ratchet.http.server"
@@ -58,13 +57,10 @@ function server_ctx(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(client_ctx, "tcp://localhost:10080")
+    kernel:attach(client_ctx, "tcp://127.0.0.1:10080")
 
     local client, from = socket:accept()
     if debugging then client:set_tracer(debug_print) end
-
-    local ptr = ratchet.dns.query(from, "ptr")
-    assert(ptr and ptr[1] == "localhost.")
 
     local server_handlers = {
         GET = server_handle_command,

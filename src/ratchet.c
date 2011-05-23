@@ -910,6 +910,9 @@ int luaopen_ratchet (lua_State *L)
 	lua_setfield (L, -2, "timerfd");
 #endif
 
+	lua_pushstring (L, PACKAGE_VERSION);
+	lua_setfield (L, -2, "version");
+
 	return 1;
 }
 /* }}} */

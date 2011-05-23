@@ -1,16 +1,15 @@
 
--- Create module, but keep global namespace.
-local globals = _G
-module("ratchet.http.client")
-local http_client = globals.getfenv()
-globals.setfenv(1, globals)
+require "package"
+local common = require "ratchet.http.common"
 
-http_client.__index = http_client
+module("ratchet.http.client", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ http_client.new()
-function http_client.new(socket, send_size)
+-- {{{ new()
+function new(socket, send_size)
     local self = {}
-    setmetatable(self, http_client)
+    setmetatable(self, class)
 
     self.socket = socket
 
@@ -21,50 +20,19 @@ function http_client.new(socket, send_size)
 end
 -- }}}
 
--- {{{ http_client:build_header_string()
-function http_client:build_header_string(headers)
-    local ret = ""
-    for name, value in pairs(headers) do
-        for i, each in ipairs(value) do
-            ret = ret .. name .. ": " .. tostring(each) .. "\r\n"
-        end
-    end
-    return ret
-end
--- }}}
-
--- {{{ http_client:parse_header_string()
-function http_client:parse_header_string(data, start)
-    local headers = {}
-    repeat
-        local name, value
-        name, value, start = data:match("^(.-):%s+(.-)\r\n()", start)
-        if name then
-            local key = name:lower()
-            if not headers[key] then
-                headers[key] = {value}
-            else
-                table.insert(headers[key], value)
-            end
-        end
-    until not name
-    return headers, start
-end
--- }}}
-
--- {{{ http_client:build_request_and_headers()
-function http_client:build_request_and_headers(command, uri, headers)
+-- {{{ build_request_and_headers()
+function build_request_and_headers(self, command, uri, headers)
     local ret = command:upper() .. " " .. uri .. " HTTP/1.0\r\n"
     if headers and #headers then
-        ret = ret .. self:build_header_string(headers)
+        ret = ret .. common.build_header_string(headers)
     end
     ret = ret .. "\r\n"
     return ret
 end
 -- }}}
 
--- {{{ http_client:slow_send()
-function http_client:slow_send(socket, request, data)
+-- {{{ slow_send()
+function slow_send(self, socket, request, data)
     -- The purpose of this function is to avoid concatenating with data.
 
     while #request > self.send_size do
@@ -87,16 +55,16 @@ function http_client:slow_send(socket, request, data)
 end
 -- }}}
 
--- {{{ http_client:send_request()
-function http_client:send_request(socket, command, uri, headers, data)
+-- {{{ send_request()
+function send_request(self, socket, command, uri, headers, data)
     local request = self:build_request_and_headers(command, uri, headers, data)
     self:slow_send(socket, request, data)
     socket:shutdown("write")
 end
 -- }}}
 
--- {{{ http_client:parse_response()
-function http_client:parse_response(socket)
+-- {{{ parse_response()
+function parse_response(self, socket)
     local full_reply = ""
     repeat
         local data = socket:recv()
@@ -114,7 +82,7 @@ function http_client:parse_response(socket)
         return
     end
 
-    headers, lineend = self:parse_header_string(full_reply, lineend)
+    headers, lineend = common.parse_header_string(full_reply, lineend)
 
     lineend = full_reply:match("\r\n\r\n()", lineend)
     if lineend then
@@ -125,8 +93,8 @@ function http_client:parse_response(socket)
 end
 -- }}}
 
--- {{{ http_client:query()
-function http_client:query(command, uri, headers, data)
+-- {{{ query()
+function query(self, command, uri, headers, data)
     self:send_request(self.socket, command, uri, headers, data)
     return self:parse_response(self.socket)
 end
