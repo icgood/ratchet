@@ -6,10 +6,7 @@ mechanism for large numbers of sockets without using threads or losing the ease
 of synchronous socket programming. Implementations of standard Berkeley sockets
 are provided, as well as rudimentary support for ZeroMQ sockets, provided
 versions greater than or equal to 2.1.0 are installed. The polling mechanism is
-written on top of libevent (http://monkey.org/~provos/libevent/). The library
-also provides a URI system for implementation of connection strings. The
-ratchet library provides DNS resolution functions using the GNU getaddrinfo_a()
-function suite, capable of parsing IP v4 and v6 addresses.
+written on top of libevent (http://monkey.org/~provos/libevent/).
 
 The ratchet library provides and manages a blend of libevent event loops and
 Lua coroutines to provide the effect of synchronous socket programming. Each
