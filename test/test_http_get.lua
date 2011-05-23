@@ -70,7 +70,7 @@ function server_ctx(where)
         GET = server_handle_command,
     }
     local handler = ratchet.http.server.new(client, from, server_handlers)
-    handler()
+    handler:handle()
 end
 -- }}}
 

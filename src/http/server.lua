@@ -176,8 +176,8 @@ function http_server:get_request()
 end
 -- }}}
 
--- {{{ http_server:__call()
-function http_server:__call()
+-- {{{ http_server:handle()
+function http_server:handle()
     local req = self:get_request()
 
     local cmd_handler

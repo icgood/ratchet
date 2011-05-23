@@ -1,0 +1,31 @@
+
+--- This library provides server-side capabilities for an HTTP service.
+--  Currently the server only supports HTTP/1.0, with no current plans to
+--  support 1.1 or higher, as it is only provided for convenience and as an
+--  example of using the ratchet libraries.
+module "ratchet.http.server"
+
+--- Creates a new HTTP server object. A new object should be created with this
+--  function for each socket created by accept()'ing a new connection on a
+--  listening socket.
+--  @param socket Used as the underlying socket for the query, under the
+--                assumption that encryption has been established as needed
+--                and no other I/O has taken place.
+--  @param handlers Table whose keys correspond to supported HTTP commands. The
+--                  command is called as a method of this table, e.g.
+--                  handlers:GET(...), with the arguments being the URI,
+--                  headers, data, and source address.
+--  @param from Passed as the last argument to a handler function, typically
+--              used to send the source address of the connection (the second
+--              value returned by accept()).
+--  @param send_size Used as the maximum size of a send() operation, defaults
+--                   to half of the SO_SNDBUF socket option.
+--  @return a new http.server object.
+function new(socket, handlers, from, send_size)
+
+--- Receives an HTTP query, calls the corresponding handler, and returns the
+--  results.
+--  @param self The http.server object.
+function handle(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

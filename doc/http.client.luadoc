@@ -1,0 +1,33 @@
+
+--- This library provides client-side access to an HTTP service, commonly used
+--  in many different cases across the Web. Currently the client only supports
+--  HTTP/1.0, with no current plans to support 1.1 or higher, as it is only
+--  provided for convenience and as an example of using the ratchet libraries.
+module "ratchet.http.client"
+
+--- Creates a new HTTP client object.
+--  @param socket Used as the underlying socket for the query, under the
+--                assumption that encryption has been established as needed
+--                and no other I/O has taken place.
+--  @param send_size Used as the maximum size of a send() operation, defaults
+--                   to half of the SO_SNDBUF socket option.
+--  @return a new http.client object.
+function new(socket, send_size)
+
+--- Sends an HTTP query, and returns the results.
+--  @param self the http.client object.
+--  @param command The HTTP command to use, such as "PUT" or "GET".
+--  @param uri The URI to query.
+--  @param headers A table whose keys are header names and values are arrays
+--                 of strings. Each string in the value array will result in a
+--                 new header of the given name.
+--  @param data Additional data to send in the body of the query. It is usually
+--              important to specify a "Content-Length" header with the length
+--              of this string.
+--  @return In order: the return code of the query, the descriptive return
+--          message, additional headers returned (in the same format as the
+--          headers parameter), and a string of data returned by the query (if
+--          any).
+function query(self, command, uri, headers, data)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
