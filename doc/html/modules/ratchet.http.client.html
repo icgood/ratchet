@@ -38,12 +38,12 @@
 		<a href="../modules/ratchet.html">ratchet</a>
 	</li>
 
-	<li><strong>ratchet.dns</strong></li>
-	
 	<li>
-		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
 
+	<li><strong>ratchet.http.client</strong></li>
+	
 	<li>
 		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
 	</li>
@@ -83,9 +83,9 @@
 
 <div id="content">
 
-<h1>Module <code>ratchet.dns</code></h1>
+<h1>Module <code>ratchet.http.client</code></h1>
 
-<p>Provides a system for querying DNS for information such as A/AAAA, PTR, MX, and TXT records. While there is a class-based system internally, that API is currently hidden by namespace functions that call everything necessary.</p>
+<p>This library provides client-side access to an HTTP service, commonly used in many different cases across the Web. Currently the client only supports HTTP/1.0, with no current plans to support 1.1 or higher, as it is only provided for convenience and as an example of using the ratchet libraries.</p>
 
 
 
@@ -95,13 +95,13 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#query">query</a>&nbsp;(data, type)</td>
-	<td class="summary">Queries for results for one type of query for the given data.</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size)</td>
+	<td class="summary">Creates a new HTTP client object.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#query_all">query_all</a>&nbsp;(data, types)</td>
-	<td class="summary">Queries for results for many types of query for the given data.</td>
+	<td class="name" nowrap><a href="#query">query</a>&nbsp;(self, command, uri, headers, data)</td>
+	<td class="summary">Sends an HTTP query, and returns the results.</td>
 	</tr>
 
 </table>
@@ -121,20 +121,20 @@
 
 
 
-<dt><a name="query"></a><strong>query</strong>&nbsp;(data, type)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, send_size)</dt>
 <dd>
-Queries for results for one type of query for the given data. Until the results come in, this function will pause the calling thread. The return value is a table whose contents are defined by the type of query. See manual for complete details.
+Creates a new HTTP client object.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  data: The hostname, IP, or special-case to query against.
+	  socket: Used as the underlying socket for the query, under the assumption that encryption has been established as needed and no other I/O has taken place.
 	</li>
 	
 	<li>
-	  type: The type of query, e.g. "ipv4" or "mx".
+	  send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
 	</li>
 	
 </ul>
@@ -145,7 +145,7 @@ Queries for results for one type of query for the given data. Until the results 
 
 
 <h3>Return value:</h3>
-Table with results, or nil followed by an error message.
+a new http.client object.
 
 
 
@@ -154,20 +154,32 @@ Table with results, or nil followed by an error message.
 
 
 
-<dt><a name="query_all"></a><strong>query_all</strong>&nbsp;(data, types)</dt>
+<dt><a name="query"></a><strong>query</strong>&nbsp;(self, command, uri, headers, data)</dt>
 <dd>
-Queries for results for many types of query for the given data. Until all results come in, this function will pause the calling thread. This call attempts to perform these lookups in parallel, with a file descriptor for each query type. The return value is a table  keyed on either the query types or the query type suffixed with "_error". The values will either be a table of results or an error message, respectively. See manual for complete details.
+Sends an HTTP query, and returns the results.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  data: The hostname, IP, or special-case to query against.
+	  self: the http.client object.
 	</li>
 	
 	<li>
-	  types: Table with types of queries, e.g. "ipv4" or "mx".
+	  command: The HTTP command to use, such as "PUT" or "GET".
+	</li>
+	
+	<li>
+	  uri: The URI to query.
+	</li>
+	
+	<li>
+	  headers: A table whose keys are header names and values are arrays of strings. Each string in the value array will result in a new header of the given name.
+	</li>
+	
+	<li>
+	  data: Additional data to send in the body of the query. It is usually important to specify a "Content-Length" header with the length of this string.
 	</li>
 	
 </ul>
@@ -178,7 +190,7 @@ Queries for results for many types of query for the given data. Until all result
 
 
 <h3>Return value:</h3>
-Table with results, or nil followed by an error message.
+In order: the return code of the query, the descriptive return message, additional headers returned (in the same format as the headers parameter), and a string of data returned by the query (if any).
 
 
 
