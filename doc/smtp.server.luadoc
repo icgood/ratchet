@@ -1,0 +1,37 @@
+
+--- This library provides client-side access an an SMTP server, commonly used
+--  to transport email messages. Currently the client will take advantage of
+--  the SIZE, STARTTLS and PIPELINING extensions and can send custom, arbitrary
+--  commands. It is provided for convenience and as an example of using the
+--  ratchet libraries.
+
+--- This library provides server-side capabilities for an SMTP server. Currently
+--  the server will advertize the 8BITMIME, PIPELINING, and ENHANCEDSTATUSCODES
+--  extensions and is capable of handling arbitrary, custom commands as well. It
+--  is provided for convenience and as an example of using the ratchet
+--  libraries.
+module "ratchet.smtp.server"
+
+--- Creates a new SMTP server object. A new object should be created with this
+--  function for each socket created by accept()'ing a new connection on a
+--  listening socket.
+--  @param socket Used as the underlying socket for the session, under the
+--                assumption that no I/O has taken place, except possibly
+--                encryption if not using STARTTLS.
+--  @param handlers Table whose keys correspond to supported SMTP commands. The
+--                  command is called as a method of this table, e.g.
+--                  handlers:MAIL(...), with the first argument being a reply
+--                  table that the method can use to set the "code" and
+--                  "message" keys to control the response. See the manual for
+--                  more details.
+--  @param send_size Used as the maximum size of a send() operation, defaults
+--                   to half of the SO_SNDBUF socket option.
+--  @return a new smtp.server object.
+function new(socket, handlers, send_size)
+
+--- Sends a banner and starts listening for and responding to SMTP commands from
+--  the client. This function continues until the client sends a QUIT command.
+--  @param self the smtp.server object.
+function handle(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

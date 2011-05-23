@@ -1,0 +1,121 @@
+
+--- This library provides client-side access to an SMTP server, commonly used
+--  to transport email messages. Currently the client will take advantage of
+--  the SIZE, STARTTLS and PIPELINING extensions and can send custom, arbitrary
+--  commands. It is provided for convenience and as an example of using the
+--  ratchet libraries.
+module "ratchet.smtp.client"
+
+--- Creates a new SMTP client object.
+--  @param socket Used as the underlying socket for the session, under the
+--                assumption that no I/O has taken place, except possibly
+--                encryption if not using STARTTLS.
+--  @param send_size Used as the maximum size of a send() operation, defaults
+--                   to half of the SO_SNDBUF socket option.
+--  @return a new smtp.client object.
+function new(socket, send_size)
+
+--- Receives the SMTP banner from the server. When this function returns, you
+--  can safely expect the return table to be populated.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function get_banner(self)
+
+--- Sends the EHLO command. When this function returns, you can safely expect
+--  the return table to be populated. The "message" string in the reply table
+--  does not include lines designated as SMTP extensions, these are parsed out
+--  into the "extensions" member object, see manual for details.
+--  @param self the smtp.client object.
+--  @param ehlo_as The string to identify as.
+--  @return A reply table with "code" and "message" keys.
+function ehlo(self, ehlo_as)
+
+--- Sends the HELO command. When this function returns, you can safely expect
+--  the return table to be populated.
+--  @param self the smtp.client object.
+--  @param helo_as The string to identify as.
+--  @return A reply table with "code" and "message" keys.
+function helo(self, helo_as)
+
+--- Sends a STARTTLS request to the server, which indicates that, on a 250 reply
+--  from the server, you will initiate a TLS handshake. This function does not
+--  do the TLS handshake. When this function returns, you can safely expect the
+--  return table to be populated.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function starttls(self)
+
+--- Sends a MAIL FROM command, which starts a new message transmission on the
+--  session and specifies the sending address. This function will also add the
+--  "SIZE=nnn" parameter, if the SIZE extension is supported by the server,
+--  where "nnn" is the data_size parameter. When this function returns, the
+--  reply table WILL NOT be populated if the server supports the PIPELINING
+--  extension. You can only safely expect the return table to be populated
+--  after calling the data() function.
+--  @param self the smtp.client object.
+--  @param address The sender address of the message envelope.
+--  @param data_size The approximate size of the message data.
+--  @return A reply table with "code" and "message" keys.
+function mailfrom(self, address, data_size)
+
+--- Sends a RCPT TO command, which specifies one (of possibly many) recipient
+--  for the current message transaction, as started by mailfrom(). When this
+--  function returns the reply table WILL NOT be populated if the server
+--  supports the PIPELINING extension. You can only safely expect the return
+--  table to be populated after calling the data() function.
+--  @param self the smtp.client object.
+--  @param address A recipient address to add to the envelope.
+--  @return A reply table with "code" and "message" keys.
+function rcptto(self, address)
+
+--- Sends the DATA command, indicating to the server that you are ready to send
+--  message data. When this function returns, its reply table as well as those
+--  returned by mailfrom() and rcptto() will be populated. If the reply code
+--  is a 354, the SMTP protocol requires you send message data, ending with
+--  a "<CRLF>.<CRLF>", even if the mailfrom() or rcptto() commands failed.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function data(self)
+
+--- Sends arbitrary message data. This function will apply the transparency
+--  filters specified by the RFC, so no special care must be taken with the
+--  message data before sending it. When message data has been sent, the end
+--  marker "<CRLF>.<CRLF>" is also sent. It is not safe to expect the reply
+--  table to be populated when this function returns, if the server supports
+--  the PIPELINING extension.
+--  @param self the smtp.client object.
+--  @param data The message data, typically as per RFC 2822.
+--  @return A reply table with "code" and "message" keys.
+function send_data(self, data)
+
+--- Sends empty message data. This function simply sends the message end marker,
+--  "<CRLF>.<CRLF>", and should be used when the server replied to the data()
+--  function with a "354" code but calls to mailfrom() or rcptto() were not
+--  successful. It is not safe to expect the reply table to be populated when
+--  this function returns, if the server supports the PIPELINING extension.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function send_empty_data(self)
+
+--- Sends a custom command. This function implies no logic, but does expect a
+--  standard SMTP code-message reply from the server. It is safe to expect the
+--  reply table to be populated when this function returns.
+--  @param self the smtp.client object.
+--  @param command The SMTP command to send.
+--  @param arg A string to send as an argument to the command, if applicable.
+--  @return A reply table with "code" and "message" keys.
+function custom_command(self, command, arg)
+
+--- Sends a RSET command. When this function returns, you can safely expect the
+--  return table to be populated.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function rset(self)
+
+--- Sends a QUIT command, and closes the connection. You can safely expect the
+--  return table to be populated, when this function returns.
+--  @param self the smtp.client object.
+--  @return A reply table with "code" and "message" keys.
+function quit(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
