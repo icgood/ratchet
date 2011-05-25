@@ -21,7 +21,7 @@ end
 -- }}}
 
 -- {{{ build_request_and_headers()
-function build_request_and_headers(self, command, uri, headers)
+local function build_request_and_headers(command, uri, headers)
     local ret = command:upper() .. " " .. uri .. " HTTP/1.0\r\n"
     if headers and #headers then
         ret = ret .. common.build_header_string(headers)
@@ -32,39 +32,39 @@ end
 -- }}}
 
 -- {{{ slow_send()
-function slow_send(self, socket, request, data)
+local function slow_send(socket, send_size, request, data)
     -- The purpose of this function is to avoid concatenating with data.
 
-    while #request > self.send_size do
-        local to_send = request:sub(1, self.send_size)
+    while #request > send_size do
+        local to_send = request:sub(1, send_size)
         socket:send(to_send)
-        request = request:sub(self.send_size+1)
+        request = request:sub(send_size+1)
     end
     if not data then
         socket:send(request)
     else
-        local to_send = request .. data:sub(1, self.send_size - #request)
+        local to_send = request .. data:sub(1, send_size - #request)
         socket:send(to_send)
-        data = data:sub(self.send_size - #request + 1)
+        data = data:sub(send_size - #request + 1)
         repeat
-            to_send = data:sub(1, self.send_size)
+            to_send = data:sub(1, send_size)
             socket:send(to_send)
-            data = data:sub(self.send_size+1)
+            data = data:sub(send_size+1)
         until data == ""
     end
 end
 -- }}}
 
 -- {{{ send_request()
-function send_request(self, socket, command, uri, headers, data)
-    local request = self:build_request_and_headers(command, uri, headers, data)
-    self:slow_send(socket, request, data)
-    socket:shutdown("write")
+local function send_request(self, command, uri, headers, data)
+    local request = build_request_and_headers(command, uri, headers, data)
+    slow_send(self.socket, self.send_size, request, data)
+    self.socket:shutdown("write")
 end
 -- }}}
 
 -- {{{ parse_response()
-function parse_response(self, socket)
+local function parse_response(socket)
     local full_reply = ""
     repeat
         local data = socket:recv()
@@ -95,8 +95,8 @@ end
 
 -- {{{ query()
 function query(self, command, uri, headers, data)
-    self:send_request(self.socket, command, uri, headers, data)
-    return self:parse_response(self.socket)
+    send_request(self, command, uri, headers, data)
+    return parse_response(self.socket)
 end
 -- }}}
 

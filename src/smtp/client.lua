@@ -22,7 +22,7 @@ end
 -- }}}
 
 -- {{{ recv_batch()
-function recv_batch(self)
+local function recv_batch(self)
     self.io:flush_send()
 
     repeat
@@ -39,7 +39,7 @@ function get_banner(self)
     local banner = common.smtp_reply.new("[BANNER]")
     table.insert(self.recv_queue, banner)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return banner
 end
@@ -53,7 +53,7 @@ function ehlo(self, ehlo_as)
     local command = "EHLO " .. ehlo_as
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
     if ehlo.code == "250" then
         self.extensions:reset()
         ehlo.message = self.extensions:parse_string(ehlo.message)
@@ -71,7 +71,7 @@ function helo(self, helo_as)
     local command = "HELO " .. helo_as
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return ehlo
 end
@@ -85,7 +85,7 @@ function starttls(self)
     local command = "STARTTLS"
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return starttls
 end
@@ -103,7 +103,7 @@ function mailfrom(self, address, data_size)
     self.io:send_command(command)
 
     if not self.extensions:has("PIPELINING") then
-        self:recv_batch()
+        recv_batch(self)
     end
 
     return mailfrom
@@ -119,7 +119,7 @@ function rcptto(self, address)
     self.io:send_command(command)
 
     if not self.extensions:has("PIPELINING") then
-        self:recv_batch()
+        recv_batch(self)
     end
 
     return rcptto
@@ -134,7 +134,7 @@ function data(self)
     local command = "DATA"
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return data
 end
@@ -148,7 +148,7 @@ function send_data(self, data)
     local data_sender = common.data_sender.new(data, self.iter_size)
     data_sender:send(self.io)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return send_data
 end
@@ -161,7 +161,7 @@ function send_empty_data(self)
 
     self.io:send_command(".")
 
-    self:recv_batch()
+    recv_batch(self)
 
     return send_data
 end
@@ -177,7 +177,7 @@ function custom_command(self, command, arg)
     end
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return custom
 end
@@ -191,7 +191,7 @@ function rset(self)
     local command = "RSET"
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
 
     return rset
 end
@@ -205,7 +205,7 @@ function quit(self)
     local command = "QUIT"
     self.io:send_command(command)
 
-    self:recv_batch()
+    recv_batch(self)
     self.io:close()
 
     return quit

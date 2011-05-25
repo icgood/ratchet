@@ -23,7 +23,7 @@ end
 -- }}}
 
 -- {{{ build_response_and_headers()
-function build_response_and_headers(self, response)
+local function build_response_and_headers(response)
     local ret = "HTTP/1.0 " .. response.code .. " " .. response.message .. "\r\n"
     if response.headers and #response.headers then
         ret = ret .. common.build_header_string(response.headers)
@@ -34,40 +34,40 @@ end
 -- }}}
 
 -- {{{ slow_send()
-function slow_send(self, socket, request, data)
+local function slow_send(socket, send_size, request, data)
     -- The purpose of this function is to avoid concatenating with data.
 
-    while #request > self.send_size do
-        local to_send = request:sub(1, self.send_size)
+    while #request > send_size do
+        local to_send = request:sub(1, send_size)
         socket:send(to_send)
-        request = request:sub(self.send_size+1)
+        request = request:sub(send_size+1)
     end
     if not data then
         socket:send(request)
     else
-        local to_send = request .. data:sub(1, self.send_size - #request)
+        local to_send = request .. data:sub(1, send_size - #request)
         socket:send(to_send)
-        data = data:sub(self.send_size - #request + 1)
+        data = data:sub(send_size - #request + 1)
         while data ~= "" do
-            to_send = data:sub(1, self.send_size)
+            to_send = data:sub(1, send_size)
             socket:send(to_send)
-            data = data:sub(self.send_size+1)
+            data = data:sub(send_size+1)
         end
     end
 end
 -- }}}
 
 -- {{{ send_response()
-function send_response(self, response)
-    local response_str = self:build_response_and_headers(response)
-    self:slow_send(self.socket, response_str, response.data)
+local function send_response(self, response)
+    local response_str = build_response_and_headers(response)
+    slow_send(self.socket, self.send_size, response_str, response.data)
     self.socket:shutdown("both")
     self.socket:close()
 end
 -- }}}
 
 -- {{{ parse_request_so_far()
-function parse_request_so_far(self, so_far, unparsed_i, request)
+local function parse_request_so_far(so_far, unparsed_i, request)
     local i
 
     if not request.command or not request.uri then
@@ -77,7 +77,6 @@ function parse_request_so_far(self, so_far, unparsed_i, request)
             unparsed_i = i
         else
             if so_far:match("^.-\r\n", unparsed_i) then
-                self.socket:close()
                 error("Malformed HTTP session.")
             end
             return false, unparsed_i
@@ -123,21 +122,21 @@ end
 -- }}}
 
 -- {{{ get_request()
-function get_request(self)
+local function get_request(socket)
     local request = {}
     local so_far = ""
     local unparsed_i = 1
     local done = false
 
     while not done do
-        local data = self.socket:recv()
+        local data = socket:recv()
         so_far = so_far .. data
-        done, unparsed_i = self:parse_request_so_far(so_far, unparsed_i, request)
+        done, unparsed_i = parse_request_so_far(so_far, unparsed_i, request)
         if data == "" then
             break
         end
     end
-    self.socket:shutdown("read")
+    socket:shutdown("read")
 
     --return request.command, request.uri, request.headers, request.data
     return request
@@ -146,7 +145,7 @@ end
 
 -- {{{ handle()
 function handle(self)
-    local req = self:get_request()
+    local req = get_request(self.socket)
 
     local cmd_handler
     if req.command then
@@ -160,7 +159,7 @@ function handle(self)
         response = cmd_handler(self.handlers, req.uri, req.headers, req.data, self.from)
     end
 
-    self:send_response(response)
+    send_response(self, response)
 end
 -- }}}
 

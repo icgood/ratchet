@@ -29,7 +29,7 @@ local common = require "ratchet.smtp.common"
 module("ratchet.smtp.server", package.seeall)
 local class = getfenv()
 __index = class
-commands = {}
+local commands = {}
 
 -- {{{ new()
 function new(socket, handlers, send_size)
@@ -49,7 +49,7 @@ end
 -- }}}
 
 -- {{{ send_ESC_reply()
-function send_ESC_reply(self, reply)
+local function send_ESC_reply(self, reply)
     local code, message, esc = reply.code, reply.message, reply.enhanced_status_code
     local code_class = code:sub(1, 1)
 
@@ -77,7 +77,7 @@ end
 -- }}}
 
 -- {{{ get_message_data()
-function get_message_data(self)
+local function get_message_data(self)
     local max_size = tonumber(self.extensions:has("SIZE"))
     local reader = common.data_reader.new(self.io, max_size)
 
@@ -93,7 +93,7 @@ function get_message_data(self)
         self.handlers:HAVE_DATA(reply, data, err)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -116,7 +116,7 @@ function unknown_command(self, command, arg, message)
         message = message or "Syntax error, command unrecognized",
         enhanced_status_code = "5.5.2",
     }
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -128,7 +128,7 @@ function unknown_parameter(self, command, arg, message)
         message = message or "Command parameter not implemented",
         enhanced_status_code = "5.5.4",
     }
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -140,7 +140,7 @@ function bad_sequence(self, command, arg, message)
         message = message or "Bad sequence of commands",
         enhanced_status_code = "5.5.1",
     }
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -152,7 +152,7 @@ function bad_arguments(self, command, arg, message)
         message = message or "Syntax error in parameters or arguments",
         enhanced_status_code = "5.5.4",
     }
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -249,7 +249,7 @@ function commands.STARTTLS(self, arg)
         self.handlers:STARTTLS(reply)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     if reply.code == "220" then
@@ -298,7 +298,7 @@ function commands.MAIL(self, arg)
                     message = "Message size exceeds "..max_size.." limit",
                     enhanced_status_code = "5.3.4"
                 }
-                self:send_ESC_reply(reply)
+                send_ESC_reply(self, reply)
                 self.io:flush_send()
                 return
             end
@@ -318,7 +318,7 @@ function commands.MAIL(self, arg)
         self.handlers:MAIL(reply, address)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     self.have_mailfrom = self.have_mailfrom or (reply.code == "250")
@@ -356,7 +356,7 @@ function commands.RCPT(self, arg)
         self.handlers:RCPT(reply, address)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     self.have_rcptto = self.have_rcptto or (reply.code == "250")
@@ -384,11 +384,11 @@ function commands.DATA(self, arg)
         self.handlers:DATA(reply)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     if reply.code == "354" then
-        self:get_message_data()
+        get_message_data(self)
     end
 end
 -- }}}
@@ -408,7 +408,7 @@ function commands.RSET(self, arg)
         self.handlers:RSET(reply)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     if reply.code == "250" then
@@ -429,7 +429,7 @@ function commands.NOOP(self)
         self.handlers:NOOP(reply)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
@@ -449,7 +449,7 @@ function commands.QUIT(self, arg)
         self.handlers:QUIT(reply)
     end
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 
     self:close()
@@ -459,7 +459,7 @@ end
 -- }}}
 
 -- {{{ custom_command()
-function custom_command(self, command, arg)
+local function custom_command(self, command, arg)
     local reply = {
         code = "250",
         message = "Ok",
@@ -467,21 +467,21 @@ function custom_command(self, command, arg)
 
     self.handlers[command](self.handlers, reply, arg, io)
 
-    self:send_ESC_reply(reply)
+    send_ESC_reply(self, reply)
     self.io:flush_send()
 end
 -- }}}
 
 -- {{{ handle()
 function handle(self)
-    self.commands.BANNER(self)
+    commands.BANNER(self)
 
     repeat
         local command, arg = self.io:recv_command()
-        if self.commands[command] then
-            self.commands[command](self, arg)
+        if commands[command] then
+            commands[command](self, arg)
         elseif self.handlers[command] then
-            self:custom_command(command, arg)
+            custom_command(self, command, arg)
         else
             self:unknown_command(command, arg)
         end
