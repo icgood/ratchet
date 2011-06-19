@@ -31,6 +31,15 @@ function data_reader:from_recv_buffer()
 end
 -- }}}
 
+-- {{{ data_reader:strip_EOD_endline()
+function data_reader:strip_EOD_endline()
+    if self.EOD > 1 then
+        local last_line = self.lines[self.EOD-1]
+        self.lines[self.EOD-1] = last_line:match("(.-)%\r?%\n") or last_line
+    end
+end
+-- }}}
+
 -- {{{ data_reader:handle_finished_line()
 function data_reader:handle_finished_line()
     local i = self.i
@@ -45,6 +54,7 @@ function data_reader:handle_finished_line()
         -- Check for the End-Of-Data marker.
         if line:match("^%.%\r?%\n") then
             self.EOD = i
+            self:strip_EOD_endline()
             return
 
         -- Remove an initial period on non-EOD lines as per RFC 821 4.5.2.
