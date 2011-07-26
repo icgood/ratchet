@@ -43,6 +43,9 @@ function client_handle_response(code, reason, headers, data)
     local header_values = headers["x-testing"]
     assert(#header_values == 1)
     assert(header_values[1] == "check")
+    local missing_header_values = headers['x-missing']
+    assert(type(missing_header_values) == "table")
+    assert(#missing_header_values == 0)
 
     client_received_response = true
 end

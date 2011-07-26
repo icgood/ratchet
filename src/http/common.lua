@@ -3,6 +3,17 @@ require "package"
 
 module("ratchet.http.common", package.seeall)
 
+-- {{{ headers_metatable
+local headers_metatable = {
+
+    -- For any non-existent header, return an empty table.
+    __index = function (key)
+        return {}
+    end,
+
+}
+-- }}}
+
 -- {{{ build_header_string()
 function build_header_string(headers)
     local ret = ""
@@ -30,6 +41,8 @@ function parse_header_string(data, start)
             end
         end
     until not name
+
+    setmetatable(headers, headers_metatable)
     return headers, start
 end
 -- }}}
