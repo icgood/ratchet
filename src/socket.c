@@ -132,6 +132,48 @@ static int rsock_new (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rsock_new_pair() */
+static int rsock_new_pair (lua_State *L)
+{
+	int family = luaL_optint (L, 1, AF_UNIX);
+	int socktype = luaL_optint (L, 2, SOCK_STREAM);
+	int protocol = luaL_optint (L, 3, 0);
+
+	int *fd1 = (int *) lua_newuserdata (L, sizeof (int));
+	int *fd2 = (int *) lua_newuserdata (L, sizeof (int));
+
+	int sv[2];
+	int ret = socketpair (family, socktype, protocol, sv);
+	if (ret < 0)
+		return handle_perror (L);
+	*fd1 = sv[0];
+	*fd2 = sv[1];
+
+	if (set_nonblocking (*fd1) < 0)
+		return handle_perror (L);
+	if (set_nonblocking (*fd2) < 0)
+		return handle_perror (L);
+
+	luaL_getmetatable (L, "ratchet_socket_meta");
+	lua_setmetatable (L, -2);
+
+	luaL_getmetatable (L, "ratchet_socket_meta");
+	lua_setmetatable (L, -3);
+
+	lua_createtable (L, 0, 1);
+	lua_pushnumber (L, (lua_Number) -1.0);
+	lua_setfield (L, -2, "timeout");
+	lua_setfenv (L, -2);
+
+	lua_createtable (L, 0, 1);
+	lua_pushnumber (L, (lua_Number) -1.0);
+	lua_setfield (L, -2, "timeout");
+	lua_setfenv (L, -3);
+
+	return 2;
+}
+/* }}} */
+
 /* {{{ rsock_from_fd() */
 static int rsock_from_fd (lua_State *L)
 {
@@ -813,6 +855,7 @@ int luaopen_ratchet_socket (lua_State *L)
 	static const luaL_Reg funcs[] = {
 		/* Documented methods. */
 		{"new", rsock_new},
+		{"new_pair", rsock_new_pair},
 		{"from_fd", rsock_from_fd},
 		/* Undocumented, helper methods. */
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
