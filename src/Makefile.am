@@ -46,6 +46,7 @@ lualibdir = @MODULE_PATH@
 lualib_LTLIBRARIES = ratchet.la
 ratchet_la_LDFLAGS = -module -avoid-version -shared
 ratchet_la_LIBADD = libratchet.la
+ratchet_la_SOURCES =
 endif
 
 SUBDIRS =
