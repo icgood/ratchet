@@ -22,7 +22,8 @@ function from_fd(fd)
 --- URI parser for socket connection strings. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
 --  The parser is capable of creating TCP, UDP, and Unix sockets. See the manual
---  page for complete details.
+--  page for complete details. Depending on the URI schema, this call *may*
+--  block until data is ready, such as for DNS lookups.
 --  @param uri the URI connection string.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
@@ -30,7 +31,8 @@ function prepare_uri(uri)
 
 --- Prepares TCP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
---  See the manual page for complete details.
+--  See the manual page for complete details. If host is not an IP address, this
+--  call will pause the current thread to wait for a DNS lookup.
 --  @param host queried by DNS for new TCP connection.
 --  @param port destination port number for new TCP connection.
 --  @return Table of information useful in creating a new socket, or nil on
@@ -39,7 +41,8 @@ function prepare_tcp(host, port)
 
 --- Prepares UDP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
---  See the manual page for complete details.
+--  See the manual page for complete details. If host is not an IP address, this
+--  call will pause the current thread to wait for a DNS lookup.
 --  @param host queried by DNS for new UDP connection.
 --  @param port destination port number for new UDP connection.
 --  @return Table of information useful in creating a new socket, or nil on
@@ -52,7 +55,7 @@ function prepare_udp(host, port)
 --  @param path file-path to connect/create UNIX socket.
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_udp(path)
+function prepare_unix(path)
 
 --- Returns the internal socket file descriptor.
 --  @param self the socket object.
