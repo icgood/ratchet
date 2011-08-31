@@ -133,7 +133,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size)</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size, iter_size)</td>
 	<td class="summary">Creates a new SMTP client object.</td>
 	</tr>
 
@@ -382,7 +382,7 @@ A reply table with "code" and "message" keys.
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, send_size)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, send_size, iter_size)</dt>
 <dd>
 Creates a new SMTP client object.
 
@@ -396,6 +396,10 @@ Creates a new SMTP client object.
 	
 	<li>
 	  send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+	</li>
+	
+	<li>
+	  iter_size: Maximum size of each iteration over message data, defaults to 1024 bytes at a time.
 	</li>
 	
 </ul>

@@ -168,12 +168,12 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(path)</td>
-	<td class="summary">Prepares UNIX socket information.</td>
+	<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(host, port)</td>
+	<td class="summary">Prepares UDP socket information.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(path)</td>
+	<td class="name" nowrap><a href="#prepare_unix">prepare_unix</a>&nbsp;(path)</td>
 	<td class="summary">Prepares UNIX socket information.</td>
 	</tr>
 
@@ -584,7 +584,7 @@ a new socket object.
 
 <dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port)</dt>
 <dd>
-Prepares TCP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details.
+Prepares TCP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
 
 
 <h3>Parameters</h3>
@@ -615,16 +615,20 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 
 
-<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(path)</dt>
+<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(host, port)</dt>
 <dd>
-Prepares UNIX socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details.
+Prepares UDP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  path: file-path to connect/create UNIX socket.
+	  host: queried by DNS for new UDP connection.
+	</li>
+	
+	<li>
+	  port: destination port number for new UDP connection.
 	</li>
 	
 </ul>
@@ -644,7 +648,7 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 
 
-<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(path)</dt>
+<dt><a name="prepare_unix"></a><strong>prepare_unix</strong>&nbsp;(path)</dt>
 <dd>
 Prepares UNIX socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details.
 
@@ -675,7 +679,7 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 <dt><a name="prepare_uri"></a><strong>prepare_uri</strong>&nbsp;(uri)</dt>
 <dd>
-URI parser for socket connection strings. On success, the returned object contains all necessary data to create and bind/connect a new socket object. The parser is capable of creating TCP, UDP, and Unix sockets. See the manual page for complete details.
+URI parser for socket connection strings. On success, the returned object contains all necessary data to create and bind/connect a new socket object. The parser is capable of creating TCP, UDP, and Unix sockets. See the manual page for complete details. Depending on the URI schema, this call *may* block until data is ready, such as for DNS lookups.
 
 
 <h3>Parameters</h3>
