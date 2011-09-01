@@ -512,12 +512,17 @@ static int rsock_check_ok (lua_State *L)
 
 	if (error)
 	{
-		if (error == ECONNREFUSED || error == ETIMEDOUT)
-			lua_pushboolean (L, 0);
-		else
+		switch (error)
 		{
-			errno = error;
-			return handle_perror (L);
+			case ECONNREFUSED:
+			case ETIMEDOUT:
+			case EBADF:
+				lua_pushboolean (L, 0);
+				break;
+
+			default:
+				errno = error;
+				return handle_perror (L);
 		}
 	}
 	else
