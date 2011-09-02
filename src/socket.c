@@ -508,7 +508,12 @@ static int rsock_check_ok (lua_State *L)
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
-		return handle_perror (L);
+	{
+		if (errno == EBADF)
+			error = errno;
+		else
+			return handle_perror (L);
+	}
 
 	if (error)
 	{
