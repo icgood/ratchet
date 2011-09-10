@@ -1,4 +1,4 @@
 
-loc1dir = @SMTP_PATH@/ratchet/smtp
+loc1dir = @SMTP_PATH@
 dist_loc1_DATA = client.lua server.lua common.lua
 

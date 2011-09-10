@@ -51,6 +51,10 @@ endif
 
 SUBDIRS =
 
+if HAVE_SOCKET
+SUBDIRS += socketpad
+endif
+
 if HAVE_DNS
 SUBDIRS += libdns
 endif

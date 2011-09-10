@@ -13,6 +13,7 @@ TESTS = test_listen_connect.lua \
 	test_thread_error_handler.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \
+	test_socketpad.lua \
 	test_unix_sockets.lua \
 	test_event_timeout.lua \
 	test_ssl_send_recv.lua \
@@ -39,12 +40,14 @@ XFAIL_TESTS += test_ssl_send_recv.lua
 endif
 
 if HAVE_SOCKET
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.socketpad"] = assert(loadfile("../src/socketpad/init.lua"))'
 XFAIL_TESTS +=  
 else
 XFAIL_TESTS += test_listen_connect.lua \
 	       test_send_recv.lua \
 	       test_shutdown.lua \
 	       test_socketpair.lua \
+	       test_socketpad.lua \
 	       test_unix_sockets.lua \
 	       test_ssl_send_recv.lua \
 	       test_event_timeout.lua \
@@ -72,18 +75,18 @@ XFAIL_TESTS += test_zmq_send_recv.lua \
 endif
 
 if ENABLE_HTTP
-TESTS_ENVIRONMENT += -e 'package.preload["ratchet.http.client"] = loadfile("../src/http/client.lua")' \
-                     -e 'package.preload["ratchet.http.server"] = loadfile("../src/http/server.lua")' \
-                     -e 'package.preload["ratchet.http.common"] = loadfile("../src/http/common.lua")'
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.http.client"] = assert(loadfile("../src/http/client.lua"))' \
+                     -e 'package.preload["ratchet.http.server"] = assert(loadfile("../src/http/server.lua"))' \
+                     -e 'package.preload["ratchet.http.common"] = assert(loadfile("../src/http/common.lua"))'
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_http_get.lua
 endif
 
 if ENABLE_SMTP
-TESTS_ENVIRONMENT += -e 'package.preload["ratchet.smtp.client"] = loadfile("../src/smtp/client.lua")' \
-                     -e 'package.preload["ratchet.smtp.server"] = loadfile("../src/smtp/server.lua")' \
-                     -e 'package.preload["ratchet.smtp.common"] = loadfile("../src/smtp/common.lua")'
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.smtp.client"] = assert(loadfile("../src/smtp/client.lua"))' \
+                     -e 'package.preload["ratchet.smtp.server"] = assert(loadfile("../src/smtp/server.lua"))' \
+                     -e 'package.preload["ratchet.smtp.common"] = assert(loadfile("../src/smtp/common.lua"))'
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_smtp.lua

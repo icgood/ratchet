@@ -57,6 +57,7 @@ AC_ARG_WITH([lua-cpath], [AS_HELP_STRING([--with-lua-cpath=CPATH],
 if test "x${with_lua_cpath}" == "x"; then
 	with_lua_cpath="`pkg-config lua --variable=INSTALL_CMOD`"
 fi
+AC_SUBST([LUA_CPATH], ["$with_lua_cpath"])
 
 #####################
 # Configure options: --with-lua-lpath=LPATH
@@ -65,6 +66,7 @@ AC_ARG_WITH([lua-lpath], [AS_HELP_STRING([--with-lua-lpath=LPATH],
 if test "x${with_lua_lpath}" == "x"; then
 	with_lua_lpath="`pkg-config lua --variable=INSTALL_LMOD`"
 fi
+AC_SUBST([LUA_LPATH], ["$with_lua_lpath"])
 
 #####################
 # Checks for libraries.
@@ -205,7 +207,7 @@ AC_ARG_ENABLE([http], [AS_HELP_STRING([--enable-http@<:@=PATH@:>@],
 	      [enable_http="${enableval%/}"], [enable_http=yes])
 if test "x${enable_http}" != "xno"; then
 	if test "x${enable_http}" == "xyes"; then
-		enable_http="$with_lua_lpath"
+		enable_http="$with_lua_lpath/ratchet/http"
 	fi
 	if test "x${enable_http}" == "x"; then
 		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
@@ -221,7 +223,7 @@ AC_ARG_ENABLE([smtp], [AS_HELP_STRING([--enable-smtp@<:@=PATH@:>@],
 	      [enable_smtp="${enableval%/}"], [enable_smtp=yes])
 if test "x${enable_smtp}" != "xno"; then
 	if test "x${enable_smtp}" == "xyes"; then
-		enable_smtp="$with_lua_lpath"
+		enable_smtp="$with_lua_lpath/ratchet/smtp"
 	fi
 	if test "x${enable_smtp}" == "x"; then
 		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
@@ -257,6 +259,7 @@ AC_CONFIG_FILES([Makefile
 	         src/Makefile
 	         src/http/Makefile
 	         src/smtp/Makefile
+		 src/socketpad/Makefile
 	         src/libdns/Makefile
 	         test/Makefile])
 AC_OUTPUT
