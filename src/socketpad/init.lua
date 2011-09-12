@@ -37,6 +37,8 @@ local function recv_until_bytes(self, bytes)
         local data, err = recv_once(self)
         if not data then
             return nil, err
+        elseif data == '' then
+            break
         end
     end
 
@@ -51,19 +53,25 @@ local function recv_until_string(self, str)
     local escaped_str = str:gsub('([%^%$%(%)%%%.%[%]%*%+%-%?])', '%1')
     local pattern = escaped_str .. '()'
 
+    local end_i
     while true do
-        local end_i = self.recv_buffer:match(pattern)
+        end_i = self.recv_buffer:match(pattern)
         if end_i then
-            local ret = self.recv_buffer:sub(1, end_i-1)
-            self.recv_buffer = self.recv_buffer:sub(end_i)
-            return ret
+            break
         end
 
         local data, err = recv_once(self)
         if not data then
             return nil, err
+        elseif data == '' then
+            end_i = #self.recv_buffer
+            break
         end
     end
+
+    local ret = self.recv_buffer:sub(1, end_i-1)
+    self.recv_buffer = self.recv_buffer:sub(end_i)
+    return ret
 end
 -- }}}
 
@@ -103,6 +111,12 @@ function send(self, data, more)
 
         return self.socket:send(to_send)
     end
+end
+-- }}}
+
+-- {{{ close()
+function close(self)
+    self.socket:close()
 end
 -- }}}
 

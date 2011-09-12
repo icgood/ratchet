@@ -1,0 +1,39 @@
+
+--- The socketpad library provides a layer on top of the ratchet.socket library
+--  to manage buffered socket IO. This allows for more familiar usages and
+--  easier implementation of binary and ASCII socket protocols.
+module "ratchet.socketpad"
+
+--- Returns a new socketpad object, using the given socket as the underlying
+--  engine to send and receive buffered IO. The socket object is available in
+--  raw form as the "socket" field of the returned socketpad object.
+--  @param socket A socket object to buffer.
+--  @return a new socketpad object.
+function new(socket)
+
+--- Adds the given data to the send-buffer, and possibly flushes it to the
+--  underlying socket.
+--  @param self the socketpad object.
+--  @param data a string of data to send.
+--  @param more flag specifying more data will be buffered, so the send-buffer
+--              will not be flushed until this parameter is false.
+--  @return On error, nil followed by an error message.
+function send(self, data)
+
+--- Attempts to receive a specific amount of data from the socket, receiving
+--  packets on the underlying socket until the criteria is met. 
+--  @param self the socket object.
+--  @param stop if given as a number, this method will attempt to receive that
+--              many bytes on the socket and return exactly that many. If given
+--              as a string, the socket will receive until that string is seen,
+--              everything up-to and including that string is returned.
+--  @return string of data received on the socket. On error, nil followed by an
+--          error message. As with regular socket recv(), this method can return
+--          an empty string signaling the connection has been closed remotely.
+function recv(self)
+
+--- Calls close() on the underlying socket, provided purely as convenience. 
+--  @param self the socket object.
+function close(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
