@@ -51,7 +51,7 @@ static int rsockopt_get_boolean (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -67,7 +67,7 @@ static int rsockopt_get_int (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -83,7 +83,7 @@ static int rsockopt_get_string (lua_State *L, int fd, int opt, int maxlen)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -103,7 +103,7 @@ static int rsockopt_get_linger (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -126,7 +126,7 @@ static int rsockopt_get_peercred (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 #endif
@@ -147,7 +147,7 @@ static int rsockopt_get_timeval (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -159,7 +159,7 @@ static int rsockopt_set_boolean (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -171,7 +171,7 @@ static int rsockopt_set_int (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -184,7 +184,7 @@ static int rsockopt_set_string (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -204,7 +204,7 @@ static int rsockopt_set_linger (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
@@ -229,7 +229,7 @@ static int rsockopt_set_peercred (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 #endif
@@ -250,7 +250,7 @@ static int rsockopt_set_timeval (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return handle_perror (L);
+		return throw_perror (L);
 }
 /* }}} */
 
