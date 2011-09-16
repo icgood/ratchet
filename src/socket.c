@@ -804,12 +804,12 @@ static int rsock_rawrecv (lua_State *L)
 /* {{{ connect() */
 #define rsock_connect "return function (self, ...)\n" \
 	"	local ret, err = self:rawconnect(...)\n" \
-	"	if ret == false then\n" \
+	"	if err then\n" \
+	"		return nil, err\n" \
+	"	elseif not ret then\n" \
 	"		if not coroutine.yield('write', self) then\n" \
 	"			return nil, 'Timed out.'\n" \
 	"		end\n" \
-	"	elseif not ret then\n" \
-	"		return nil, err\n" \
 	"	end\n" \
 	"	return self:check_errors()\n" \
 	"end\n"
