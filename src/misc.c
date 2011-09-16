@@ -36,27 +36,8 @@
 
 #include "misc.h"
 
-/* {{{ raise_perror_ln() */
-int raise_perror_ln (lua_State *L, const char *file, int line)
-{
-	char errorbuf[512];
-
-	if (errno)
-	{
-		if (strerror_r (errno, errorbuf, sizeof (errorbuf)) == -1)
-			lua_pushfstring (L, "%s:%d: Unknown error occured. [errno=%d]", file, line, errno);
-		else
-			lua_pushfstring (L, "%s:%d: %s", file, line, errorbuf);
-	}
-	else
-		lua_pushfstring (L, "%s:%d: Unknown error occured.", file, line);
-	
-	return lua_error (L);
-}
-/* }}} */
-
-/* {{{ return_perror_ln() */
-int return_perror_ln (lua_State *L, const char *file, int line)
+/* {{{ handle_perror_ln() */
+int handle_perror_ln (lua_State *L, const char *file, int line)
 {
 	char errorbuf[512];
 
@@ -71,8 +52,12 @@ int return_perror_ln (lua_State *L, const char *file, int line)
 	}
 	else
 		lua_pushfstring (L, "%s:%d: Unknown error occured.", file, line);
-	
+
+#if RATCHET_THROW_ERRORS
+	return lua_error (L);
+#else
 	return 2;
+#endif
 }
 /* }}} */
 
