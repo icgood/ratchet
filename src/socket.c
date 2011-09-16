@@ -504,7 +504,7 @@ static int rsock_set_timeout (lua_State *L)
 static int rsock_check_errors (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
-	int error;
+	int error = 0;
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
