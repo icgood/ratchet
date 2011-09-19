@@ -25,6 +25,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -61,6 +62,39 @@ int return_perror_ln (lua_State *L, const char *file, int line)
 int throw_perror_ln (lua_State *L, const char *file, int line)
 {
 	return_perror_ln (L, file, line);
+	return lua_error (L);
+}
+/* }}} */
+
+/* {{{ return_str_ln() */
+int return_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
+{
+	lua_pushnil (L);
+	lua_pushfstring (L, "%s:%d: ");
+
+	va_list args;
+	va_start (args, err);
+	lua_pushvfstring (L, err, args);
+	va_end (args);
+
+	lua_concat (L, 2);
+
+	return 2;
+}
+/* }}} */
+
+/* {{{ throw_str_ln() */
+int throw_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
+{
+	lua_pushfstring (L, "%s:%d: ");
+
+	va_list args;
+	va_start (args, err);
+	lua_pushvfstring (L, err, args);
+	va_end (args);
+
+	lua_concat (L, 2);
+
 	return lua_error (L);
 }
 /* }}} */

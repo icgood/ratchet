@@ -9,10 +9,18 @@
 
 #define throw_perror(L) throw_perror_ln (L, __FILE__, __LINE__)
 #if RATCHET_THROW_ERRORS
-#define handle_perror(L) return_perror_ln (L, __FILE__, __LINE__)
-#else
 #define handle_perror(L) throw_perror_ln (L, __FILE__, __LINE__)
+#else
+#define handle_perror(L) return_perror_ln (L, __FILE__, __LINE__)
 #endif
+
+#if RATCHET_THROW_ERRORS
+#define handle_error_str(L, ...) throw_str_ln (L, __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define handle_error_str(L, ...) return_str_ln (L, __FILE__, __LINE__, __VA_ARGS__)
+#endif
+
+
 #define stackdump(L) stackdump_ln (L, __FILE__, __LINE__)
 
 struct luafunc {
@@ -22,6 +30,8 @@ struct luafunc {
 
 int return_perror_ln (lua_State *L, const char *file, int line);
 int throw_perror_ln (lua_State *L, const char *file, int line);
+int return_str_ln (lua_State *L, const char *file, int line, const char *err, ...);
+int throw_str_ln (lua_State *L, const char *file, int line, const char *err, ...);
 void build_lua_function (lua_State *L, const char *fstr);
 void register_luafuncs (lua_State *L, int index, const struct luafunc *fs);
 int strmatch (lua_State *L, int index, const char *match);
