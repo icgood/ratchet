@@ -56,6 +56,8 @@ function wait_all(self, threads)
 --  used as scratch-space for thread-scope data. This table is not created until
 --  the first time this method is called for in thread.
 --  @param self the ratchet object.
+--  @param premade optionally pass in a pre-existing object to be stored as the
+--                 thread's scratch space instead of the default a new table.
 --  @return a table specific to the current thread.
 function thread_space(self)
 
