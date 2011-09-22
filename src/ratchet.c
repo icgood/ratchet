@@ -139,6 +139,22 @@ static void set_thread_ready (lua_State *L, int index)
 }
 /* }}} */
 
+/* {{{ set_thread_global_scope() */
+static void set_thread_global_scope (lua_State *L, int index)
+{
+	lua_newtable (L);
+	lua_pushvalue (L, LUA_GLOBALSINDEX);
+	lua_setfield (L, -2, "_globals");
+	lua_pushvalue (L, -1);
+	lua_setfield (L, -2, "_G");
+	lua_createtable (L, 0, 1);
+	lua_pushvalue (L, LUA_GLOBALSINDEX);
+	lua_setfield (L, -2, "__index");
+	lua_setmetatable (L, -2);
+	lua_setfenv (L, index);
+}
+/* }}} */
+
 /* {{{ end_thread_persist() */
 static void end_thread_persist (lua_State *L, int index)
 {
@@ -346,6 +362,9 @@ static int ratchet_attach (lua_State *L)
 	luaL_checkany (L, 2);	/* Function or callable object. */
 	int nargs = lua_gettop (L) - 2;
 
+	/* Set up thread global scope. */
+	set_thread_global_scope (L, 2);
+
 	/* Set up new coroutine. */
 	lua_State *L1 = lua_newthread (L);
 	lua_insert (L, 2);
@@ -366,6 +385,9 @@ static int ratchet_attach_background (lua_State *L)
 	struct event_base *e_b = get_event_base (L, 1);
 	luaL_checkany (L, 2);	/* Function or callable object. */
 	int nargs = lua_gettop (L) - 2;
+
+	/* Set up thread global scope. */
+	set_thread_global_scope (L, 2);
 
 	/* Set up new coroutine. */
 	lua_State *L1 = lua_newthread (L);

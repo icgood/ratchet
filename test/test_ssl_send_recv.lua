@@ -32,7 +32,7 @@ function ctx1(where)
     assert(data == "foo")
     client:send("bar")
 
-    counter = counter + 1
+    _globals.counter = _globals.counter + 1
 end
 
 function ctx2(where)
@@ -63,7 +63,7 @@ function ctx2(where)
     local data = socket:recv()
     assert(data == "bar")
 
-    counter = counter + 2
+    _globals.counter = _globals.counter + 2
 end
 
 ssl1 = ratchet.ssl.new(ratchet.ssl.SSLv3_server)
