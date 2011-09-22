@@ -435,23 +435,34 @@ static int ratchet_wait_all (lua_State *L)
 static int ratchet_thread_space (lua_State *L)
 {
 	get_event_base (L, 1);
-	lua_settop (L, 1);
+	lua_settop (L, 2);
 
 	if (lua_pushthread (L))
 		return luaL_error (L, "thread_space cannot be called from main thread");
 
 	lua_getfenv (L, 1);
 	lua_getfield (L, -1, "thread_space");
-	lua_pushvalue (L, 2);
+	lua_pushvalue (L, 3);
 	lua_rawget (L, -2);
 
 	if (lua_isnil (L, -1))
 	{
 		lua_pop (L, 1);
-		lua_newtable (L);
-		lua_pushvalue (L, 2);
-		lua_pushvalue (L, -2);
-		lua_rawset (L, -4);
+
+		if (lua_isnil (L, 2))
+		{
+			lua_newtable (L);
+			lua_pushvalue (L, 3);
+			lua_pushvalue (L, -2);
+			lua_rawset (L, -4);
+		}
+		else
+		{
+			lua_pushvalue (L, 3);
+			lua_pushvalue (L, 2);
+			lua_rawset (L, -3);
+			lua_pushvalue (L, 2);
+		}
 	}
 
 	return 1;
