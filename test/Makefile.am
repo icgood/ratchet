@@ -11,7 +11,6 @@ TESTS = test_listen_connect.lua \
 	test_error_handler.lua \
 	test_wait_all.lua \
 	test_thread_error_handler.lua \
-	test_thread_global_scope.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \
 	test_socketpad.lua \

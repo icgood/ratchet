@@ -3,7 +3,7 @@ require "ratchet"
 count = 0
 
 local function ctx1(n)
-    _globals.count = _globals.count + n
+    count = count + n
 end
 
 local function ctx2(r)
@@ -14,8 +14,8 @@ local function ctx2(r)
     local t5 = r:attach(ctx1, 5)
 
     r:wait_all({t1, t2, t3, t4, t5})
-    assert(_globals.count == 15)
-    _globals.count = _globals.count + 6
+    assert(count == 15)
+    count = count + 6
 end
 
 local r = ratchet.new()
