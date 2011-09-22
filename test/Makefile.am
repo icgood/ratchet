@@ -15,6 +15,7 @@ TESTS = test_listen_connect.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \
 	test_socketpad.lua \
+	test_socket_byteorder.lua \
 	test_unix_sockets.lua \
 	test_event_timeout.lua \
 	test_ssl_send_recv.lua \
@@ -49,6 +50,7 @@ XFAIL_TESTS += test_listen_connect.lua \
 	       test_shutdown.lua \
 	       test_socketpair.lua \
 	       test_socketpad.lua \
+	       test_socket_byteorder.lua \
 	       test_unix_sockets.lua \
 	       test_ssl_send_recv.lua \
 	       test_event_timeout.lua \

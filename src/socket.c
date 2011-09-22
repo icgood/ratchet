@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 #include <math.h>
 #include <netdb.h>
+#include <string.h>
 #include <errno.h>
 
 #include "luaopens.h"
@@ -406,6 +407,60 @@ static int rsock_prepare_unix (lua_State *L)
 	strncpy (addr->sun_path, path, UNIX_PATH_MAX-1);
 	addr->sun_path[UNIX_PATH_MAX-1] = '\0';
 	lua_setfield (L, 2, "addr");
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_ntoh() */
+static int rsock_ntoh (lua_State *L)
+{
+	size_t str_len = 0;
+	const char *str = luaL_checklstring (L, 1, &str_len);
+
+	if (str_len == sizeof (uint32_t))
+	{
+		uint32_t in = 0, out = 0;
+		memcpy (&in, str, sizeof (uint32_t));
+		out = ntohl (in);
+
+		lua_pushinteger (L, (lua_Number) out);
+	}
+	else if (str_len == sizeof (uint16_t))
+	{
+		uint16_t in = 0, out = 0;
+		memcpy (&in, str, sizeof (uint16_t));
+		out = ntohs (in);
+
+		lua_pushinteger (L, (lua_Number) out);
+	}
+	else
+		return luaL_argerror (L, 1, "Input can only be 2 or 4 bytes.");
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_hton() */
+static int rsock_hton (lua_State *L)
+{
+	char out_str[4];
+	int use_16 = lua_toboolean (L, 2);
+
+	if (use_16)
+	{
+		uint16_t out, in = (uint16_t) luaL_checkinteger (L, 1);
+		out = htons (in);
+		memcpy (out_str, &out, sizeof (uint16_t));
+		lua_pushlstring (L, out_str, 2);
+	}
+	else
+	{
+		uint32_t out, in = (uint32_t) luaL_checkinteger (L, 1);
+		out = htonl (in);
+		memcpy (out_str, &out, sizeof (uint32_t));
+		lua_pushlstring (L, out_str, 4);
+	}
 
 	return 1;
 }
@@ -867,6 +922,8 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"new", rsock_new},
 		{"new_pair", rsock_new_pair},
 		{"from_fd", rsock_from_fd},
+		{"ntoh", rsock_ntoh},
+		{"hton", rsock_hton},
 		/* Undocumented, helper methods. */
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
 		{"build_tcp_info", rsock_build_tcp_info},

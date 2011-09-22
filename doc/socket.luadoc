@@ -62,6 +62,23 @@ function prepare_unix(path)
 --  @return a file descriptor.
 function get_fd(self)
 
+--- Converts a byte-string from network byte-order to host byte-order. This is
+--  necessary only for binary socket protocols. Takes a 2- or 4-byte string from
+--  the socket and returns the regular number after conversion. See manpage
+--  byteorder(3).
+--  @param in the binary input string from the socket to convert to a number.
+--  @return the resulting number after conversion.
+function ntoh(in)
+
+--- Converts a number into a byte-string ready to be sent over the network. This
+--  is necessary only for binary socket protocols. See manpage byteorder(3).
+--  @param in the number to be converted.
+--  @param use_16 if given and true, the number is truncated to 16-bits and the
+--                resulting string is only two bytes long.
+--  @return a byte-string in network byte-order ready to be sent over the
+--          network.
+function hton(in, use_16)
+
 --- Gets the current timeout for all socket methods that pause the thread.
 --  @param self the socket object.
 --  @return the current timeout in seconds.
