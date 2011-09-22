@@ -93,6 +93,14 @@ static int setup_persistance_tables (lua_State *L)
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "error_handlers");
 
+	/* Set up scratch-space for threads to store thread-scope data. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "k");
+	lua_setfield (L, -2, "__mode");
+	lua_setmetatable (L, -2);
+	lua_setfield (L, -2, "thread_space");
+
 	return 1;
 }
 /* }}} */
@@ -420,6 +428,33 @@ static int ratchet_wait_all (lua_State *L)
 	event_base_loopbreak (e_b);	/* So that new threads get started. */
 
 	return lua_yield (L, 0);
+}
+/* }}} */
+
+/* {{{ ratchet_thread_space() */
+static int ratchet_thread_space (lua_State *L)
+{
+	get_event_base (L, 1);
+	lua_settop (L, 1);
+
+	if (lua_pushthread (L))
+		return luaL_error (L, "thread_space cannot be called from main thread");
+
+	lua_getfenv (L, 1);
+	lua_getfield (L, -1, "thread_space");
+	lua_pushvalue (L, 2);
+	lua_rawget (L, -2);
+
+	if (lua_isnil (L, -1))
+	{
+		lua_pop (L, 1);
+		lua_newtable (L);
+		lua_pushvalue (L, 2);
+		lua_pushvalue (L, -2);
+		lua_rawset (L, -4);
+	}
+
+	return 1;
 }
 /* }}} */
 
@@ -849,6 +884,7 @@ int luaopen_ratchet (lua_State *L)
 		{"attach", ratchet_attach},
 		{"attach_background", ratchet_attach_background},
 		{"wait_all", ratchet_wait_all},
+		{"thread_space", ratchet_thread_space},
 		{"running_thread", ratchet_running_thread},
 		{"timer", ratchet_timer},
 		{"pause", ratchet_pause},

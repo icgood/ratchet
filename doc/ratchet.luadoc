@@ -52,6 +52,13 @@ function attach_background(self, func, ...)
 --  @param threads table containing threads to wait for.
 function wait_all(self, threads)
 
+--- Returns a table that is specific to the currently-running thread that can be
+--  used as scratch-space for thread-scope data. This table is not created until
+--  the first time this method is called for in thread.
+--  @param self the ratchet object.
+--  @return a table specific to the current thread.
+function thread_space(self)
+
 --- Returns the Lua thread object that is currently running, or nil for the main
 --  thread.
 --  @param self the ratchet object.
