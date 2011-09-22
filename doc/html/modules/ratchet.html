@@ -61,6 +61,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
 	</li>
 
@@ -140,6 +144,11 @@
 	<tr>
 	<td class="name" nowrap><a href="#set_error_handler">set_error_handler</a>&nbsp;(self, func, ...)</td>
 	<td class="summary">Sets the new error handler for threads.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#thread_space">thread_space</a>&nbsp;(self, premade)</td>
+	<td class="summary">Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data.</td>
 	</tr>
 
 	<tr>
@@ -407,6 +416,39 @@ Sets the new error handler for threads. The scope of the error handler depends o
 
 
 
+
+
+
+</dd>
+
+
+
+
+<dt><a name="thread_space"></a><strong>thread_space</strong>&nbsp;(self, premade)</dt>
+<dd>
+Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data. This table is not created until the first time this method is called for in thread.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ratchet object.
+	</li>
+	
+	<li>
+	  premade: optionally pass in a pre-existing object to be stored as the thread's scratch space instead of the default a new table.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a table specific to the current thread.
 
 
 
