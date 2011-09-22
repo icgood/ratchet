@@ -89,7 +89,7 @@ static int rssl_ctx_new (lua_State *L)
 	/* Create context. */
 	ctx = SSL_CTX_new (meth ());
 	if (!ctx)
-		return luaL_error (L, "Creation of SSL_CTX object failed");
+		return handle_error_str (L, "Creation of SSL_CTX object failed");
 
 	/* Set up Lua object. */
 	SSL_CTX **new = (SSL_CTX **) lua_newuserdata (L, sizeof (SSL_CTX *));
@@ -137,7 +137,7 @@ static int rssl_ctx_create_session (lua_State *L)
 
 	SSL *ssl = SSL_new (ctx);
 	if (!ssl)
-		return luaL_error (L, "Could not create SSL object");
+		return handle_error_str (L, "Could not create SSL object");
 	SSL_set_bio (ssl, rbio, wbio);
 
 	/* Set up Lua object. */
@@ -192,14 +192,14 @@ static int rssl_ctx_load_certs (lua_State *L)
 
 	/* Load keys and certificates. */
 	if (!SSL_CTX_use_certificate_chain_file (ctx, certchainfile))
-		return luaL_error (L, "Could not read certificate chain file: %s", certchainfile);
+		return handle_error_str (L, "Could not read certificate chain file: %s", certchainfile);
 	if (password)
 	{
 		SSL_CTX_set_default_passwd_cb (ctx, password_cb);
 		SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) password);
 	}
 	if (!SSL_CTX_use_PrivateKey_file (ctx, privkeyfile, SSL_FILETYPE_PEM))
-		return luaL_error (L, "Could not read key file: %s", privkeyfile);
+		return handle_error_str (L, "Could not read key file: %s", privkeyfile);
 
 	return 0;
 }
@@ -219,11 +219,11 @@ static int rssl_ctx_load_cas (lua_State *L)
 	if (!SSL_CTX_load_verify_locations (ctx, ca_file, ca_path))
 	{
 		if (ca_path && ca_file)
-			return luaL_error (L, "Could not read CA locations: %s %s", ca_file, ca_path);
+			return handle_error_str (L, "Could not read CA locations: %s %s", ca_file, ca_path);
 		else if (ca_path)
-			return luaL_error (L, "Could not read CA path: %s", ca_path);
+			return handle_error_str (L, "Could not read CA path: %s", ca_path);
 		else
-			return luaL_error (L, "Could not read CA file: %s", ca_file);
+			return handle_error_str (L, "Could not read CA file: %s", ca_file);
 	}
 	SSL_CTX_set_verify_depth (ctx, depth);
 
@@ -245,7 +245,7 @@ static int rssl_ctx_load_randomness (lua_State *L)
 	if (!random)
 		return luaL_argerror (L, 5, "Could not find default random file");
 	if (!RAND_load_file (random, rand_max_bytes))
-		return luaL_error (L, "Could not load randomness: %s", random);
+		return handle_error_str (L, "Could not load randomness: %s", random);
 
 	return 0;
 }
@@ -259,15 +259,15 @@ static int rssl_ctx_load_dh_params (lua_State *L)
 
 	BIO *bio = BIO_new_file (file, "r");
 	if (!bio)
-		return luaL_error (L, "Could not open DH params file: %s", file);
+		return handle_error_str (L, "Could not open DH params file: %s", file);
 
 	DH *ret = PEM_read_bio_DHparams (bio, NULL, NULL, NULL);
 	BIO_free (bio);
 	if (!ret)
-		return luaL_error (L, "Could not read DH params file: %s", file);
+		return handle_error_str (L, "Could not read DH params file: %s", file);
 
 	if (SSL_CTX_set_tmp_dh (ctx, ret) < 0)
-		return luaL_error (L, "Could not set DH params: %s", file);
+		return handle_error_str (L, "Could not set DH params: %s", file);
 
 	return 0;
 }
@@ -282,10 +282,10 @@ static int rssl_ctx_generate_tmp_rsa (lua_State *L)
 
 	RSA *rsa = RSA_generate_key (bits, e, NULL, NULL);
 	if (!rsa)
-		return luaL_error (L, "Could not generate a %d-bit RSA key", bits);
+		return handle_error_str (L, "Could not generate a %d-bit RSA key", bits);
 
 	if (!SSL_CTX_set_tmp_rsa (ctx, rsa))
-		return luaL_error (L, "Could not set set temporary RSA key");
+		return handle_error_str (L, "Could not set set temporary RSA key");
 
 	RSA_free (rsa);
 
@@ -458,7 +458,7 @@ static int rssl_session_rawread (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_read: %s", ERR_error_string (error, NULL));
+			return handle_error_str (L, "SSL_read: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -492,7 +492,7 @@ static int rssl_session_rawwrite (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_write: %s", ERR_error_string (error, NULL));
+			return handle_error_str (L, "SSL_write: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -524,7 +524,7 @@ static int rssl_session_rawshutdown (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
+			return handle_error_str (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -556,7 +556,7 @@ static int rssl_session_rawconnect (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_connect: %s", ERR_error_string (error, NULL));
+			return handle_error_str (L, "SSL_connect: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -588,7 +588,7 @@ static int rssl_session_rawaccept (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_accept: %s", ERR_error_string (error, NULL));
+			return handle_error_str (L, "SSL_accept: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -617,7 +617,7 @@ int rsock_encrypt (lua_State *L)
 
 	BIO *bio = BIO_new_socket (fd, BIO_NOCLOSE);
 	if (!bio)
-		return luaL_error (L, "Could not create BIO object from: %d", fd);
+		return handle_error_str (L, "Could not create BIO object from: %d", fd);
 
 	lua_getfield (L, 2, "create_session");
 	lua_pushvalue (L, 2);
