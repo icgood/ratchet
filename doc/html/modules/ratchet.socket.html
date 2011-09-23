@@ -157,6 +157,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#hton">hton</a>&nbsp;(in, use_16)</td>
+	<td class="summary">Converts a number into a byte-string ready to be sent over the network.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#listen">listen</a>&nbsp;(self, backlog)</td>
 	<td class="summary">Sets the socket to listen mode.</td>
 	</tr>
@@ -164,6 +169,11 @@
 	<tr>
 	<td class="name" nowrap><a href="#new">new</a>&nbsp;(family, socktype, protocol)</td>
 	<td class="summary">Returns a new socket object, with its own file descriptor.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#ntoh">ntoh</a>&nbsp;(in)</td>
+	<td class="summary">Converts a byte-string from network byte-order to host byte-order.</td>
 	</tr>
 
 	<tr>
@@ -519,6 +529,39 @@ the current timeout in seconds.
 
 
 
+<dt><a name="hton"></a><strong>hton</strong>&nbsp;(in, use_16)</dt>
+<dd>
+Converts a number into a byte-string ready to be sent over the network. This is necessary only for binary socket protocols. See manpage byteorder(3).
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  in: the number to be converted.
+	</li>
+	
+	<li>
+	  use_16: if given and true, the number is truncated to 16-bits and the resulting string is only two bytes long.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a byte-string in network byte-order ready to be sent over the network.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="listen"></a><strong>listen</strong>&nbsp;(self, backlog)</dt>
 <dd>
 Sets the socket to listen mode. This socket will open the system port it was bind()ed to. Connections to this socket can be accepted by the accept() method.
@@ -578,6 +621,35 @@ Returns a new socket object, with its own file descriptor.
 
 <h3>Return value:</h3>
 a new socket object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="ntoh"></a><strong>ntoh</strong>&nbsp;(in)</dt>
+<dd>
+Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 2- or 4-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3).
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  in: the binary input string from the socket to convert to a number.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the resulting number after conversion.
 
 
 
