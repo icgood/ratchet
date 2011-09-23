@@ -434,7 +434,7 @@ static int ratchet_wait_all (lua_State *L)
 /* {{{ ratchet_thread_space() */
 static int ratchet_thread_space (lua_State *L)
 {
-	get_event_base (L, 1);
+	(void) get_event_base (L, 1);
 	lua_settop (L, 2);
 
 	if (lua_pushthread (L))
