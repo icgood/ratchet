@@ -555,11 +555,11 @@ static int rsock_set_timeout (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_check_ok() */
-static int rsock_check_ok (lua_State *L)
+/* {{{ rsock_check_errors() */
+static int rsock_check_errors (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
-	int error;
+	int error = 0;
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
@@ -571,20 +571,7 @@ static int rsock_check_ok (lua_State *L)
 	}
 
 	if (error)
-	{
-		switch (error)
-		{
-			case ECONNREFUSED:
-			case ETIMEDOUT:
-			case EBADF:
-				lua_pushboolean (L, 0);
-				break;
-
-			default:
-				errno = error;
-				return handle_perror (L);
-		}
-	}
+		return handle_perror (L);
 	else
 		lua_pushboolean (L, 1);
 
@@ -727,8 +714,8 @@ static int rsock_rawaccept (lua_State *L)
 		{
 			lua_getfield (L, 1, "accept");
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 1);
-			return 1;
+			lua_call (L, 1, 2);
+			return 2;
 		}
 
 		else
@@ -767,8 +754,8 @@ static int rsock_rawsend (lua_State *L)
 			lua_getfield (L, 1, "send");
 			lua_pushvalue (L, 1);
 			lua_pushvalue (L, 2);
-			lua_call (L, 2, 1);
-			return 1;
+			lua_call (L, 2, 2);
+			return 2;
 		}
 
 		else
@@ -801,8 +788,8 @@ static int rsock_rawrecv (lua_State *L)
 		{
 			lua_getfield (L, 1, "recv");
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 1);
-			return 1;
+			lua_call (L, 1, 2);
+			return 2;
 		}
 
 		else
@@ -863,16 +850,23 @@ static int rsock_rawrecv (lua_State *L)
 #define rsock_accept "return function (self, ...)\n" \
 	"	if coroutine.yield('read', self) then\n" \
 	"		return self:rawaccept(...)\n" \
+	"	else\n" \
+	"		return nil, 'Timed out.'\n" \
 	"	end\n" \
 	"end\n"
 /* }}} */
 
 /* {{{ connect() */
 #define rsock_connect "return function (self, ...)\n" \
-	"	if not self:rawconnect(...) then\n" \
-	"		coroutine.yield('write', self)\n" \
+	"	local ret, err = self:rawconnect(...)\n" \
+	"	if err then\n" \
+	"		return nil, err\n" \
+	"	elseif not ret then\n" \
+	"		if not coroutine.yield('write', self) then\n" \
+	"			return nil, 'Timed out.'\n" \
+	"		end\n" \
 	"	end\n" \
-	"	return self:check_ok()\n" \
+	"	return self:check_errors()\n" \
 	"end\n"
 /* }}} */
 
@@ -962,7 +956,7 @@ int luaopen_ratchet_socket (lua_State *L)
 #endif
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
-		{"check_ok", rsock_check_ok},
+		{"check_errors", rsock_check_errors},
 		{"shutdown", rsock_shutdown},
 		{"close", rsock_close},
 		{"set_tracer", rsock_set_tracer},

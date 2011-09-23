@@ -147,7 +147,7 @@ static int parse_rr_a (lua_State *L, struct dns_rr *rr, struct dns_packet *answe
 	struct dns_a rec;
 	int error = dns_a_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_a_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_a_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
 	memcpy (addr, &rec.addr, sizeof (struct in_addr));
@@ -163,7 +163,7 @@ static int parse_rr_aaaa (lua_State *L, struct dns_rr *rr, struct dns_packet *an
 	struct dns_aaaa rec;
 	int error = dns_aaaa_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_aaaa_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_aaaa_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	struct in6_addr *addr = (struct in6_addr *) lua_newuserdata (L, sizeof (struct in6_addr));
 	memcpy (addr, &rec.addr, sizeof (struct in6_addr));
@@ -228,7 +228,7 @@ static int parse_rr_mx (lua_State *L, struct dns_rr *rr, struct dns_packet *answ
 	struct dns_mx rec;
 	int error = dns_mx_parse (&rec, rr, answer), j;
 	if (error)
-		return luaL_error (L, "dns_mx_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_mx_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	luaL_getmetatable (L, "ratchet_dns_mx_meta");
 	lua_setmetatable (L, -2);
@@ -284,7 +284,7 @@ static int parse_rr_ns (lua_State *L, struct dns_rr *rr, struct dns_packet *answ
 	struct dns_ns rec;
 	int error = dns_ns_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_ns_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_ns_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	lua_pushstring (L, rec.host);
 	lua_rawseti (L, -2, i);
@@ -299,7 +299,7 @@ static int parse_rr_cname (lua_State *L, struct dns_rr *rr, struct dns_packet *a
 	struct dns_cname rec;
 	int error = dns_cname_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_cname_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_cname_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	lua_pushstring (L, rec.host);
 	lua_rawseti (L, -2, i);
@@ -314,7 +314,7 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 	struct dns_ptr rec;
 	int error = dns_ptr_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_ptr_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_ptr_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	lua_pushstring (L, rec.host);
 	lua_rawseti (L, -2, i);
@@ -335,7 +335,7 @@ static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 	dns_txt_init (&rec, size);
 	int error = dns_txt_parse (&rec, rr, answer);
 	if (error)
-		return luaL_error (L, "dns_txt_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
+		return handle_error_str (L, "dns_txt_parse: %s: %s", lua_tostring (L, 2), dns_strerror (error));
 
 	lua_pushlstring (L, (char *) rec.data, rec.len);
 	lua_rawseti (L, -2, i);
@@ -380,7 +380,7 @@ static int parse_rr (lua_State *L, struct dns_rr *rr, struct dns_packet *answer,
 //	else if (rr->type == DNS_T_SSHFP)
 //		return parse_rr_sshfp (L, rr, answer, i);
 
-	return luaL_error (L, "unimplemented DNS_T_*: %d", (int) rr->type);
+	return handle_error_str (L, "unimplemented DNS_T_*: %d", (int) rr->type);
 }
 /* }}} */
 
@@ -503,7 +503,10 @@ static struct dns_resolv_conf *load_resolv_conf (lua_State *L, int index)
 	/* Create new resconf object. */
 	resconf = dns_resconf_open (&error);
 	if (!resconf)
-		luaL_error (L, "dns_resconf_open: %s", dns_strerror (error));
+	{
+		lua_pushfstring (L, "dns_resconf_open: %s", dns_strerror (error));
+		return NULL;
+	}
 
 	/* Load /etc/resolv.conf or given alternative(s). */
 	for (i=1; ; i++)
@@ -515,7 +518,10 @@ static struct dns_resolv_conf *load_resolv_conf (lua_State *L, int index)
 		path = lua_tostring (L, -1);
 		error = dns_resconf_loadpath (resconf, path);
 		if (error)
-			luaL_error (L, "%s: %s", path, dns_strerror (error));
+		{
+			lua_pushfstring (L, "%s: %s", path, dns_strerror (error));
+			return NULL;
+		}
 
 		lua_pop (L, 1);
 	}
@@ -532,6 +538,8 @@ static int myresconf_new (lua_State *L)
 
 	struct dns_resolv_conf **new = (struct dns_resolv_conf **) lua_newuserdata (L, sizeof (struct dns_resolv_conf *));
 	*new = load_resolv_conf (L, 1);
+	if (!*new)
+		return handle_error_top (L);
 
 	luaL_getmetatable (L, "ratchet_dns_resolv_conf_meta");
 	lua_setmetatable (L, -2);
@@ -598,7 +606,10 @@ static struct dns_hosts *load_hosts (lua_State *L, int index)
 	{
 		hosts = dns_hosts_local (&error);
 		if (!hosts)
-			luaL_error (L, "/etc/hosts: %s", dns_strerror (error));
+		{
+			lua_pushfstring (L, "/etc/hosts: %s", dns_strerror (error));
+			return NULL;
+		}
 		return hosts;
 	}
 	else
@@ -607,7 +618,10 @@ static struct dns_hosts *load_hosts (lua_State *L, int index)
 	/* Create new hosts object. */
 	hosts = dns_hosts_open (&error);
 	if (!hosts)
-		luaL_error (L, "dns_hosts_open: %s", dns_strerror (error));
+	{
+		lua_pushfstring (L, "dns_hosts_open: %s", dns_strerror (error));
+		return NULL;
+	}
 
 	/* Load given /etc/hosts alternative(s). */
 	for (i=1; ; i++)
@@ -619,7 +633,10 @@ static struct dns_hosts *load_hosts (lua_State *L, int index)
 		path = lua_tostring (L, -1);
 		error = dns_hosts_loadpath (hosts, path);
 		if (error)
-			luaL_error (L, "%s: %s", path, dns_strerror (error));
+		{
+			lua_pushfstring (L, "%s: %s", path, dns_strerror (error));
+			return NULL;
+		}
 
 		lua_pop (L, 1);
 	}
@@ -636,6 +653,8 @@ static int myhosts_new (lua_State *L)
 
 	struct dns_hosts **new = (struct dns_hosts **) lua_newuserdata (L, sizeof (struct dns_hosts *));
 	*new = load_hosts (L, 1);
+	if (!*new)
+		return handle_error_top (L);
 
 	luaL_getmetatable (L, "ratchet_dns_hosts_meta");
 	lua_setmetatable (L, -2);
@@ -764,7 +783,7 @@ static int mydns_new (lua_State *L)
 
 	*new = dns_res_open (resconf, hosts, dns_hints_mortal (dns_hints_local (resconf, &error)), NULL, dns_opts (), &error);
 	if (!*new)
-		return luaL_error (L, "dns_res_open: %s", dns_strerror (error));
+		return handle_error_str (L, "dns_res_open: %s", dns_strerror (error));
 
 	luaL_getmetatable (L, "ratchet_dns_meta");
 	lua_setmetatable (L, -2);
@@ -859,7 +878,7 @@ static int mydns_submit_query (lua_State *L)
 
 	int error = dns_res_submit (res, data, type, DNS_C_IN);
 	if (error)
-		return luaL_error (L, "dns_res_submit: %s: %s", data, dns_strerror (error));
+		return handle_error_str (L, "dns_res_submit: %s: %s", data, dns_strerror (error));
 
 	return 0;
 }

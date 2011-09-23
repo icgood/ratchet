@@ -155,8 +155,8 @@ static int rtfd_rawread (lua_State *L)
 		{
 			lua_getfield (L, 1, "read");
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 1);
-			return 1;
+			lua_call (L, 1, 2);
+			return 2;
 		}
 
 		else
