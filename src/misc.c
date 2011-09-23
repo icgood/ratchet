@@ -66,11 +66,11 @@ int throw_perror_ln (lua_State *L, const char *file, int line)
 }
 /* }}} */
 
-/* {{{ return_str_ln() */
-int return_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
+/* {{{ return_error_str_ln() */
+int return_error_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
 {
 	lua_pushnil (L);
-	lua_pushfstring (L, "%s:%d: ");
+	lua_pushfstring (L, "%s:%d: ", file, line);
 
 	va_list args;
 	va_start (args, err);
@@ -83,16 +83,39 @@ int return_str_ln (lua_State *L, const char *file, int line, const char *err, ..
 }
 /* }}} */
 
-/* {{{ throw_str_ln() */
-int throw_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
+/* {{{ throw_error_str_ln() */
+int throw_error_str_ln (lua_State *L, const char *file, int line, const char *err, ...)
 {
-	lua_pushfstring (L, "%s:%d: ");
+	lua_pushfstring (L, "%s:%d: ", file, line);
 
 	va_list args;
 	va_start (args, err);
 	lua_pushvfstring (L, err, args);
 	va_end (args);
 
+	lua_concat (L, 2);
+
+	return lua_error (L);
+}
+/* }}} */
+
+/* {{{ return_error_top_ln() */
+int return_error_top_ln (lua_State *L, const char *file, int line)
+{
+	lua_pushnil (L);
+	lua_pushfstring (L, "%s:%d: ", file, line);
+	lua_pushvalue (L, -3);
+	lua_concat (L, 2);
+
+	return 2;
+}
+/* }}} */
+
+/* {{{ throw_error_top_ln() */
+int throw_error_top_ln (lua_State *L, const char *file, int line)
+{
+	lua_pushfstring (L, "%s:%d: ", file, line);
+	lua_pushvalue (L, -2);
 	lua_concat (L, 2);
 
 	return lua_error (L);
