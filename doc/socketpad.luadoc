@@ -1,7 +1,8 @@
 
 --- The socketpad library provides a layer on top of the ratchet.socket library
 --  to manage buffered socket IO. This allows for more familiar usages and
---  easier implementation of binary and ASCII socket protocols.
+--  easier implementation of binary and ASCII socket protocols. These functions
+--  can fail, see error handling section in manual for details.
 module "ratchet.socketpad"
 
 --- Returns a new socketpad object, using the given socket as the underlying
@@ -17,7 +18,6 @@ function new(socket)
 --  @param data a string of data to send.
 --  @param more flag specifying more data will be buffered, so the send-buffer
 --              will not be flushed until this parameter is false.
---  @return On error, nil followed by an error message.
 function send(self, data)
 
 --- Attempts to receive a specific amount of data from the socket, receiving
@@ -27,9 +27,9 @@ function send(self, data)
 --              many bytes on the socket and return exactly that many. If given
 --              as a string, the socket will receive until that string is seen,
 --              everything up-to and including that string is returned.
---  @return string of data received on the socket. On error, nil followed by an
---          error message. As with regular socket recv(), this method can return
---          an empty string signaling the connection has been closed remotely.
+--  @return string of data received on the socket. As with regular socket
+--          recv(), this method can return an empty string signaling the
+--          connection has been closed remotely.
 function recv(self)
 
 --- Calls close() on the underlying socket, provided purely as convenience. 

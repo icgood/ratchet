@@ -1,7 +1,8 @@
 
 --- The zmqsocket library provides an implementation of the ZeroMQ socket
 --  library on top of the ratchet library. Any methods that pause execution
---  MUST be called from within a thread attached to a ratchet object.
+--  MUST be called from within a thread attached to a ratchet object. These
+--  functions can fail, see error handling section in manual for details.
 module "ratchet.zmqsocket"
 
 --- Returns a new zmqsocket object.

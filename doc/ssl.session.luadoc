@@ -1,7 +1,8 @@
 
 --- The ssl.session library provides an SSL encryption session. This session
 --  will apply to one encrypted session, such as a socket. These objects are
---  not created directly, but are returned by ssl:create_session().
+--  not created directly, but are returned by ssl:create_session(). These
+--  functions can fail, see error handling section in manual for details.
 module "ratchet.ssl.session"
 
 --- Returns the communication engine powering the encrypted session, generally
@@ -47,7 +48,7 @@ function shutdown(self)
 --  as it is usually called by the communication engine itself. For example,
 --  with socket objects, calling recv() after encrypt() will actually call this
 --  method. The return value will be an empty string if the other side has
---  shutdown.
+--  shut down.
 --  @param self the ssl session object.
 --  @return string of data received on the session, or nil on timeout.
 function read(self)

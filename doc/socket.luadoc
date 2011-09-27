@@ -3,7 +3,8 @@
 --  sockets on top of the ratchet library. Any methods that pause execution
 --  MUST be called from within a thread attached to a ratchet object. This
 --  library is also intended for use alongside calls to ratchet:resolve_dns(),
---  see the manual for examples.
+--  see the manual for examples. Most of these functions can fail, see error
+--  handling section in manual for details.
 module "ratchet.socket"
 
 --- Returns a new socket object, with its own file descriptor.
@@ -123,7 +124,8 @@ function connect(self, sockaddr)
 --  send()/recv() methods.
 --  @param self the socket object.
 --  @param context a ratchet.ssl context object.
---  @return the new encryption session for the socket.
+--  @return the new encryption session for the socket. See ratchet.ssl.session
+--          for details.
 function encrypt(self, context)
 
 --- Returns the current encryption session for the socket.
@@ -139,16 +141,16 @@ function send(self, data)
 
 --- Attempts to receive data from across the socket, pausing the thread until
 --  data is available. As in the system call, recv() will return an empty
---  string if the other end has shutdown.
+--  string if the other end has shut down.
 --  @param self the socket object.
 --  @return string of data received on the socket.
 function recv(self)
 
---- Gets the current state of the socket. If a fatal socket error has occurred,
---  a Lua error is raised on the current thread.
+--- Gets the current state of the socket. Returns true if the socket is
+--  connected and not in an error state, or returns nil and an error otherwise.
 --  @param self the socket object.
---  @return true if the socket is okay, false otherwise followed by info.
-function check_ok(self)
+--  @return true if the socket is okay. See error handling section in manual.
+function check_errors(self)
 
 --- Shuts down portions of the socket, corresponding to the system call of the
 --  same name. You can shut down reads, writes, or both.
