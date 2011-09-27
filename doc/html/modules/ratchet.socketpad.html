@@ -97,7 +97,7 @@
 
 <h1>Module <code>ratchet.socketpad</code></h1>
 
-<p>The socketpad library provides a layer on top of the ratchet.socket library to manage buffered socket IO. This allows for more familiar usages and easier implementation of binary and ASCII socket protocols.</p>
+<p>The socketpad library provides a layer on top of the ratchet.socket library to manage buffered socket IO. This allows for more familiar usages and easier implementation of binary and ASCII socket protocols. These functions can fail, see error handling section in manual for details.</p>
 
 
 
@@ -222,7 +222,7 @@ Attempts to receive a specific amount of data from the socket, receiving packets
 
 
 <h3>Return value:</h3>
-string of data received on the socket. On error, nil followed by an error message. As with regular socket recv(), this method can return an empty string signaling the connection has been closed remotely.
+string of data received on the socket. As with regular socket recv(), this method can return an empty string signaling the connection has been closed remotely.
 
 
 
@@ -257,9 +257,6 @@ Adds the given data to the send-buffer, and possibly flushes it to the underlyin
 
 
 
-
-<h3>Return value:</h3>
-On error, nil followed by an error message.
 
 
 
