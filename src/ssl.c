@@ -442,17 +442,17 @@ static int rssl_session_rawread (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_ZERO_RETURN:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "shutdown");
 			return 2;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
 			return 2;
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
 			return 2;
 
@@ -481,12 +481,12 @@ static int rssl_session_rawwrite (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
 			return 2;
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
 			return 2;
 
@@ -513,12 +513,12 @@ static int rssl_session_rawshutdown (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
 			return 2;
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
 			return 2;
 
@@ -545,12 +545,12 @@ static int rssl_session_rawconnect (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
 			return 2;
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
 			return 2;
 
@@ -577,12 +577,12 @@ static int rssl_session_rawaccept (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
 			return 2;
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushnil (L);
+			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
 			return 2;
 
@@ -640,8 +640,10 @@ int rsock_encrypt (lua_State *L)
 #define rssl_session_read "return function (self, ...)\n" \
 	"	repeat\n" \
 	"		local ret, yield_on = self:rawread(...)\n" \
-	"		if not yield_on then\n" \
+	"		if ret then\n" \
 	"			return ret\n" \
+	"		elseif ret == nil then\n" \
+	"			return nil, yield_on\n" \
 	"		elseif yield_on == 'shutdown' then\n" \
 	"			return self:shutdown()\n" \
 	"		end\n" \
@@ -653,8 +655,10 @@ int rsock_encrypt (lua_State *L)
 #define rssl_session_write "return function (self, ...)\n" \
 	"	repeat\n" \
 	"		local ret, yield_on = self:rawwrite(...)\n" \
-	"		if not yield_on then\n" \
+	"		if ret then\n" \
 	"			return ret\n" \
+	"		elseif ret == nil then\n" \
+	"			return nil, yield_on\n" \
 	"		end\n" \
 	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
 	"end\n"
@@ -664,8 +668,10 @@ int rsock_encrypt (lua_State *L)
 #define rssl_session_connect "return function (self, ...)\n" \
 	"	repeat\n" \
 	"		local ret, yield_on = self:rawconnect(...)\n" \
-	"		if not yield_on then\n" \
+	"		if ret then\n" \
 	"			return ret\n" \
+	"		elseif ret == nil then\n" \
+	"			return nil, yield_on\n" \
 	"		end\n" \
 	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
 	"end\n"
@@ -675,8 +681,10 @@ int rsock_encrypt (lua_State *L)
 #define rssl_session_accept "return function (self, ...)\n" \
 	"	repeat\n" \
 	"		local ret, yield_on = self:rawaccept(...)\n" \
-	"		if not yield_on then\n" \
+	"		if ret then\n" \
 	"			return ret\n" \
+	"		elseif ret == nil then\n" \
+	"			return nil, yield_on\n" \
 	"		end\n" \
 	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
 	"end\n"
@@ -686,8 +694,10 @@ int rsock_encrypt (lua_State *L)
 #define rssl_session_shutdown "return function (self, ...)\n" \
 	"	repeat\n" \
 	"		local ret, yield_on = self:rawshutdown(...)\n" \
-	"		if not yield_on then\n" \
+	"		if ret then\n" \
 	"			return ret\n" \
+	"		elseif ret == nil then\n" \
+	"			return nil, yield_on\n" \
 	"		end\n" \
 	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
 	"end\n"
