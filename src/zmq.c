@@ -41,10 +41,10 @@
 #define socket_ptr(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->socket)
 #define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->timeout)
 
-#ifdef RATCHET_RETURN_ERRORS
-#define handle_zmq_error return_zmq_error
-#else
+#if RATCHET_THROW_ERRORS
 #define handle_zmq_error raise_zmq_error
+#else
+#define handle_zmq_error return_zmq_error
 #endif
 
 #define raise_zmq_error(L) raise_zmq_error_ln (L, __FILE__, __LINE__)
