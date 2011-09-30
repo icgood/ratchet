@@ -61,6 +61,9 @@ endif
 
 if ENABLE_HTTP
 SUBDIRS += http
+if ENABLE_BUS
+SUBDIRS += bus
+endif
 endif
 
 if ENABLE_SMTP

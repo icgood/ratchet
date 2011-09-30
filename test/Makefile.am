@@ -20,6 +20,8 @@ TESTS = test_listen_connect.lua \
 	test_event_timeout.lua \
 	test_ssl_send_recv.lua \
 	test_zmq_send_recv.lua \
+	test_message_bus_sockets.lua \
+	test_message_bus_local.lua \
 	test_multi_protocol.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
@@ -84,6 +86,13 @@ TESTS_ENVIRONMENT += -e 'package.preload["ratchet.http.client"] = assert(loadfil
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_http_get.lua
+endif
+
+if ENABLE_BUS
+XFAIL_TESTS +=
+else
+XFAIL_TESTS += test_message_bus_sockets.lua \
+	       test_message_bus_local.lua
 endif
 
 if ENABLE_SMTP
