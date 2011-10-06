@@ -518,6 +518,9 @@ static int ratchet_unpause (lua_State *L)
 	if (lua_status (L1) != LUA_YIELD)
 		return luaL_error (L, "thread is not yielding, cannot unpause");
 
+	/* Remove the main thread from index 1 of the thread. */
+	lua_remove (L1, 1);
+
 	/* Set up the extra arguments as return values from pause(). */
 	int nargs = lua_gettop (L) - 2;
 	lua_xmove (L, L1, nargs);
@@ -725,6 +728,11 @@ static int ratchet_yield_thread (lua_State *L)
 		}
 	}
 
+	/* Leave the main thread at index 1 of the child thread. */
+	lua_pushthread (L);
+	lua_xmove (L, L1, 1);
+	lua_insert (L1, 1);
+
 	return 0;
 }
 /* }}} */
@@ -789,11 +797,6 @@ static int ratchet_wait_for_write (lua_State *L)
 	struct timeval tv;
 	int use_tv = gettimeval (timeout, &tv);
 
-	/* Set the main thread at index 1. */
-	lua_settop (L1, 0);
-	lua_pushthread (L);
-	lua_xmove (L, L1, 1);
-
 	/* Build event. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
@@ -834,11 +837,6 @@ static int ratchet_wait_for_read (lua_State *L)
 	struct timeval tv;
 	int use_tv = gettimeval (timeout, &tv);
 
-	/* Set the main thread at index 1. */
-	lua_settop (L1, 0);
-	lua_pushthread (L);
-	lua_xmove (L, L1, 1);
-
 	/* Build event. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
@@ -861,11 +859,6 @@ static int ratchet_wait_for_timeout (lua_State *L)
 	get_thread (L, 2, L1);
 	struct timeval tv;
 	gettimeval_arg (L, 3, &tv);
-
-	/* Set the main thread at index 1. */
-	lua_settop (L1, 0);
-	lua_pushthread (L);
-	lua_xmove (L, L1, 1);
 
 	/* Build event and queue it up. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
