@@ -561,7 +561,7 @@ static int ratchet_loop (lua_State *L)
 		if (ret < 0)
 			return luaL_error (L, "libevent internal error");
 		else if (ret > 0)
-			break;
+			return luaL_error (L, "non-IO deadlock detected");
 	}
 	lua_settop (L, 1);
 

@@ -89,6 +89,9 @@ XFAIL_TESTS += test_http_get.lua
 endif
 
 if ENABLE_BUS
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.bus"] = assert(loadfile("../src/bus/init.lua"))' \
+                     -e 'package.preload["ratchet.bus.samestate"] = assert(loadfile("../src/bus/samestate.lua"))' \
+                     -e 'package.preload["ratchet.bus.samestate_transaction"] = assert(loadfile("../src/bus/samestate_transaction.lua"))'
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_message_bus_sockets.lua \

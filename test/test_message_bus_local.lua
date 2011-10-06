@@ -1,19 +1,42 @@
 require "ratchet"
 require "ratchet.bus"
 
-function ctx1(where)
-    local s_bus, c_bus = ratchet.bus.new_bus()
+function ctx1()
+    local bus = ratchet.bus.new_local(kernel)
 
-    kernel:attach(server_socket, s_client, s_bus)
-    kernel:attach(client_socket, c_socket, c_bus)
+    kernel:attach(server_bus, bus)
+    kernel:attach(client_bus_1, bus)
 end
 
-function server_socket(socket, bus)
-    local request, response = bus:recv_request()
-    assert("important" == data.data)
+function server_bus(bus)
+    local test_response_1 = {data = "important answer!"}
+    local test_response_2 = "yes"
+
+    local transaction_1, request_1 = bus:recv_request()
+    kernel:attach(client_bus_2, bus)
+    local transaction_2, request_2 = bus:recv_request()
+
+    assert("important question!" == request_1.data)
+    assert(1337 == request_2)
+
+    transaction_1:send_response(test_response_1)
+    transaction_2:send_response(test_response_2)
 end
 
-function client_socket(socket, bus)
+function client_bus_1(bus)
+    local test_request = {data = "important question!"}
+
+    local transaction = bus:send_request(test_request)
+    local response = transaction:recv_response()
+    assert("important answer!" == response.data)
+end
+
+function client_bus_2(bus)
+    local test_request = 1337
+
+    local transaction = bus:send_request(test_request)
+    local response = transaction:recv_response()
+    assert("yes" == response)
 end
 
 kernel = ratchet.new()
