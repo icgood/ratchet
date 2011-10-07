@@ -132,7 +132,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#pause">pause</a>&nbsp;(self)</td>
+	<td class="name" nowrap><a href="#pause">pause</a>&nbsp;()</td>
 	<td class="summary">Pauses the current thread indefinitely.</td>
 	</tr>
 
@@ -157,7 +157,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#unpause">unpause</a>&nbsp;(self, thread, ...)</td>
+	<td class="name" nowrap><a href="#unpause">unpause</a>&nbsp;(thread, ...)</td>
 	<td class="summary">Unpauses the given thread.</td>
 	</tr>
 
@@ -332,19 +332,10 @@ a new ratchet object.
 
 
 
-<dt><a name="pause"></a><strong>pause</strong>&nbsp;(self)</dt>
+<dt><a name="pause"></a><strong>pause</strong>&nbsp;()</dt>
 <dd>
 Pauses the current thread indefinitely. The thread must be resumed by a call to unpause() from another thread.
 
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-</ul>
 
 
 
@@ -487,7 +478,7 @@ Pauses the current thread for the given period.
 
 
 
-<dt><a name="unpause"></a><strong>unpause</strong>&nbsp;(self, thread, ...)</dt>
+<dt><a name="unpause"></a><strong>unpause</strong>&nbsp;(thread, ...)</dt>
 <dd>
 Unpauses the given thread. The paused thread will resume on next iteration of the main loop. Extra parameters to this function will be given to the paused thread as return values from pause().
 
@@ -496,15 +487,11 @@ Unpauses the given thread. The paused thread will resume on next iteration of th
 <ul>
 	
 	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
 	  thread: the thread to unpause.
 	</li>
 	
 	<li>
-	  ...: 
+	  ...: extra parameters will be returned by pause().
 	</li>
 	
 </ul>
