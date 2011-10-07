@@ -74,16 +74,15 @@ function timer(self, seconds)
 
 --- Pauses the current thread indefinitely. The thread must be resumed by a call
 --  to unpause() from another thread.
---  @param self the ratchet object.
 --  @return any extra arguments passed to unpause() from other thread.
-function pause(self)
+function pause()
 
 --- Unpauses the given thread. The paused thread will resume on next iteration
 --  of the main loop. Extra parameters to this function will be given to the
 --  paused thread as return values from pause().
---  @param self the ratchet object.
 --  @param thread the thread to unpause.
-function unpause(self, thread, ...)
+--  @param ... extra parameters will be returned by pause().
+function unpause(thread, ...)
 
 --- Starts the main loop. Every iteration of this loop runs all new threads, runs
 --  all recently unpaused threads, runs all threads that are done waiting on

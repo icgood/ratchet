@@ -1,18 +1,21 @@
 require "ratchet"
 
-local function ctx2(r, t)
-    r:unpause(t, "beep beep")
+local function ctx2()
+    ratchet.unpause(t1, "beep beep")
+    local ret = ratchet.pause()
+    assert(ret == "boop boop")
 end
 
-local function ctx1(r)
-    local ret = r:pause()
+local function ctx1()
+    local ret = ratchet.pause()
     assert(ret == "beep beep")
+    ratchet.unpause(t2, "boop boop")
 end
 
 local r = ratchet.new()
 
-local t1 = r:attach(ctx1, r)
-r:attach(ctx2, r, t1)
+t1 = r:attach(ctx1)
+t2 = r:attach(ctx2)
 
 r:loop()
 
