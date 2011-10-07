@@ -417,6 +417,7 @@ static int rsock_ntoh (lua_State *L)
 {
 	size_t str_len = 0;
 	const char *str = luaL_checklstring (L, 1, &str_len);
+	int nargs = lua_gettop (L);
 
 	if (str_len == sizeof (uint32_t))
 	{
@@ -437,7 +438,9 @@ static int rsock_ntoh (lua_State *L)
 	else
 		return luaL_argerror (L, 1, "Input can only be 2 or 4 bytes.");
 
-	return 1;
+	lua_replace (L, 1);
+
+	return nargs;
 }
 /* }}} */
 
@@ -445,24 +448,15 @@ static int rsock_ntoh (lua_State *L)
 static int rsock_hton (lua_State *L)
 {
 	char out_str[4];
-	int use_16 = lua_toboolean (L, 2);
+	int nargs = lua_gettop (L);
 
-	if (use_16)
-	{
-		uint16_t out, in = (uint16_t) luaL_checkinteger (L, 1);
-		out = htons (in);
-		memcpy (out_str, &out, sizeof (uint16_t));
-		lua_pushlstring (L, out_str, 2);
-	}
-	else
-	{
-		uint32_t out, in = (uint32_t) luaL_checkinteger (L, 1);
-		out = htonl (in);
-		memcpy (out_str, &out, sizeof (uint32_t));
-		lua_pushlstring (L, out_str, 4);
-	}
+	uint32_t out, in = (uint32_t) luaL_checkinteger (L, 1);
+	out = htonl (in);
+	memcpy (out_str, &out, sizeof (uint32_t));
+	lua_pushlstring (L, out_str, 4);
+	lua_replace (L, 1);
 
-	return 1;
+	return nargs;
 }
 /* }}} */
 

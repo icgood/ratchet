@@ -20,7 +20,7 @@ function ctx2(socket)
     assert(4 == #bytestr)
     assert(1333337 == ratchet.socket.ntoh(bytestr))
 
-    bytestr = ratchet.socket.hton(73, true)
+    bytestr = ratchet.socket.hton(73)
     socket:send(bytestr)
 end
 
@@ -35,7 +35,7 @@ function ctx3(where)
     socket:send(bytestr)
 
     bytestr = socket:recv()
-    assert(2 == #bytestr)
+    assert(4 == #bytestr)
     assert(73 == ratchet.socket.ntoh(bytestr))
 end
 
