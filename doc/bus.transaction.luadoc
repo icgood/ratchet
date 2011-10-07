@@ -1,0 +1,23 @@
+
+--- After a request has been sent or received by the client- or server-side,
+--  respectively, of a message bus, the first returned value is a transaction
+--  object, defined by this module. A transaction object cannot be created
+--  directly, it is presented as a module for documentation purposes only.
+module("ratchet.bus.transaction")
+
+--- Sends a response back to the client-side of a message bus, after a
+--  request was received fro that client. Information about the client's
+--  connection is available in the "from" index of the transaction object, if
+--  the bus is socket-based. This function is available from transactions
+--  returned by <code>recv_request()</code>.
+--  @param self a transaction object returned by <code>recv_request()</code>.
+--  @param response a response object to send.
+function send_response(self, response)
+
+--- Receives a response from the server-side of a message bus. This function is
+--  available from transactions returned by <code>recv_response()</code>.
+--  @param self a transaction object returned by <code>send_request()</code>.
+--  @return the response from the server-side message bus.
+function recv_response(self)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

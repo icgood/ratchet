@@ -1,0 +1,56 @@
+
+--- This module is designed as a convenience to make requests in the form of a
+--  message queue, with simple responses being returned to the sender. Two
+--  different forms exist, allowing sharing either between threads in the same
+--  ratchet context or sharing across a socket. This can be especially useful
+--  as an abstraction when two systems may be running separately or running
+--  side-by-side in the same process.
+module("ratchet.bus")
+
+--- Creates a new, local message bus. Waiting for a request in a thread will
+--  pause that thread until another sends a request, and waiting for a response
+--  will pause until one is sent. Requests are queued if a thread is not
+--  actively waiting for them. The same bus object, created by this function,
+--  is used for both the client- and server-sides of the message bus.
+--  @return a new local message bus, returned twice.
+function new_local()
+
+--- Creates the server-side of a socket-based message bus. Receiving a request
+--  will wait for a new client connection and a request on that connection.
+--  The response is then sent back over the connection to the client-side of the
+--  bus.
+--  @param a socket already listening for new connections.
+--  @param request_from_bus an arbitrary function that accepts a string and
+--                          converts it into a request object.
+--  @param response_to_bus an arbitrary function that converts a response object
+--                         into a string.
+function new_server(socket, request_from_bus, response_to_bus)
+
+--- Creates the client-side of a socket-based message bus. After sending a
+--  request, the client-side will need wait to receive a response.
+--  @param a socket already connected to a server.
+--  @param request_to_bus an arbitrary function that converts a request object
+--                        into a string.
+--  @param response_from_bus an arbitrary function that accepts a string and
+--                           converts it into a response object.
+function new_server(socket, request_from_bus, response_to_bus)
+
+--- Receives a request from the server-side of a message bus. This function can
+--  be used by a local message bus object created with <code>new_local()</code>
+--  or a server-side socket message bus object created with
+--  <code>new_server()</code>.
+--  @param self the server-side of a message bus.
+--  @return a <code>ratchet.bus.transaction</code> object on which to send the
+--          response, followed by the request object received.
+function recv_request(self)
+
+--- Sends a request from the client-side of a message bus. This function can be
+--  used by a local message bus object created with <code>new_local()</code> or
+--  a client-side message bus object created with <code>new_client()</code>.
+--  @param self the client-side of a message bus.
+--  @param request a request object to send.
+--  @return a <code>ratchet.bus.transaction</code> object on which to receive
+--          the response.
+function send_request(self, request)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
