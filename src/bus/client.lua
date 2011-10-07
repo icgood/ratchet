@@ -13,8 +13,8 @@ function new(socket, request_to_bus, response_from_bus)
     setmetatable(self, class)
 
     self.socket = socket
-    self.request_to_bus = request_to_bus
-    self.response_from_bus = response_from_bus
+    self.request_to_bus = request_to_bus or tostring
+    self.response_from_bus = response_from_bus or tostring
 
     return self
 end

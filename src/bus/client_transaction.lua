@@ -20,8 +20,19 @@ end
 
 -- {{{ recv_response()
 function recv_response(self)
-    local size = ratchet.socket.ntoh(self.socket_buffer:recv(4))
-    local data = self.socket_buffer:recv(size)
+    -- Receive the size "header" of the response transmission.
+    local size, incomplete = ratchet.socket.ntoh(self.socket_buffer:recv(4))
+    if incomplete then
+        self.socket_buffer:close()
+        return
+    end
+
+    -- Receive the actual content of the response transmission.
+    local data, incomplete = self.socket_buffer:recv(size)
+    if incomplete then
+        self.socket_buffer:close()
+        return
+    end
 
     local response = self.response_from_bus(data)
 
