@@ -1,11 +1,31 @@
 require "ratchet"
 require "ratchet.bus"
 
-local obj = {
-    data = "important",
+-- {{{ request_to_bus()
+local function request_to_bus(obj)
+    return tostring(obj.id) .. "||" .. tostring(obj.stuff)
+end
+-- }}}
 
-}
+-- {{{ request_from_bus()
+local function request_from_bus(data)
+    local obj = {}
+    obj.id, obj.stuff = data:match("^([^%|]*)%|%|(.*)$")
+    return obj
+end
+-- }}}
 
+-- {{{ response_to_bus()
+function response_to_bus(obj)
+    return tostring(obj)
+end
+-- }}}
+
+-- {{{ response_from_bus()
+function response_from_bus(data)
+    return tonumber(data)
+end
+-- }}}
 
 function ctx1(where)
     local s_rec = ratchet.socket.prepare_uri(where)
@@ -18,22 +38,30 @@ function ctx1(where)
     local c_socket = ratchet.socket.new(c_rec.family, c_rec.socktype, c_rec.protocol)
     c_socket:connect(c_rec.addr)
 
-    local s_client = s_socket:accept()
-
-    local s_bus = ratchet.bus.new_bus()
-    local c_bus = ratchet.bus.new_bus(s_bus)
-
-    kernel:attach(server_socket, s_client, s_bus)
-    kernel:attach(client_socket, c_socket, c_bus)
+    kernel:attach(server_socket, s_socket)
+    kernel:attach(client_socket, c_socket)
 end
 
-function server_socket(socket, bus)
-    bus:use_socket(socket)
+function server_socket(socket)
+    local bus = ratchet.bus.new_server(socket, request_from_bus, response_to_bus)
 
+    local test_response = 1337
+
+    local transaction, request = bus:recv_request()
+    assert(request.id == "operation falcon")
+    assert(request.stuff == "important")
+
+    transaction:send_response(test_response)
 end
 
-function client_socket(socket, bus)
-    bus:use_socket(socket)
+function client_socket(socket)
+    local bus = ratchet.bus.new_client(socket, request_to_bus, response_from_bus)
+
+    local test_request = {id = "operation falcon", stuff = "important"}
+
+    local transaction = bus:send_request(test_request)
+    local response = transaction:recv_response()
+    assert(1337 == response)
 end
 
 kernel = ratchet.new()

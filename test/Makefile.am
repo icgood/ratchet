@@ -91,7 +91,11 @@ endif
 if ENABLE_BUS
 TESTS_ENVIRONMENT += -e 'package.preload["ratchet.bus"] = assert(loadfile("../src/bus/init.lua"))' \
                      -e 'package.preload["ratchet.bus.samestate"] = assert(loadfile("../src/bus/samestate.lua"))' \
-                     -e 'package.preload["ratchet.bus.samestate_transaction"] = assert(loadfile("../src/bus/samestate_transaction.lua"))'
+                     -e 'package.preload["ratchet.bus.samestate_transaction"] = assert(loadfile("../src/bus/samestate_transaction.lua"))' \
+                     -e 'package.preload["ratchet.bus.server"] = assert(loadfile("../src/bus/server.lua"))' \
+                     -e 'package.preload["ratchet.bus.server_transaction"] = assert(loadfile("../src/bus/server_transaction.lua"))' \
+                     -e 'package.preload["ratchet.bus.client"] = assert(loadfile("../src/bus/client.lua"))' \
+                     -e 'package.preload["ratchet.bus.client_transaction"] = assert(loadfile("../src/bus/client_transaction.lua"))'
 XFAIL_TESTS +=
 else
 XFAIL_TESTS += test_message_bus_sockets.lua \
