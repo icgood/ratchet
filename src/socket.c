@@ -419,7 +419,9 @@ static int rsock_ntoh (lua_State *L)
 	const char *str = luaL_checklstring (L, 1, &str_len);
 	int nargs = lua_gettop (L);
 
-	if (str_len == sizeof (uint32_t))
+	if (str_len != sizeof (uint32_t))
+		lua_pushnil (L);
+	else
 	{
 		uint32_t in = 0, out = 0;
 		memcpy (&in, str, sizeof (uint32_t));
@@ -427,16 +429,6 @@ static int rsock_ntoh (lua_State *L)
 
 		lua_pushinteger (L, (lua_Number) out);
 	}
-	else if (str_len == sizeof (uint16_t))
-	{
-		uint16_t in = 0, out = 0;
-		memcpy (&in, str, sizeof (uint16_t));
-		out = ntohs (in);
-
-		lua_pushinteger (L, (lua_Number) out);
-	}
-	else
-		return luaL_argerror (L, 1, "Input can only be 2 or 4 bytes.");
 
 	lua_replace (L, 1);
 
@@ -454,6 +446,46 @@ static int rsock_hton (lua_State *L)
 	out = htonl (in);
 	memcpy (out_str, &out, sizeof (uint32_t));
 	lua_pushlstring (L, out_str, 4);
+	lua_replace (L, 1);
+
+	return nargs;
+}
+/* }}} */
+
+/* {{{ rsock_ntoh16() */
+static int rsock_ntoh16 (lua_State *L)
+{
+	size_t str_len = 0;
+	const char *str = luaL_checklstring (L, 1, &str_len);
+	int nargs = lua_gettop (L);
+
+	if (str_len != sizeof (uint16_t))
+		lua_pushnil (L);
+	else
+	{
+		uint16_t in = 0, out = 0;
+		memcpy (&in, str, sizeof (uint16_t));
+		out = ntohs (in);
+
+		lua_pushinteger (L, (lua_Number) out);
+	}
+
+	lua_replace (L, 1);
+
+	return nargs;
+}
+/* }}} */
+
+/* {{{ rsock_hton16() */
+static int rsock_hton16 (lua_State *L)
+{
+	char out_str[4];
+	int nargs = lua_gettop (L);
+
+	uint16_t out, in = (uint16_t) luaL_checkinteger (L, 1);
+	out = htons (in);
+	memcpy (out_str, &out, sizeof (uint16_t));
+	lua_pushlstring (L, out_str, 2);
 	lua_replace (L, 1);
 
 	return nargs;
@@ -912,6 +944,8 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"from_fd", rsock_from_fd},
 		{"ntoh", rsock_ntoh},
 		{"hton", rsock_hton},
+		{"ntoh16", rsock_ntoh16},
+		{"hton16", rsock_hton16},
 		/* Undocumented, helper methods. */
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
 		{"build_tcp_info", rsock_build_tcp_info},

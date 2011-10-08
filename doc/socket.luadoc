@@ -64,21 +64,36 @@ function prepare_unix(path)
 function get_fd(self)
 
 --- Converts a byte-string from network byte-order to host byte-order. This is
---  necessary only for binary socket protocols. Takes a 2- or 4-byte string from
+--  necessary only for binary socket protocols. Takes a 4-byte string from
 --  the socket and returns the regular number after conversion. See manpage
 --  byteorder(3).
 --  @param in the binary input string from the socket to convert to a number.
---  @return the resulting number after conversion.
+--  @return the resulting number after conversion. Any extra arguments passed
+--          are also returned in order.
 function ntoh(in)
 
 --- Converts a number into a byte-string ready to be sent over the network. This
 --  is necessary only for binary socket protocols. See manpage byteorder(3).
 --  @param in the number to be converted.
---  @param use_16 if given and true, the number is truncated to 16-bits and the
---                resulting string is only two bytes long.
 --  @return a byte-string in network byte-order ready to be sent over the
---          network.
-function hton(in, use_16)
+--          network. Any extra arguments passed are also returned in order.
+function hton(in)
+
+--- Converts a byte-string from network byte-order to host byte-order. This is
+--  necessary only for binary socket protocols. Takes a 2-byte string from
+--  the socket and returns the regular number after conversion. See manpage
+--  byteorder(3). This is the 16-bit version of ntoh().
+--  @param in the binary input string from the socket to convert to a number.
+--  @return the resulting number after conversion. Any extra arguments passed
+--          are also returned in order.
+function ntoh16(in)
+
+--- Converts a number into a byte-string ready to be sent over the network. This
+--  is necessary only for binary socket protocols. See manpage byteorder(3).
+--  @param in the number to be converted. This is the 16-bit version of hton().
+--  @return a byte-string in network byte-order ready to be sent over the
+--          network. Any extra arguments passed are also returned in order.
+function hton16(in)
 
 --- Gets the current timeout for all socket methods that pause the thread.
 --  @param self the socket object.
