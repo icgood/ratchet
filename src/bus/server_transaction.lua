@@ -6,13 +6,14 @@ local class = getfenv()
 __index = class
 
 -- {{{ new()
-function new(request, response_to_bus, socket_buffer)
+function new(request, response_to_bus, socket_buffer, from)
     local self = {}
     setmetatable(self, class)
 
     self.request = request
     self.socket_buffer = socket_buffer
     self.response_to_bus = response_to_bus
+    self.from = from
 
     return self
 end

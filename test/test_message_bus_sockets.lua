@@ -38,9 +38,7 @@ function ctx1(where)
     local c_socket = ratchet.socket.new(c_rec.family, c_rec.socktype, c_rec.protocol)
     c_socket:connect(c_rec.addr)
 
-    local s_client = s_socket:accept()
-
-    kernel:attach(server_socket, s_client)
+    kernel:attach(server_socket, s_socket)
     kernel:attach(client_socket, c_socket)
 end
 
