@@ -22,9 +22,7 @@ end
 
 -- {{{ recv_request()
 function recv_request(self)
-    local client, from = self.socket:accept()
-
-    local pad = ratchet.socketpad.new(client)
+    local pad = ratchet.socketpad.new(self.socket)
 
     -- Receive the size "header" of the transmission.
     local size, incomplete = ratchet.socket.ntoh(pad:recv(4))
@@ -42,7 +40,7 @@ function recv_request(self)
 
     local request = self.request_from_bus(data)
 
-    local transaction = ratchet.bus.server_transaction.new(request, self.response_to_bus, pad, from)
+    local transaction = ratchet.bus.server_transaction.new(request, self.response_to_bus, pad)
     return transaction, request
 end
 -- }}}
