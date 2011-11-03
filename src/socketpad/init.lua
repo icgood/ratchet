@@ -6,11 +6,12 @@ local class = getfenv()
 __index = class
 
 -- {{{ new()
-function new(socket)
+function new(socket, from)
     local self = {}
     setmetatable(self, class)
 
     self.socket = socket
+    self.from = from
 
     self.recv_buffer = ''
     self.send_buffer = ''
