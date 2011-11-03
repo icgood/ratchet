@@ -125,6 +125,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#block_on">block_on</a>&nbsp;(reads, writes, timeout)</td>
+	<td class="summary">Blocks on multiple items, with a single timeout.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#get_method">get_method</a>&nbsp;(self)</td>
 	<td class="summary">Returns the polling method used behind-the-scenes by libevent.</td>
 	</tr>
@@ -145,7 +150,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#running_thread">running_thread</a>&nbsp;(self)</td>
+	<td class="name" nowrap><a href="#running_thread">running_thread</a>&nbsp;()</td>
 	<td class="summary">Returns the Lua thread object that is currently running, or nil for the main thread.</td>
 	</tr>
 
@@ -265,6 +270,43 @@ a Lua thread object.
 
 
 
+<dt><a name="block_on"></a><strong>block_on</strong>&nbsp;(reads, writes, timeout)</dt>
+<dd>
+Blocks on multiple items, with a single timeout. This function will block until the first event on any one of the items. Items given in the read and write argument tables must have a get_fd() method that returns its file descriptor.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  reads: Table of items to wait for read events on.
+	</li>
+	
+	<li>
+	  writes: Table of items to wait for write events on.
+	</li>
+	
+	<li>
+	  timeout: Returns nil if this many seconds elapse with no events.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+The item from the read or write table that triggered an event.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="get_method"></a><strong>get_method</strong>&nbsp;(self)</dt>
 <dd>
 Returns the polling method used behind-the-scenes by libevent.
@@ -360,19 +402,10 @@ any extra arguments passed to unpause() from other thread.
 
 
 
-<dt><a name="running_thread"></a><strong>running_thread</strong>&nbsp;(self)</dt>
+<dt><a name="running_thread"></a><strong>running_thread</strong>&nbsp;()</dt>
 <dd>
 Returns the Lua thread object that is currently running, or nil for the main thread.
 
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-</ul>
 
 
 

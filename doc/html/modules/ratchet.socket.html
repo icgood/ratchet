@@ -180,8 +180,18 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#multi_recv">multi_recv</a>&nbsp;(sockets, timeout)</td>
+	<td class="summary">Waits for incoming data on several sockets, with a single timeout.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#new">new</a>&nbsp;(family, socktype, protocol)</td>
 	<td class="summary">Returns a new socket object, with its own file descriptor.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#new_pair">new_pair</a>&nbsp;()</td>
+	<td class="summary">Returns two new socket objects, pre-connected to each other.</td>
 	</tr>
 
 	<tr>
@@ -227,6 +237,11 @@
 	<tr>
 	<td class="name" nowrap><a href="#set_timeout">set_timeout</a>&nbsp;(self, seconds)</td>
 	<td class="summary">Sets the current timeout for all socket methods that pause the thread.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#set_tracer">set_tracer</a>&nbsp;(self, tracer)</td>
+	<td class="summary">Sets a tracer function on the socket, which is called on the major events on the socket.</td>
 	</tr>
 
 	<tr>
@@ -635,6 +650,39 @@ Sets the socket to listen mode. This socket will open the system port it was bin
 
 
 
+<dt><a name="multi_recv"></a><strong>multi_recv</strong>&nbsp;(sockets, timeout)</dt>
+<dd>
+Waits for incoming data on several sockets, with a single timeout. A recv() call will be run on the first socket to signal incoming data, and the result will be returned by this function.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  sockets: Table array of sockets to wait for data on.
+	</li>
+	
+	<li>
+	  timeout: Seconds of inactivity before the function returns nil.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+The first data received on any of the sockets. If first return is nil, either a timeout occured or the nil will be followed by an error message.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="new"></a><strong>new</strong>&nbsp;(family, socktype, protocol)</dt>
 <dd>
 Returns a new socket object, with its own file descriptor.
@@ -664,6 +712,26 @@ Returns a new socket object, with its own file descriptor.
 
 <h3>Return value:</h3>
 a new socket object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="new_pair"></a><strong>new_pair</strong>&nbsp;()</dt>
+<dd>
+Returns two new socket objects, pre-connected to each other. This is done with the socketpair() system call, and does not open a port or create a server.
+
+
+
+
+
+
+
+<h3>Return value:</h3>
+Two socket objects connected to each other.
 
 
 
@@ -927,6 +995,36 @@ Sets the current timeout for all socket methods that pause the thread.
 	
 	<li>
 	  seconds: the new timeout in seconds.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="set_tracer"></a><strong>set_tracer</strong>&nbsp;(self, tracer)</dt>
+<dd>
+Sets a tracer function on the socket, which is called on the major events on the socket. The first argument to the tracer function will be an event type, such as "accept" or "recv". A second argument is passed for those events that have associated data, such as "recv". Tracer functions can be useful for verbose logging or debugging.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socket object.
+	</li>
+	
+	<li>
+	  tracer: Function to call as tracer, or none or nil to clear current tracer.
 	</li>
 	
 </ul>
