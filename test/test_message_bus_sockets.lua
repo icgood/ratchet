@@ -34,12 +34,17 @@ function ctx1(where)
     s_socket:bind(s_rec.addr)
     s_socket:listen()
 
-    local c_rec = ratchet.socket.prepare_uri(where)
-    local c_socket = ratchet.socket.new(c_rec.family, c_rec.socktype, c_rec.protocol)
-    c_socket:connect(c_rec.addr)
+    local c1_rec = ratchet.socket.prepare_uri(where)
+    local c1_socket = ratchet.socket.new(c1_rec.family, c1_rec.socktype, c1_rec.protocol)
+    c1_socket:connect(c1_rec.addr)
+
+    local c2_rec = ratchet.socket.prepare_uri(where)
+    local c2_socket = ratchet.socket.new(c2_rec.family, c2_rec.socktype, c2_rec.protocol)
+    c2_socket:connect(c2_rec.addr)
 
     kernel:attach(server_socket, s_socket)
-    kernel:attach(client_socket, c_socket)
+    kernel:attach(client_socket, c1_socket)
+    kernel:attach(client_socket, c2_socket)
 end
 
 function server_socket(socket)
@@ -47,11 +52,16 @@ function server_socket(socket)
 
     local test_response = 1337
 
-    local transaction, request = bus:recv_request()
-    assert(request.id == "operation falcon")
-    assert(request.stuff == "important")
+    local transaction1, request1 = bus:recv_request()
+    assert(request1.id == "operation falcon")
+    assert(request1.stuff == "important")
 
-    transaction:send_response(test_response)
+    local transaction2, request2 = bus:recv_request()
+    assert(request2.id == "operation falcon")
+    assert(request2.stuff == "important")
+
+    transaction1:send_response(test_response)
+    transaction2:send_response(test_response)
 end
 
 function client_socket(socket)
