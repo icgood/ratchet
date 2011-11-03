@@ -243,6 +243,49 @@ static void timeout_triggered (int fd, short event, void *arg)
 }
 /* }}} */
 
+/* {{{ multi_event_del_all() */
+static void multi_event_del_all (lua_State *L, int index)
+{
+	int i;
+
+	for (i=1; ; i++)
+	{
+		lua_rawgeti (L, index, i);
+		if (lua_isnil (L, -1))
+		{
+			lua_pop (L, 1);
+			break;
+		}
+
+		struct event *ev = (struct event *) lua_touserdata (L, -1);
+		event_del (ev);
+		lua_pop (L, 1);
+	}
+}
+/* }}} */
+
+/* {{{ multi_event_triggered() */
+static void multi_event_triggered (int fd, short event, void *arg)
+{
+	lua_State *L1 = (lua_State *) arg;
+	lua_State *L = lua_tothread (L1, 1);
+
+	multi_event_del_all (L1, 3);
+
+	/* Figure out which object was triggered based on fd. */
+	lua_rawgeti (L1, 2, fd);
+	lua_replace (L1, 1);
+	lua_settop (L1, 1);
+
+	/* Call the run_thread() helper method. */
+	lua_getfield (L, 1, "run_thread");
+	lua_pushvalue (L, 1);
+	lua_pushthread (L1);
+	lua_xmove (L1, L, 1);
+	lua_call (L, 2, 0);
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ ratchet_new() */
@@ -269,6 +312,17 @@ static int ratchet_stackdump (lua_State *L)
 {
 	stackdump (L);
 	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_block_on() */
+static int ratchet_block_on (lua_State *L)
+{
+	lua_pushliteral (L, "multi");
+	lua_insert (L, 1);
+
+	int nargs = lua_gettop (L);
+	return lua_yield (L, nargs);
 }
 /* }}} */
 
@@ -700,6 +754,8 @@ static int ratchet_yield_thread (lua_State *L)
 			lua_getfield (L, 1, "wait_for_read");
 		else if (0 == strcmp (yieldtype, "timeout"))
 			lua_getfield (L, 1, "wait_for_timeout");
+		else if (0 == strcmp (yieldtype, "multi"))
+			lua_getfield (L, 1, "wait_for_multi");
 		else
 			lua_pushnil (L);
 
@@ -856,6 +912,86 @@ static int ratchet_wait_for_timeout (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_wait_for_multi() */
+static int ratchet_wait_for_multi (lua_State *L)
+{
+	/* Gather args into usable data. */
+	struct event_base *e_b = get_event_base (L, 1);
+	get_thread (L, 2, L1);
+	luaL_checktype (L, 3, LUA_TTABLE);
+	if (!lua_isnoneornil (L, 4))
+		luaL_checktype (L, 4, LUA_TTABLE);
+	else
+	{
+		lua_newtable (L);
+		lua_replace (L, 4);
+	}
+	struct timeval tv;
+	gettimeval_opt (L, 5, &tv);
+	lua_settop (L, 5);
+
+	int i, nread = lua_objlen (L, 3), nwrite = lua_objlen (L, 4);
+
+	lua_newtable (L1);
+	lua_createtable (L1, 1+nread+nwrite, 0);
+
+	/* Create timeout event. */
+	struct event *timeout = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	lua_setmetatable (L1, -2);
+	lua_rawseti (L1, -2, 1);
+
+	/* Queue up timeout event. */
+	timeout_set (timeout, timeout_triggered, L1);
+	event_base_set (e_b, timeout);
+	event_add (timeout, &tv);
+
+	for (i=1; i<=nread; i++)
+	{
+		lua_rawgeti (L, 3, i);
+		int fd = get_fd_from_object (L, -1);
+
+		lua_pushinteger (L1, fd);
+		lua_xmove (L, L1, 1);
+		lua_rawset (L1, -4);
+
+		/* Build event. */
+		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+		luaL_getmetatable (L1, "ratchet_event_internal_meta");
+		lua_setmetatable (L1, -2);
+		lua_rawseti (L1, -2, i+1);
+
+		/* Queue up the event. */
+		event_set (ev, fd, EV_READ, multi_event_triggered, L1);
+		event_base_set (e_b, ev);
+		event_add (ev, NULL);
+	}
+
+	for (i=1; i<=nwrite; i++)
+	{
+		lua_rawgeti (L, 4, i);
+		int fd = get_fd_from_object (L, -1);
+
+		lua_pushinteger (L1, fd);
+		lua_xmove (L, L1, 1);
+		lua_rawset (L1, -4);
+
+		/* Build event. */
+		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+		luaL_getmetatable (L1, "ratchet_event_internal_meta");
+		lua_setmetatable (L1, -2);
+		lua_rawseti (L1, -2, nread+i+1);
+
+		/* Queue up the event. */
+		event_set (ev, fd, EV_WRITE, multi_event_triggered, L1);
+		event_base_set (e_b, ev);
+		event_add (ev, NULL);
+	}
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet() */
@@ -867,6 +1003,7 @@ int luaopen_ratchet (lua_State *L)
 		{"pause", ratchet_pause},
 		{"unpause", ratchet_unpause},
 		{"running_thread", ratchet_running_thread},
+		{"block_on", ratchet_block_on},
 		{NULL}
 	};
 
@@ -887,6 +1024,7 @@ int luaopen_ratchet (lua_State *L)
 		{"wait_for_write", ratchet_wait_for_write},
 		{"wait_for_read", ratchet_wait_for_read},
 		{"wait_for_timeout", ratchet_wait_for_timeout},
+		{"wait_for_multi", ratchet_wait_for_multi},
 		{"start_threads_ready", ratchet_start_threads_ready},
 		{"start_threads_done_waiting", ratchet_start_threads_done_waiting},
 		{NULL}

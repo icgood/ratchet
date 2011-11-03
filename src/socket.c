@@ -547,6 +547,17 @@ static int rsock_newindex (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rsock_eq() */
+static int rsock_eq (lua_State *L)
+{
+	int fd1 = socket_fd (L, 1);
+	int fd2 = socket_fd (L, 2);
+
+	lua_pushboolean (L, (fd1 == fd2));
+	return 1;
+}
+/* }}} */
+
 /* {{{ rsock_get_fd() */
 static int rsock_get_fd (lua_State *L)
 {
@@ -929,6 +940,21 @@ static int rsock_rawrecv (lua_State *L)
 	"end\n"
 /* }}} */
 
+/* {{{ multi_recv() */
+#define rsock_multi_recv "return function (socks, timeout, ...)\n" \
+	"	local sock = coroutine.yield('multi', socks, nil, timeout)\n" \
+	"	if not sock then\n" \
+	"		return nil\n" \
+	"	end\n" \
+	"	local ret, err = sock:recv(...)\n" \
+	"	if ret then\n" \
+	"		return ret, sock\n" \
+	"	else\n" \
+	"		return nil, err\n" \
+	"	end\n" \
+	"end\n"
+/* }}} */
+
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_socket() */
@@ -960,6 +986,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"prepare_uri", rsock_prepare_uri},
 		{"prepare_tcp", rsock_prepare_tcp},
 		{"prepare_udp", rsock_prepare_udp},
+		{"multi_recv", rsock_multi_recv},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
@@ -969,6 +996,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"__gc", rsock_gc},
 		{"__index", rsock_index},
 		{"__newindex", rsock_newindex},
+		{"__eq", rsock_eq},
 		{NULL}
 	};
 

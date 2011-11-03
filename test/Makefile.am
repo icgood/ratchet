@@ -16,18 +16,19 @@ TESTS = test_listen_connect.lua \
 	test_socketpair.lua \
 	test_socketpad.lua \
 	test_socket_byteorder.lua \
+	test_socket_multi_recv.lua \
 	test_unix_sockets.lua \
 	test_event_timeout.lua \
 	test_ssl_send_recv.lua \
 	test_zmq_send_recv.lua \
-	test_message_bus_sockets.lua \
-	test_message_bus_local.lua \
 	test_multi_protocol.lua \
 	test_pause_unpause.lua \
 	test_callable_object.lua \
 	test_http_get.lua \
 	test_smtp.lua \
 	test_sockopt.lua
+#	test_message_bus_sockets.lua
+#	test_message_bus_local.lua
 XFAIL_TESTS = 
 EXTRA_DIST = $(TESTS)
 
@@ -53,6 +54,7 @@ XFAIL_TESTS += test_listen_connect.lua \
 	       test_socketpair.lua \
 	       test_socketpad.lua \
 	       test_socket_byteorder.lua \
+	       test_socket_multi_read.lua \
 	       test_unix_sockets.lua \
 	       test_ssl_send_recv.lua \
 	       test_event_timeout.lua \
