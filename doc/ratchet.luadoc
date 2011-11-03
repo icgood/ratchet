@@ -63,9 +63,8 @@ function thread_space(self)
 
 --- Returns the Lua thread object that is currently running, or nil for the main
 --  thread.
---  @param self the ratchet object.
 --  @return thread object or nil.
-function running_thread(self)
+function running_thread()
 
 --- Pauses the current thread for the given period.
 --  @param self the ratchet object.
@@ -83,6 +82,16 @@ function pause()
 --  @param thread the thread to unpause.
 --  @param ... extra parameters will be returned by pause().
 function unpause(thread, ...)
+
+--- Blocks on multiple items, with a single timeout. This function will block
+--  until the first event on any one of the items. Items given in the read and
+--  write argument tables must have a get_fd() method that returns its file
+--  descriptor.
+--  @param reads Table of items to wait for read events on.
+--  @param writes Table of items to wait for write events on.
+--  @param timeout Returns nil if this many seconds elapse with no events.
+--  @return The item from the read or write table that triggered an event.
+function block_on(reads, writes, timeout)
 
 --- Starts the main loop. Every iteration of this loop runs all new threads, runs
 --  all recently unpaused threads, runs all threads that are done waiting on

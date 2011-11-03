@@ -972,11 +972,11 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"hton", rsock_hton},
 		{"ntoh16", rsock_ntoh16},
 		{"hton16", rsock_hton16},
+		{"prepare_unix", rsock_prepare_unix},
 		/* Undocumented, helper methods. */
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
 		{"build_tcp_info", rsock_build_tcp_info},
 		{"build_udp_info", rsock_build_udp_info},
-		{"prepare_unix", rsock_prepare_unix},
 		{NULL}
 	};
 
