@@ -106,6 +106,17 @@ function peek(self)
 end
 -- }}}
 
+-- {{{ update_and_peek()
+function update_and_peek(self)
+    local data, err = recv_once(self)
+    if not data then
+        return nil, err
+    end
+
+    return self.recv_buffer
+end
+-- }}}
+
 -- {{{ send()
 function send(self, data, more)
     self.send_buffer = self.send_buffer .. data

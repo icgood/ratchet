@@ -22,7 +22,7 @@ function send(self, data)
 
 --- Attempts to receive a specific amount of data from the socket, receiving
 --  packets on the underlying socket until the criteria is met. 
---  @param self the socket object.
+--  @param self the socketpad object.
 --  @param stop if given as a number, this method will attempt to receive that
 --              many bytes on the socket and return exactly that many. If given
 --              as a string, the socket will receive until that string is seen,
@@ -32,6 +32,26 @@ function send(self, data)
 --          will be true if only part of the requested data was received before
 --          the connection was remotely closed.
 function recv(self)
+
+--- Returns all remaining data in the socket buffer, without actually checking
+--  for new data. This function empties the socket buffer. It is useful for
+--  checking for extra data that came along with previous calls to recv().
+--  @param self the socketpad object.
+--  @return string of data cleared from the socket buffer.
+function recv_remaining(self)
+
+--- Peeks at the current, full contents of the socket buffer, without updating
+--  or changing them.
+--  @param self the socketpad object.
+--  @return string of data currently in the socket buffer.
+function peek(self)
+
+--- Calls for one single update of the socket buffer, and then returns the
+--  full contents of the buffer. It is useful when you know new data is waiting
+--  on the socket but are not ready to do a full recv() on a criteria.
+--  @param self the socketpad object.
+--  @return string of data in the socket buffer after a single update.
+function update_and_peek(self)
 
 --- Calls close() on the underlying socket, provided purely as convenience. 
 --  @param self the socket object.
