@@ -42,29 +42,28 @@ function ctx1(where)
     local c2_socket = ratchet.socket.new(c2_rec.family, c2_rec.socktype, c2_rec.protocol)
     c2_socket:connect(c2_rec.addr)
 
-    kernel:attach(server_socket, s_socket)
-    kernel:attach(client_socket, c1_socket)
-    kernel:attach(client_socket, c2_socket)
+    kernel:attach(server_bus, s_socket, c2_socket)
+    kernel:attach(client_bus_1, c1_socket)
 end
 
-function server_socket(socket)
+function server_bus(socket, c2_socket)
     local bus = ratchet.bus.new_server(socket, request_from_bus, response_to_bus)
-
-    local test_response = 1337
 
     local transaction1, request1 = bus:recv_request()
     assert(request1.id == "operation falcon")
     assert(request1.stuff == "important")
 
-    local transaction2, request2 = bus:recv_request()
-    assert(request2.id == "operation falcon")
-    assert(request2.stuff == "important")
+    kernel:attach(client_bus_2, c2_socket)
 
-    transaction1:send_response(test_response)
-    transaction2:send_response(test_response)
+    local transaction2, request2 = bus:recv_request()
+    assert(request2.id == "operation condor")
+    assert(request2.stuff == "confidential")
+
+    transaction1:send_response(1337)
+    transaction2:send_response(7357)
 end
 
-function client_socket(socket)
+function client_bus_1(socket)
     local bus = ratchet.bus.new_client(socket, request_to_bus, response_from_bus)
 
     local test_request = {id = "operation falcon", stuff = "important"}
@@ -72,6 +71,16 @@ function client_socket(socket)
     local transaction = bus:send_request(test_request)
     local response = transaction:recv_response()
     assert(1337 == response)
+end
+
+function client_bus_2(socket)
+    local bus = ratchet.bus.new_client(socket, request_to_bus, response_from_bus)
+
+    local test_request = {id = "operation condor", stuff = "confidential"}
+
+    local transaction = bus:send_request(test_request)
+    local response = transaction:recv_response()
+    assert(7357 == response)
 end
 
 kernel = ratchet.new()
