@@ -39,6 +39,14 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
 
@@ -157,7 +165,12 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#hton">hton</a>&nbsp;(in, use_16)</td>
+	<td class="name" nowrap><a href="#hton">hton</a>&nbsp;(in)</td>
+	<td class="summary">Converts a number into a byte-string ready to be sent over the network.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#hton16">hton16</a>&nbsp;(in)</td>
 	<td class="summary">Converts a number into a byte-string ready to be sent over the network.</td>
 	</tr>
 
@@ -173,6 +186,11 @@
 
 	<tr>
 	<td class="name" nowrap><a href="#ntoh">ntoh</a>&nbsp;(in)</td>
+	<td class="summary">Converts a byte-string from network byte-order to host byte-order.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#ntoh16">ntoh16</a>&nbsp;(in)</td>
 	<td class="summary">Converts a byte-string from network byte-order to host byte-order.</td>
 	</tr>
 
@@ -529,7 +547,7 @@ the current timeout in seconds.
 
 
 
-<dt><a name="hton"></a><strong>hton</strong>&nbsp;(in, use_16)</dt>
+<dt><a name="hton"></a><strong>hton</strong>&nbsp;(in)</dt>
 <dd>
 Converts a number into a byte-string ready to be sent over the network. This is necessary only for binary socket protocols. See manpage byteorder(3).
 
@@ -541,8 +559,33 @@ Converts a number into a byte-string ready to be sent over the network. This is 
 	  in: the number to be converted.
 	</li>
 	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a byte-string in network byte-order ready to be sent over the network. Any extra arguments passed are also returned in order.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="hton16"></a><strong>hton16</strong>&nbsp;(in)</dt>
+<dd>
+Converts a number into a byte-string ready to be sent over the network. This is necessary only for binary socket protocols. See manpage byteorder(3).
+
+
+<h3>Parameters</h3>
+<ul>
+	
 	<li>
-	  use_16: if given and true, the number is truncated to 16-bits and the resulting string is only two bytes long.
+	  in: the number to be converted. This is the 16-bit version of hton().
 	</li>
 	
 </ul>
@@ -553,7 +596,7 @@ Converts a number into a byte-string ready to be sent over the network. This is 
 
 
 <h3>Return value:</h3>
-a byte-string in network byte-order ready to be sent over the network.
+a byte-string in network byte-order ready to be sent over the network. Any extra arguments passed are also returned in order.
 
 
 
@@ -631,7 +674,7 @@ a new socket object.
 
 <dt><a name="ntoh"></a><strong>ntoh</strong>&nbsp;(in)</dt>
 <dd>
-Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 2- or 4-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3).
+Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 4-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3).
 
 
 <h3>Parameters</h3>
@@ -649,7 +692,36 @@ Converts a byte-string from network byte-order to host byte-order. This is neces
 
 
 <h3>Return value:</h3>
-the resulting number after conversion.
+the resulting number after conversion. Any extra arguments passed are also returned in order.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="ntoh16"></a><strong>ntoh16</strong>&nbsp;(in)</dt>
+<dd>
+Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 2-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3). This is the 16-bit version of ntoh().
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  in: the binary input string from the socket to convert to a number.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the resulting number after conversion. Any extra arguments passed are also returned in order.
 
 
 

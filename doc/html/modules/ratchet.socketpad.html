@@ -39,6 +39,14 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
 
@@ -117,13 +125,28 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#peek">peek</a>&nbsp;(self)</td>
+	<td class="summary">Peeks at the current, full contents of the socket buffer, without updating or changing them.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#recv">recv</a>&nbsp;(self, stop)</td>
 	<td class="summary">Attempts to receive a specific amount of data from the socket, receiving packets on the underlying socket until the criteria is met.</td>
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#recv_remaining">recv_remaining</a>&nbsp;(self)</td>
+	<td class="summary">Returns all remaining data in the socket buffer, without actually checking for new data.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#send">send</a>&nbsp;(self, data, more)</td>
 	<td class="summary">Adds the given data to the send-buffer, and possibly flushes it to the underlying socket.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#update_and_peek">update_and_peek</a>&nbsp;(self)</td>
+	<td class="summary">Calls for one single update of the socket buffer, and then returns the full contents of the buffer.</td>
 	</tr>
 
 </table>
@@ -198,6 +221,35 @@ a new socketpad object.
 
 
 
+<dt><a name="peek"></a><strong>peek</strong>&nbsp;(self)</dt>
+<dd>
+Peeks at the current, full contents of the socket buffer, without updating or changing them.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socketpad object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+string of data currently in the socket buffer.
+
+
+
+</dd>
+
+
+
+
 <dt><a name="recv"></a><strong>recv</strong>&nbsp;(self, stop)</dt>
 <dd>
 Attempts to receive a specific amount of data from the socket, receiving packets on the underlying socket until the criteria is met.
@@ -207,7 +259,7 @@ Attempts to receive a specific amount of data from the socket, receiving packets
 <ul>
 	
 	<li>
-	  self: the socket object.
+	  self: the socketpad object.
 	</li>
 	
 	<li>
@@ -222,7 +274,36 @@ Attempts to receive a specific amount of data from the socket, receiving packets
 
 
 <h3>Return value:</h3>
-string of data received on the socket. As with regular socket recv(), this method can return an empty string signaling the connection has been closed remotely.
+string of data received on the socket, or nil followed by an error message. If the first return is not nil, the second returned value will be true if only part of the requested data was received before the connection was remotely closed.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="recv_remaining"></a><strong>recv_remaining</strong>&nbsp;(self)</dt>
+<dd>
+Returns all remaining data in the socket buffer, without actually checking for new data. This function empties the socket buffer. It is useful for checking for extra data that came along with previous calls to recv().
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socketpad object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+string of data cleared from the socket buffer.
 
 
 
@@ -257,6 +338,35 @@ Adds the given data to the send-buffer, and possibly flushes it to the underlyin
 
 
 
+
+
+
+</dd>
+
+
+
+
+<dt><a name="update_and_peek"></a><strong>update_and_peek</strong>&nbsp;(self)</dt>
+<dd>
+Calls for one single update of the socket buffer, and then returns the full contents of the buffer. It is useful when you know new data is waiting on the socket but are not ready to do a full recv() on a criteria.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the socketpad object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+string of data in the socket buffer after a single update.
 
 
 
