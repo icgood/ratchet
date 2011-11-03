@@ -42,10 +42,8 @@
 		<a href="../modules/ratchet.bus.html">ratchet.bus</a>
 	</li>
 
-	<li>
-		<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
-	</li>
-
+	<li><strong>ratchet.bus.transaction</strong></li>
+	
 	<li>
 		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
@@ -54,8 +52,10 @@
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
-	<li><strong>ratchet.http.server</strong></li>
-	
+	<li>
+		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+	</li>
+
 	<li>
 		<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
 	</li>
@@ -103,9 +103,9 @@
 
 <div id="content">
 
-<h1>Module <code>ratchet.http.server</code></h1>
+<h1>Module <code>ratchet.bus.transaction</code></h1>
 
-<p>This library provides server-side capabilities for an HTTP service. Currently the server only supports HTTP/1.0, with no current plans to support 1.1 or higher, as it is only provided for convenience and as an example of using the ratchet libraries.</p>
+<p>After a request has been sent or received by the client- or server-side, respectively, of a message bus, the first returned value is a transaction object, defined by this module. A transaction object cannot be created directly, it is presented as a module for documentation purposes only.</p>
 
 
 
@@ -115,13 +115,13 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#handle">handle</a>&nbsp;(self)</td>
-	<td class="summary">Receives an HTTP query, calls the corresponding handler, and returns the results.</td>
+	<td class="name" nowrap><a href="#recv_response">recv_response</a>&nbsp;(self)</td>
+	<td class="summary">Receives a response from the server-side of a message bus.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, from, send_size)</td>
-	<td class="summary">Creates a new HTTP server object.</td>
+	<td class="name" nowrap><a href="#send_response">send_response</a>&nbsp;(self, response)</td>
+	<td class="summary">Sends a response back to the client-side of a message bus, after a request was received fro that client.</td>
 	</tr>
 
 </table>
@@ -141,54 +141,16 @@
 
 
 
-<dt><a name="handle"></a><strong>handle</strong>&nbsp;(self)</dt>
+<dt><a name="recv_response"></a><strong>recv_response</strong>&nbsp;(self)</dt>
 <dd>
-Receives an HTTP query, calls the corresponding handler, and returns the results.
+Receives a response from the server-side of a message bus. This function is available from transactions returned by <code>recv_response()</code>.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  self: The http.server object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, from, send_size)</dt>
-<dd>
-Creates a new HTTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  socket: Used as the underlying socket for the query, under the assumption that encryption has been established as needed and no other I/O has taken place.
-	</li>
-	
-	<li>
-	  handlers: Table whose keys correspond to supported HTTP commands. The command is called as a method of this table, e.g. handlers:GET(...), with the arguments being the URI, headers, data, and source address.
-	</li>
-	
-	<li>
-	  from: Passed as the last argument to a handler function, typically used to send the source address of the connection (the second value returned by accept()).
-	</li>
-	
-	<li>
-	  send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+	  self: a transaction object returned by <code>send_request()</code>.
 	</li>
 	
 </ul>
@@ -199,7 +161,37 @@ Creates a new HTTP server object. A new object should be created with this funct
 
 
 <h3>Return value:</h3>
-a new http.server object.
+the response from the server-side message bus.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="send_response"></a><strong>send_response</strong>&nbsp;(self, response)</dt>
+<dd>
+Sends a response back to the client-side of a message bus, after a request was received fro that client. Information about the client's connection is available in the "from" index of the transaction object, if the bus is socket-based. This function is available from transactions returned by <code>recv_request()</code>.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: a transaction object returned by <code>recv_request()</code>.
+	</li>
+	
+	<li>
+	  response: a response object to send.
+	</li>
+	
+</ul>
+
+
+
+
+
 
 
 
