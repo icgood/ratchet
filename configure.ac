@@ -229,12 +229,8 @@ AC_ARG_ENABLE([bus], [AS_HELP_STRING([--enable-bus@<:@=PATH@:>@],
 	                             [install Lua bus modules to Lua module installation path, or PATH if givne.])],
 	      [enable_bus="${enableval%/}"], [enable_bus=yes])
 if test "x${enable_bus}" != "xno"; then
-	if test "x${enable_http}" == "xno"; then
-		AC_MSG_WARN([NOT providing message bus with HTTP modules disabled.])
-		enable_bus=no
-	fi
 	if test "x${enable_bus}" == "xyes"; then
-		enable_http="$with_lua_lpath/ratchet/bus"
+		enable_bus="$with_lua_lpath/ratchet/bus"
 	fi
 	if test "x${enable_http}" == "x"; then
 		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
