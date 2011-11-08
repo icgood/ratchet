@@ -112,6 +112,8 @@ function update_and_peek(self)
     local data, err = recv_once(self)
     if not data then
         return nil, err
+    elseif data == '' then
+        reutrn self.recv_buffer, true
     end
 
     return self.recv_buffer
