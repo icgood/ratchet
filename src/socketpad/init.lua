@@ -120,7 +120,10 @@ end
 
 -- {{{ send()
 function send(self, data, more)
-    self.send_buffer = self.send_buffer .. data
+    if data ~= '' then
+        self.send_buffer = self.send_buffer .. data
+    end
+
     if not more then
         local to_send = self.send_buffer
         self.send_buffer = ''
