@@ -120,16 +120,19 @@ end
 
 -- {{{ send()
 function send(self, data, more)
-    if data ~= '' then
-        self.send_buffer = self.send_buffer .. data
-    end
-
+    self.send_buffer = self.send_buffer .. data
     if not more then
-        local to_send = self.send_buffer
-        self.send_buffer = ''
-
-        return self.socket:send(to_send)
+        flush(self)
     end
+end
+-- }}}
+
+-- {{{ flush()
+function flush(self)
+    local to_send = self.send_buffer
+    self.send_buffer = ''
+
+    return self.socket:send(to_send)
 end
 -- }}}
 
