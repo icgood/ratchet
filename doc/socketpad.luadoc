@@ -7,7 +7,9 @@ module "ratchet.socketpad"
 
 --- Returns a new socketpad object, using the given socket as the underlying
 --  engine to send and receive buffered IO. The socket object is available in
---  raw form as the "socket" field of the returned socketpad object.
+--  raw form as the "socket" field of the returned socketpad object. A table for
+--  storing misc information related to the socketpad is available in the "data"
+--  field of the returned socketpad object.
 --  @param socket A socket object to buffer.
 --  @return a new socketpad object.
 function new(socket)

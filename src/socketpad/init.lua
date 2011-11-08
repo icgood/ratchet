@@ -12,6 +12,7 @@ function new(socket, from)
 
     self.socket = socket
     self.from = from
+    self.data = {}
 
     self.recv_buffer = ''
     self.send_buffer = ''
