@@ -3,15 +3,13 @@ require "ratchet.bus"
 
 -- {{{ request_to_bus()
 local function request_to_bus(obj)
-    return tostring(obj.id) .. "||" .. tostring(obj.stuff)
+    return tostring(obj.id), {tostring(obj.stuff)}
 end
 -- }}}
 
 -- {{{ request_from_bus()
-local function request_from_bus(data)
-    local obj = {}
-    obj.id, obj.stuff = data:match("^([^%|]*)%|%|(.*)$")
-    return obj
+local function request_from_bus(data, attachments)
+    return {id = data, stuff = attachments[1]}
 end
 -- }}}
 
