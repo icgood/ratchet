@@ -31,9 +31,10 @@ end
 
 -- {{{ send_request()
 function send_request(self, request)
-    local part_1, attachments = self.request_to_bus(request)
+    local attachments = {}
+    local part_1 = self.request_to_bus(request, attachments)
 
-    local num_parts = 1 + (attachments and #attachments or 0)
+    local num_parts = 1 + #attachments
     self.socket_buffer:send(ratchet.socket.hton16(num_parts), true)
 
     send_part(self.socket_buffer, part_1)

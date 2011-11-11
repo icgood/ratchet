@@ -30,16 +30,15 @@ end
 
 -- {{{ send_response()
 function send_response(self, response)
-    local part_1, attachments = self.response_to_bus(response)
+    local attachments = {}
+    local part_1 = self.response_to_bus(response, attachments)
 
-    local num_parts = 1 + (attachments and #attachments or 0)
+    local num_parts = 1 + #attachments
     self.socket_buffer:send(ratchet.socket.hton16(num_parts), true)
 
     send_part(self.socket_buffer, part_1)
-    if attachments then
-        for i = 1, #attachments do
-            send_part(self.socket_buffer, attachments[i])
-        end
+    for i = 1, #attachments do
+        send_part(self.socket_buffer, attachments[i])
     end
 
     self.socket_buffer:close()

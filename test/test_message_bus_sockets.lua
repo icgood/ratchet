@@ -2,8 +2,9 @@ require "ratchet"
 require "ratchet.bus"
 
 -- {{{ request_to_bus()
-local function request_to_bus(obj)
-    return tostring(obj.id), {tostring(obj.stuff)}
+local function request_to_bus(data, attachments)
+    table.insert(attachments, tostring(data.stuff))
+    return tostring(data.id)
 end
 -- }}}
 
