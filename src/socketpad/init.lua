@@ -113,17 +113,55 @@ function update_and_peek(self)
     if not data then
         return nil, err
     elseif data == '' then
-        reutrn self.recv_buffer, true
+        return self.recv_buffer, true
     end
 
     return self.recv_buffer
 end
 -- }}}
 
+-- {{{ send_behavior()
+function send_behavior(self, what, how)
+    if what == "chunk_size" then
+        self.chunk_size = tonumber(how)
+    elseif what == "always_flush" then
+        if type(how) == "nil" then
+            self.always_flush = true
+        else
+            self.always_flush = how
+        end
+    else
+        error("Unknown behavior type: " .. tostring(what))
+    end
+end
+-- }}}
+
+-- {{{ update_send_buffer()
+local function update_send_buffer(self, data)
+    if self.chunk_size and #self.send_buffer + #data > self.chunk_size then
+        while data ~= '' do
+            local extra = self.chunk_size - #self.send_buffer
+            local for_now = data:sub(1, extra)
+            data = data:sub(extra+1)
+            self.send_buffer = self.send_buffer .. for_now
+            flush(self)
+        end
+    else
+        self.send_buffer = self.send_buffer .. data
+    end
+end
+-- }}}
+
 -- {{{ send()
 function send(self, data, more)
-    self.send_buffer = self.send_buffer .. data
-    if not more then
+    if more and (not data or data == '') then
+        flush(self)
+        return
+    end
+
+    update_send_buffer(self, data)
+
+    if not more or self.always_flush then
         flush(self)
     end
 end
