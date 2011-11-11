@@ -8,11 +8,11 @@ local class = getfenv()
 __index = class
 
 -- {{{ new()
-function new(socket, request_to_bus, response_from_bus)
+function new(socket, request_to_bus, response_from_bus, socket_from)
     local self = {}
     setmetatable(self, class)
 
-    self.socket = socket
+    self.socket_buffer = ratchet.socketpad.new(socket, socket_from)
     self.request_to_bus = request_to_bus or tostring
     self.response_from_bus = response_from_bus or tostring
 
@@ -20,17 +20,30 @@ function new(socket, request_to_bus, response_from_bus)
 end
 -- }}}
 
+-- {{{ send_part()
+local function send_part(pad, part)
+    local part_size = ratchet.socket.hton(#part)
+
+    pad:send(part_size, true)
+    pad:send(part)
+end
+-- }}}
+
 -- {{{ send_request()
 function send_request(self, request)
-    local request_data = self.request_to_bus(request)
-    local request_size = ratchet.socket.hton(#request_data)
+    local part_1, attachments = self.request_to_bus(request)
 
-    local pad = ratchet.socketpad.new(self.socket)
-    pad:send(request_size, true)
-    pad:send(request_data)
+    local num_parts = 1 + (attachments and #attachments or 0)
+    self.socket_buffer:send(ratchet.socket.hton16(num_parts), true)
 
-    local transaction = ratchet.bus.client_transaction.new(request, self.response_from_bus, pad)
-    return transaction
+    send_part(self.socket_buffer, part_1)
+    if attachments then
+        for i = 1, #attachments do
+            send_part(self.socket_buffer, attachments[i])
+        end
+    end
+
+    return ratchet.bus.client_transaction.new(request, self.response_from_bus, self.socket_buffer)
 end
 -- }}}
 

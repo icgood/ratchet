@@ -19,13 +19,28 @@ function new(request, response_to_bus, socket_buffer, from)
 end
 -- }}}
 
+-- {{{ send_part()
+local function send_part(pad, part)
+    local part_size = ratchet.socket.hton(#part)
+
+    pad:send(part_size, true)
+    pad:send(part)
+end
+-- }}}
+
 -- {{{ send_response()
 function send_response(self, response)
-    local response_data = self.response_to_bus(response)
-    local response_size = ratchet.socket.hton(#response_data)
+    local part_1, attachments = self.response_to_bus(response)
 
-    self.socket_buffer:send(response_size, true)
-    self.socket_buffer:send(response_data)
+    local num_parts = 1 + (attachments and #attachments or 0)
+    self.socket_buffer:send(ratchet.socket.hton16(num_parts), true)
+
+    send_part(self.socket_buffer, part_1)
+    if attachments then
+        for i = 1, #attachments do
+            send_part(self.socket_buffer, attachments[i])
+        end
+    end
 
     self.socket_buffer:close()
 end

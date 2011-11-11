@@ -48,28 +48,71 @@ local function receive_connections_and_data(self)
         self.sockets[pad.socket] = pad
     else
         local pad = self.sockets[ready]
-        pad:update_and_peek()
-        self.updated = pad
+        local _, closed = pad:update_and_peek()
+        if not closed then
+            self.updated = pad
+        end
     end
 
     return true
 end
 -- }}}
 
+-- {{{ pop_num_parts()
+local function pop_num_parts(pad)
+    local peek = pad:peek()
+    if #peek >= 2 then
+        pad.data.num_parts = ratchet.socket.ntoh16(pad:recv(2))
+        pad.data.parts = {}
+        pad.data.part_lens = {}
+
+        return true
+    end
+end
+-- }}}
+
+-- {{{ pop_part_len()
+local function pop_part_len(pad, i)
+    local peek = pad:peek()
+    if #peek >= 4 then
+        pad.data.part_lens[i] = ratchet.socket.ntoh(pad:recv(4))
+        return true
+    end
+end
+-- }}}
+
+-- {{{ pop_part_data()
+local function pop_part_data(pad, i)
+    local peek = pad:peek()
+    local len = pad.data.part_lens[i]
+    if #peek >= len then
+        pad.data.parts[i] = pad:recv(len)
+        return true
+    end
+end
+-- }}}
+
 -- {{{ pop_full_request()
 local function pop_full_request(self, pad)
-    local peek = pad:peek()
+    if not pad.data.num_parts and not pop_num_parts(pad) then
+        return
+    end
 
-    if #peek >= 4 then
-        local size = ratchet.socket.ntoh(peek:sub(1, 4))
-        if #peek >= 4+size then
-            pad:recv(4)
-            local data = pad:recv(size)
+    if pad.data.num_parts == 0 then
+        return self.request_from_bus('', pad.data.parts, pad.from)
+    end
 
-            -- Convert request to object, as per user-provided transformation.
-            return self.request_from_bus(data, pad.from)
+    for i = 1, pad.data.num_parts  do
+        if not pad.data.part_lens[i] and not pop_part_len(pad, i) then
+            return
+        end
+
+        if not pad.data.parts[i] and not pop_part_data(pad, i) then
+            return
         end
     end
+
+    return self.request_from_bus(table.remove(pad.data.parts, 1), pad.data.parts, pad.from)
 end
 -- }}}
 
@@ -87,7 +130,7 @@ local function check_for_full_requests(self)
                 self.updated,
                 self.updated.from
             )
-            return request, transaction
+            return transaction, request
         end
     end
 end
@@ -95,15 +138,16 @@ end
 
 -- {{{ recv_request()
 function recv_request(self)
-    local request, transaction
+    local transaction, request
+
     repeat
         local okay, err = receive_connections_and_data(self)
         if not okay then
             return nil, err
         end
 
-        request, transaction = check_for_full_requests(self)
-    until request
+        transaction, request = check_for_full_requests(self)
+    until transaction
 
     return transaction, request
 end

@@ -18,27 +18,40 @@ function new(request, response_from_bus, socket_buffer)
 end
 -- }}}
 
+-- {{{ recv_part()
+local function recv_part(pad, parts, i)
+    local size, incomplete = ratchet.socket.ntoh(pad:recv(4))
+    if incomplete then
+        pad:close()
+        return
+    end
+
+    local data, incomplete = pad:recv(size)
+    if incomplete then
+        pad:close()
+        return
+    end
+
+    parts[i] = data
+end
+-- }}}
+
 -- {{{ recv_response()
 function recv_response(self)
-    -- Receive the size "header" of the response transmission.
-    local size, incomplete = ratchet.socket.ntoh(self.socket_buffer:recv(4))
+    local pad = self.socket_buffer
+    local num_parts, incomplete = ratchet.socket.ntoh16(pad:recv(2))
     if incomplete then
-        self.socket_buffer:close()
+        pad:close()
         return
     end
 
-    -- Receive the actual content of the response transmission.
-    local data, incomplete = self.socket_buffer:recv(size)
-    if incomplete then
-        self.socket_buffer:close()
-        return
+    local parts = {}
+    for i = 1, num_parts do
+        recv_part(pad, parts, i)
     end
+    pad:close()
 
-    local response = self.response_from_bus(data)
-
-    self.socket_buffer:close()
-
-    return response
+    return self.response_from_bus(table.remove(parts, 1), parts, pad.from)
 end
 -- }}}
 
