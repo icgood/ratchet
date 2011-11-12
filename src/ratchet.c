@@ -593,12 +593,24 @@ static int ratchet_loop (lua_State *L)
 		/* Execute self:start_threads_ready(). */
 		lua_getfield (L, 1, "start_threads_ready");
 		lua_pushvalue (L, 1);
-		lua_call (L, 1, 0);
+		lua_call (L, 1, 1);
+		if (lua_toboolean (L, -1))
+		{
+			lua_pop (L, 1);
+			continue;
+		}
+		lua_pop (L, 1);
 
 		/* Execute self:start_threads_waiting(). */
 		lua_getfield (L, 1, "start_threads_done_waiting");
 		lua_pushvalue (L, 1);
-		lua_call (L, 1, 0);
+		lua_call (L, 1, 1);
+		if (lua_toboolean (L, -1))
+		{
+			lua_pop (L, 1);
+			continue;
+		}
+		lua_pop (L, 1);
 
 		/* Break loop if we're out of foreground threads. */
 		lua_getfenv (L, 1);
@@ -630,6 +642,8 @@ static int ratchet_loop (lua_State *L)
 /* {{{ ratchet_start_threads_ready() */
 static int ratchet_start_threads_ready (lua_State *L)
 {
+	int some_ready = 0;
+
 	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 	
@@ -640,6 +654,7 @@ static int ratchet_start_threads_ready (lua_State *L)
 	{
 		if (0 == lua_next (L, 3))
 			break;
+		some_ready = 1;
 
 		/* Remove entry from ready. */
 		lua_pushvalue (L, 4);
@@ -656,13 +671,16 @@ static int ratchet_start_threads_ready (lua_State *L)
 		lua_pushnil (L);
 	}
 
-	return 0;
+	lua_pushboolean (L, some_ready);
+	return 1;
 }
 /* }}} */
 
 /* {{{ ratchet_start_threads_done_waiting() */
 static int ratchet_start_threads_done_waiting (lua_State *L)
 {
+	int some_ready = 0;
+
 	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 
@@ -674,6 +692,8 @@ static int ratchet_start_threads_done_waiting (lua_State *L)
 		lua_pushnil (L);
 		if (lua_next (L, 5) == 0)
 		{
+			some_ready = 1;
+
 			/* Remove entry from waiting_on. */
 			lua_pushvalue (L, 3);
 			lua_pushvalue (L, 4);
@@ -689,10 +709,10 @@ static int ratchet_start_threads_done_waiting (lua_State *L)
 		}
 		else
 			lua_pop (L, 2);
-
 	}
 
-	return 0;
+	lua_pushboolean (L, some_ready);
+	return 1;
 }
 /* }}} */
 
