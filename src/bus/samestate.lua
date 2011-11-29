@@ -33,7 +33,7 @@ end
 -- {{{ recv_request()
 function recv_request(self)
     local transaction = wait_for_transaction(self)
-    return transaction, transaction.request
+    return transaction, transaction and transaction.request
 end
 -- }}}
 

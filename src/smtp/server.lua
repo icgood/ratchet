@@ -50,8 +50,16 @@ end
 
 -- {{{ send_ESC_reply()
 local function send_ESC_reply(self, reply)
-    local code, message, esc = reply.code, reply.message, reply.enhanced_status_code
+    local code, message, esc = tostring(reply.code), reply.message, reply.enhanced_status_code
     local code_class = code:sub(1, 1)
+
+    local message_esc, pos = message:match("^([245]%.%d%d?%d?%.%d%d?%d?)%s()")
+    if message_esc then
+        message = message:sub(pos)
+        if not esc then
+            esc = message_esc
+        end
+    end
 
     if code_class == "2" or code_class == "4" or code_class == "5" then
         -- If no Enhanced-Status-Code was given, use empty string.

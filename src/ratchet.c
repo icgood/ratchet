@@ -947,7 +947,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 		lua_replace (L, 4);
 	}
 	struct timeval tv;
-	gettimeval_opt (L, 5, &tv);
+	int use_tv = gettimeval_opt (L, 5, &tv);
 	lua_settop (L, 5);
 
 	int i, nread = lua_objlen (L, 3), nwrite = lua_objlen (L, 4);
@@ -964,7 +964,8 @@ static int ratchet_wait_for_multi (lua_State *L)
 	/* Queue up timeout event. */
 	timeout_set (timeout, timeout_triggered, L1);
 	event_base_set (e_b, timeout);
-	event_add (timeout, &tv);
+	if (use_tv)
+		event_add (timeout, &tv);
 
 	for (i=1; i<=nread; i++)
 	{
