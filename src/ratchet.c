@@ -110,7 +110,7 @@ static void set_thread_persist (lua_State *L, int index, int background)
 {
 	if (background)
 	{
-		lua_getfenv (L, 1);
+		lua_getuservalue (L, 1);
 		lua_getfield (L, -1, "background");
 
 		lua_pushvalue (L, index);
@@ -121,7 +121,7 @@ static void set_thread_persist (lua_State *L, int index, int background)
 	}
 	else
 	{
-		lua_getfenv (L, 1);
+		lua_getuservalue (L, 1);
 		lua_getfield (L, -1, "foreground");
 
 		lua_pushvalue (L, index);
@@ -136,7 +136,7 @@ static void set_thread_persist (lua_State *L, int index, int background)
 /* {{{ set_thread_ready() */
 static void set_thread_ready (lua_State *L, int index)
 {
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "ready");
 
 	lua_pushvalue (L, index);
@@ -150,7 +150,7 @@ static void set_thread_ready (lua_State *L, int index)
 /* {{{ end_thread_persist() */
 static void end_thread_persist (lua_State *L, int index)
 {
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 
 	lua_getfield (L, -1, "background");
 	lua_pushvalue (L, index);
@@ -301,7 +301,7 @@ static int ratchet_new (lua_State *L)
 
 	/* Set up persistance table. */
 	setup_persistance_tables (L);
-	lua_setfenv (L, -2);
+	lua_setuservalue (L, -2);
 
 	return 1;
 }
@@ -376,7 +376,7 @@ static int ratchet_set_error_handler (lua_State *L)
 	lua_settop (L, 2);
 
 	/* Set the error handler, global or thread-specific. */
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "error_handlers");
 	if (lua_pushthread (L))
 	{
@@ -452,7 +452,7 @@ static int ratchet_wait_all (lua_State *L)
 		return luaL_error (L, "wait_all cannot be called from main thread");
 	lua_pop (L, 1);
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "waiting_on");
 
 	/* Iterate through table of children, building duplicate with
@@ -490,7 +490,7 @@ static int ratchet_thread_space (lua_State *L)
 	if (lua_pushthread (L))
 		return luaL_error (L, "thread_space cannot be called from main thread");
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "thread_space");
 	lua_pushvalue (L, 3);
 	lua_rawget (L, -2);
@@ -613,7 +613,7 @@ static int ratchet_loop (lua_State *L)
 		lua_pop (L, 1);
 
 		/* Break loop if we're out of foreground threads. */
-		lua_getfenv (L, 1);
+		lua_getuservalue (L, 1);
 		lua_getfield (L, -1, "foreground");
 		lua_pushnil (L);
 		if (lua_next (L, -2) == 0)
@@ -630,7 +630,7 @@ static int ratchet_loop (lua_State *L)
 	lua_settop (L, 1);
 
 	/* Clear all background threads. */
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_newtable (L);
 	lua_setfield (L, -2, "background");
 	lua_pop (L, 1);
@@ -647,7 +647,7 @@ static int ratchet_start_threads_ready (lua_State *L)
 	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 	
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, 2, "ready");
 	lua_pushnil (L);
 	while (1)
@@ -684,7 +684,7 @@ static int ratchet_start_threads_done_waiting (lua_State *L)
 	(void) get_event_base (L, 1);
 	lua_settop (L, 1);
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, 2, "waiting_on");
 	for (lua_pushnil (L); lua_next (L, 3); lua_pop (L, 1))
 	{
@@ -725,7 +725,7 @@ static int ratchet_run_thread (lua_State *L)
 	int nargs = lua_gettop (L1);
 	if (lua_status (L1) != LUA_YIELD)
 		nargs--;
-	int ret = lua_resume (L1, nargs);
+	int ret = lua_resume (L1, NULL, nargs);
 
 	if (ret == 0)
 		end_thread_persist (L, 2);	/* Remove the entry from the persistance tables. */
@@ -806,7 +806,7 @@ static int ratchet_handle_thread_error (lua_State *L)
 	get_thread (L, 2, L1);
 
 	/* Get the error handler call stack table. */
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "error_handlers");
 	lua_pushvalue (L, 2);
 	lua_gettable (L, -2);
@@ -950,7 +950,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 	int use_tv = gettimeval_opt (L, 5, &tv);
 	lua_settop (L, 5);
 
-	int i, nread = lua_objlen (L, 3), nwrite = lua_objlen (L, 4);
+	int i, nread = lua_rawlen (L, 3), nwrite = lua_rawlen (L, 4);
 
 	lua_newtable (L1);
 	lua_createtable (L1, 1+nread+nwrite, 0);
@@ -1062,36 +1062,38 @@ int luaopen_ratchet (lua_State *L)
 	};
 
 	luaL_newmetatable (L, "ratchet_event_internal_meta");
-	luaI_openlib (L, NULL, eventmetameths, 0);
+	luaL_setfuncs (L, eventmetameths, 0);
 	lua_pop (L, 1);
 
 	luaL_newmetatable (L, "ratchet_meta");
 	lua_newtable (L);
-	luaI_openlib (L, NULL, meths, 0);
+	luaL_setfuncs (L, meths, 0);
 	lua_setfield (L, -2, "__index");
-	luaI_openlib (L, NULL, metameths, 0);
+	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);
 
-	luaI_openlib (L, "ratchet", funcs, 0);
+	luaL_newlib (L, funcs);
+	lua_pushvalue (L, -1);
+	lua_setglobal (L, "ratchet");
 
 #if HAVE_SOCKET
-	luaopen_ratchet_socket (L);
+	luaL_requiref (L, "ratchet.socket", luaopen_ratchet_socket, 0);
 	lua_setfield (L, -2, "socket");
 #endif
 #if HAVE_OPENSSL
-	luaopen_ratchet_ssl (L);
+	luaL_requiref (L, "ratchet.ssl", luaopen_ratchet_ssl, 0);
 	lua_setfield (L, -2, "ssl");
 #endif
 #if HAVE_ZMQ
-	luaopen_ratchet_zmqsocket (L);
+	luaL_requiref (L, "ratchet.zmqsocket", luaopen_ratchet_zmqsocket, 0);
 	lua_setfield (L, -2, "zmqsocket");
 #endif
 #if HAVE_DNS
-	luaopen_ratchet_dns (L);
+	luaL_requiref (L, "ratchet.dns", luaopen_ratchet_dns, 0);
 	lua_setfield (L, -2, "dns");
 #endif
 #if HAVE_TIMERFD
-	luaopen_ratchet_timerfd (L);
+	luaL_requiref (L, "ratchet.timerfd", luaopen_ratchet_timerfd, 0);
 	lua_setfield (L, -2, "timerfd");
 #endif
 

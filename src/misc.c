@@ -302,7 +302,7 @@ static void printf_index (lua_State *L, int i)
 				{
 					for (j=1; j<=top-2; j++)
 					{
-						if (lua_equal (L, j, top))
+						if (lua_compare (L, j, top, LUA_OPEQ))
 						{
 							printf ("<table:%p>", lua_topointer (L, top));
 							break;

@@ -76,10 +76,10 @@ AX_WITH_LUA
 if test "x${LUA}" == "x"; then
 	AC_MSG_NOTICE([Lua interpreter not found, disabling build tests.])
 else
-	AX_WITH_LUA([501])
+	AX_WITH_LUA([502])
 fi
 AX_LUA_HEADERS
-AX_LUA_HEADERS_VERSION([501])
+AX_LUA_HEADERS_VERSION([502])
 AX_LUA_LIBS
 if test "x${LUA_LIB}" == "x"; then
 	AC_MSG_ERROR([Lua development libraries required for building.])

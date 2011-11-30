@@ -101,7 +101,7 @@ static int rssl_ctx_new (lua_State *L)
 	lua_createtable (L, 0, 1);
 	lua_pushvalue (L, 2);
 	lua_setfield (L, -2, "password");
-	lua_setfenv (L, -2);
+	lua_setuservalue (L, -2);
 
 	return 1;
 }
@@ -151,7 +151,7 @@ static int rssl_ctx_create_session (lua_State *L)
 	lua_createtable (L, 0, 1);
 	lua_pushvalue (L, 2);
 	lua_setfield (L, -2, "engine");
-	lua_setfenv (L, -2);
+	lua_setuservalue (L, -2);
 
 	return 1;
 }
@@ -310,7 +310,7 @@ static int rssl_session_get_engine (lua_State *L)
 {
 	luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "engine");
 
 	return 1;
@@ -602,7 +602,7 @@ int rsock_get_encryption (lua_State *L)
 {
 	(void) luaL_checkudata (L, 1, "ratchet_socket_meta");
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "ssl");
 
 	return 1;
@@ -625,7 +625,7 @@ int rsock_encrypt (lua_State *L)
 	lua_pushlightuserdata (L, bio);
 	lua_call (L, 3, 1);
 
-	lua_getfenv (L, 1);
+	lua_getuservalue (L, 1);
 	lua_pushvalue (L, -2);
 	lua_setfield (L, -2, "ssl");
 	lua_pop (L, 1);
@@ -766,20 +766,20 @@ int luaopen_ratchet_ssl (lua_State *L)
 
 	luaL_newmetatable (L, "ratchet_ssl_ctx_meta");
 	lua_newtable (L);
-	luaI_openlib (L, NULL, ctxmeths, 0);
+	luaL_setfuncs (L, ctxmeths, 0);
 	lua_setfield (L, -2, "__index");
-	luaI_openlib (L, NULL, ctxmetameths, 0);
+	luaL_setfuncs (L, ctxmetameths, 0);
 	lua_pop (L, 1);
 
 	luaL_newmetatable (L, "ratchet_ssl_session_meta");
 	lua_newtable (L);
-	luaI_openlib (L, NULL, sslmeths, 0);
+	luaL_setfuncs (L, sslmeths, 0);
 	register_luafuncs (L, -1, sslluameths);
 	lua_setfield (L, -2, "__index");
-	luaI_openlib (L, NULL, sslmetameths, 0);
+	luaL_setfuncs (L, sslmetameths, 0);
 	lua_pop (L, 1);
 
-	luaI_openlib (L, "ratchet.ssl", funcs, 0);
+	luaL_newlib (L, funcs);
 
 	setup_ssl_methods (L);
 
