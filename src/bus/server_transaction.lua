@@ -1,14 +1,13 @@
 
 require "ratchet"
 
-module("ratchet.bus.server_transaction", package.seeall)
-local class = getfenv()
-__index = class
+ratchet.bus.server_transaction = {}
+ratchet.bus.server_transaction.__index = ratchet.bus.server_transaction
 
--- {{{ new()
-function new(request, response_to_bus, socket_buffer, from)
+-- {{{ ratchet.bus.server_transaction.new()
+function ratchet.bus.server_transaction.new(request, response_to_bus, socket_buffer, from)
     local self = {}
-    setmetatable(self, class)
+    setmetatable(self, ratchet.bus.server_transaction)
 
     self.request = request
     self.socket_buffer = socket_buffer
@@ -28,8 +27,8 @@ local function send_part(pad, part)
 end
 -- }}}
 
--- {{{ send_response()
-function send_response(self, response)
+-- {{{ ratchet.bus.server_transaction:send_response()
+function ratchet.bus.server_transaction:send_response(response)
     local part_1, attachments = self.response_to_bus(response)
 
     local num_parts = 1 + (attachments and #attachments or 0)
@@ -45,5 +44,7 @@ function send_response(self, response)
     self.socket_buffer:close()
 end
 -- }}}
+
+return ratchet.bus.server_transaction
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

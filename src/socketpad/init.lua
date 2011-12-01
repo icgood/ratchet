@@ -1,14 +1,13 @@
 
-require "package"
+require "ratchet"
 
-module("ratchet.socketpad", package.seeall)
-local class = getfenv()
-__index = class
+ratchet.socketpad = {}
+ratchet.socketpad.__index = ratchet.socketpad
 
--- {{{ new()
-function new(socket, from)
+-- {{{ ratchet.socketpad.new()
+function ratchet.socketpad.new(socket, from)
     local self = {}
-    setmetatable(self, class)
+    setmetatable(self, ratchet.socketpad)
 
     self.socket = socket
     self.from = from
@@ -80,8 +79,8 @@ local function recv_until_string(self, str)
 end
 -- }}}
 
--- {{{ recv()
-function recv(self, through)
+-- {{{ ratchet.socketpad:recv()
+function ratchet.socketpad:recv(through)
     if type(through) == "string" then
         return recv_until_string(self, through)
     elseif type(through) == "number" then
@@ -92,8 +91,8 @@ function recv(self, through)
 end
 -- }}}
 
--- {{{ recv_remaining()
-function recv_remaining(self)
+-- {{{ ratchet.socketpad:recv_remaining()
+function ratchet.socketpad:recv_remaining()
     local ret = self.recv_buffer
     self.recv_buffer = ''
 
@@ -101,14 +100,14 @@ function recv_remaining(self)
 end
 -- }}}
 
--- {{{ peek()
-function peek(self)
+-- {{{ ratchet.socketpad:peek()
+function ratchet.socketpad:peek()
     return self.recv_buffer
 end
 -- }}}
 
--- {{{ update_and_peek()
-function update_and_peek(self)
+-- {{{ ratchet.socketpad:update_and_peek()
+function ratchet.socketpad:update_and_peek()
     local data, err = recv_once(self)
     if not data then
         return nil, err
@@ -120,8 +119,8 @@ function update_and_peek(self)
 end
 -- }}}
 
--- {{{ send_behavior()
-function send_behavior(self, what, how)
+-- {{{ ratchet.socketpad:send_behavior()
+function ratchet.socketpad:send_behavior(what, how)
     if what == "chunk_size" then
         self.chunk_size = tonumber(how)
     elseif what == "always_flush" then
@@ -144,7 +143,7 @@ local function update_send_buffer(self, data)
             local for_now = data:sub(1, extra)
             data = data:sub(extra+1)
             self.send_buffer = self.send_buffer .. for_now
-            flush(self)
+            self:flush()
         end
     else
         self.send_buffer = self.send_buffer .. data
@@ -152,23 +151,23 @@ local function update_send_buffer(self, data)
 end
 -- }}}
 
--- {{{ send()
-function send(self, data, more)
+-- {{{ ratchet.socketpad:send()
+function ratchet.socketpad:send(data, more)
     if more and (not data or data == '') then
-        flush(self)
+        self:flush()
         return
     end
 
     update_send_buffer(self, data)
 
     if not more or self.always_flush then
-        flush(self)
+        self:flush()
     end
 end
 -- }}}
 
--- {{{ flush()
-function flush(self)
+-- {{{ ratchet.socketpad:flush()
+function ratchet.socketpad:flush()
     local to_send = self.send_buffer
     self.send_buffer = ''
 
@@ -176,10 +175,12 @@ function flush(self)
 end
 -- }}}
 
--- {{{ close()
-function close(self)
+-- {{{ ratchet.socketpad:close()
+function ratchet.socketpad:close()
     self.socket:close()
 end
 -- }}}
+
+return ratchet.socketpad
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

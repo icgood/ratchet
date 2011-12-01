@@ -1,14 +1,13 @@
 
 require "ratchet"
 
-module("ratchet.bus.samestate_transaction", package.seeall)
-local class = getfenv()
-__index = class
+ratchet.bus.samestate_transaction = {}
+ratchet.bus.samestate_transaction.__index = ratchet.bus.samestate_transaction
 
--- {{{ new()
-function new(request)
+-- {{{ ratchet.bus.samestate_transaction.new()
+function ratchet.bus.samestate_transaction.new(request)
     local self = {}
-    setmetatable(self, class)
+    setmetatable(self, ratchet.bus.samestate_transaction)
 
     self.request = request
 
@@ -16,8 +15,8 @@ function new(request)
 end
 -- }}}
 
--- {{{ send_response()
-function send_response(self, res)
+-- {{{ ratchet.bus.samestate_transaction:send_response()
+function ratchet.bus.samestate_transaction:send_response(res)
     self.response = res
 
     if self.waiting_thread then
@@ -26,8 +25,8 @@ function send_response(self, res)
 end
 -- }}}
 
--- {{{ recv_response()
-function recv_response(self)
+-- {{{ ratchet.bus.samestate_transaction:recv_response()
+function ratchet.bus.samestate_transaction:recv_response()
     if self.response then
         return self.response
     else
@@ -38,5 +37,7 @@ function recv_response(self)
     end
 end
 -- }}}
+
+return ratchet.bus.samestate_transaction
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
