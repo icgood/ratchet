@@ -140,8 +140,8 @@ static int rtfd_close (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rtfd_rawread() */
-static int rtfd_rawread (lua_State *L)
+/* {{{ rtfd_read_reentry1() */
+static int rtfd_read_reentry1 (lua_State *L)
 {
 	lua_settop (L, 1);
 	int tfd = *timerfd_fd (L, 1);
@@ -169,10 +169,16 @@ static int rtfd_rawread (lua_State *L)
 }
 /* }}} */
 
-/* ---- Lua-implemented Functions ------------------------------------------- */
+/* {{{ rtfd_read() */
+static int rtfd_read (lua_State *L)
+{
+	(void) timerfd_fd (L, 1);
 
-/* {{{ read() */
-#define rtfd_read "return function (self, ...)\ncoroutine.yield('read', self)\nreturn self:rawread(...)\nend\n"
+	lua_pushliteral (L, "read");
+	lua_pushvalue (L, 1);
+
+	return lua_yieldk (L, 2, 0, rtfd_read_reentry1);
+}
 /* }}} */
 
 /* ---- Public Functions ---------------------------------------------------- */
@@ -199,14 +205,6 @@ int luaopen_ratchet_timerfd (lua_State *L)
 		{"settime", rtfd_settime},
 		{"gettime", rtfd_gettime},
 		{"close", rtfd_close},
-		/* Undocumented, helper methods. */
-		{"rawread", rtfd_rawread},
-		{NULL}
-	};
-
-	/* Methods in the ratchet.timerfd class implemented in Lua. */
-	static const struct luafunc luameths[] = {
-		/* Documented methods. */
 		{"read", rtfd_read},
 		/* Undocumented, helper methods. */
 		{NULL}
@@ -218,9 +216,7 @@ int luaopen_ratchet_timerfd (lua_State *L)
 	/* Set up the ratchet.timerfd class and metatables. */
 	luaL_newmetatable (L, "ratchet_timerfd_meta");
 	lua_newtable (L);
-	lua_pushvalue (L, -3);
-	luaL_setfuncs (L, meths, 1);
-	register_luafuncs (L, -1, luameths);
+	luaL_setfuncs (L, meths, 0);
 	lua_setfield (L, -2, "__index");
 	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);
