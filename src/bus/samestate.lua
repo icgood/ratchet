@@ -2,13 +2,14 @@
 require "ratchet"
 require "ratchet.bus.samestate_transaction"
 
-ratchet.bus.samestate = {}
-ratchet.bus.samestate.__index = ratchet.bus.samestate
+module("ratchet.bus.samestate", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ ratchet.bus.samestate.new()
-function ratchet.bus.samestate.new()
+-- {{{ new()
+function new()
     local self = {}
-    setmetatable(self, ratchet.bus.samestate)
+    setmetatable(self, class)
 
     self.queue = {}
 
@@ -29,15 +30,15 @@ local function wait_for_transaction(self)
 end
 -- }}}
 
--- {{{ ratchet.bus.samestate:recv_request()
-function ratchet.bus.samestate:recv_request()
+-- {{{ recv_request()
+function recv_request(self)
     local transaction = wait_for_transaction(self)
     return transaction, transaction and transaction.request
 end
 -- }}}
 
 -- {{{ send_or_queue_transaction()
-local function send_or_queue_transaction(self, data)
+function send_or_queue_transaction(self, data)
     if self.waiting_thread then
         ratchet.unpause(self.waiting_thread, data)
     else
@@ -46,8 +47,8 @@ local function send_or_queue_transaction(self, data)
 end
 -- }}}
 
--- {{{ ratchet.bus.samestate:send_request()
-function ratchet.bus.samestate:send_request(req)
+-- {{{ send_request()
+function send_request(self, req)
     local transaction = ratchet.bus.samestate_transaction.new(req)
 
     send_or_queue_transaction(self, transaction)

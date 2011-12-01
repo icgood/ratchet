@@ -1,15 +1,15 @@
 
-require "ratchet"
+require "package"
 local common = require "ratchet.http.common"
 
-ratchet.http = ratchet.http or {}
-ratchet.http.client = {}
-ratchet.http.client.__index = ratchet.http.client
+module("ratchet.http.client", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ ratchet.http.client.new()
-function ratchet.http.client.new(socket, send_size)
+-- {{{ new()
+function new(socket, send_size)
     local self = {}
-    setmetatable(self, ratchet.http.client)
+    setmetatable(self, class)
 
     self.socket = socket
 
@@ -93,13 +93,11 @@ local function parse_response(socket)
 end
 -- }}}
 
--- {{{ ratchet.http.client:query()
-function ratchet.http.client:query(command, uri, headers, data)
+-- {{{ query()
+function query(self, command, uri, headers, data)
     send_request(self, command, uri, headers, data)
     return parse_response(self.socket)
 end
 -- }}}
-
-return ratchet.http.client
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

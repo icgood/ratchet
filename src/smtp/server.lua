@@ -22,19 +22,19 @@ local function find_outside_quotes(haystack, needle, i)
 end
 -- }}}
 
+require "package"
 require "ratchet"
 local common = require "ratchet.smtp.common"
 
-ratchet.smtp = ratchet.smtp or {}
-ratchet.smtp.server = {}
-ratchet.smtp.server.__index = ratchet.smtp.server
-
+module("ratchet.smtp.server", package.seeall)
+local class = getfenv()
+__index = class
 local commands = {}
 
--- {{{ ratchet.smtp.server.new()
-function ratchet.smtp.server.new(socket, handlers, send_size)
+-- {{{ new()
+function new(socket, handlers, send_size)
     local self = {}
-    setmetatable(self, ratchet.smtp.server)
+    setmetatable(self, class)
 
     self.handlers = handlers
     self.io = common.smtp_io.new(socket, send_size)
@@ -106,8 +106,8 @@ local function get_message_data(self)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:close()
-function ratchet.smtp.server:close()
+-- {{{ close()
+function close(self)
     if self.handlers.CLOSE then
         self.handlers:CLOSE()
     end
@@ -117,8 +117,8 @@ end
 
 -- {{{ Generic error responses
 
--- {{{ ratchet.smtp.server:unknown_command()
-function ratchet.smtp.server:unknown_command(command, arg, message)
+-- {{{ unknown_command()
+function unknown_command(self, command, arg, message)
     local reply = {
         code = "500",
         message = message or "Syntax error, command unrecognized",
@@ -129,8 +129,8 @@ function ratchet.smtp.server:unknown_command(command, arg, message)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:unknown_parameter()
-function ratchet.smtp.server:unknown_parameter(command, arg, message)
+-- {{{ unknown_parameter()
+function unknown_parameter(self, command, arg, message)
     local reply = {
         code = "504",
         message = message or "Command parameter not implemented",
@@ -141,8 +141,8 @@ function ratchet.smtp.server:unknown_parameter(command, arg, message)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:bad_sequence()
-function ratchet.smtp.server:bad_sequence(command, arg, message)
+-- {{{ bad_sequence()
+function bad_sequence(self, command, arg, message)
     local reply = {
         code = "503",
         message = message or "Bad sequence of commands",
@@ -153,8 +153,8 @@ function ratchet.smtp.server:bad_sequence(command, arg, message)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:bad_arguments()
-function ratchet.smtp.server:bad_arguments(command, arg, message)
+-- {{{ bad_arguments()
+function bad_arguments(self, command, arg, message)
     local reply = {
         code = "501",
         message = message or "Syntax error in parameters or arguments",
@@ -480,8 +480,8 @@ local function custom_command(self, command, arg)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:handle()
-function ratchet.smtp.server:handle()
+-- {{{ handle()
+function handle(self)
     commands.BANNER(self)
 
     repeat
@@ -496,7 +496,5 @@ function ratchet.smtp.server:handle()
     until command == "QUIT"
 end
 -- }}}
-
-return ratchet.smtp.server
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

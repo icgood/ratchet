@@ -1,15 +1,15 @@
 
-require "ratchet"
+require "package"
 local common = require "ratchet.smtp.common"
 
-ratchet.smtp = ratchet.smtp or {}
-ratchet.smtp.client = {}
-ratchet.smtp.client.__index = ratchet.smtp.client
+module("ratchet.smtp.client", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ratchet.smtp.client.new()
-function ratchet.smtp.client.new(socket, send_size, iter_size)
+-- {{{ new()
+function new(socket, send_size, iter_size)
     local self = {}
-    setmetatable(self, ratchet.smtp.client)
+    setmetatable(self, class)
 
     self.io = common.smtp_io.new(socket, send_size)
     self.iter_size = iter_size
@@ -34,8 +34,8 @@ local function recv_batch(self)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:get_banner()
-function ratchet.smtp.client:get_banner()
+-- {{{ get_banner()
+function get_banner(self)
     local banner = common.smtp_reply.new("[BANNER]")
     table.insert(self.recv_queue, banner)
 
@@ -45,8 +45,8 @@ function ratchet.smtp.client:get_banner()
 end
 -- }}}
 
--- {{{ratchet.smtp.client:ehlo()
-function ratchet.smtp.client:ehlo(ehlo_as)
+-- {{{ ehlo()
+function ehlo(self, ehlo_as)
     local ehlo = common.smtp_reply.new("EHLO")
     table.insert(self.recv_queue, ehlo)
 
@@ -63,8 +63,8 @@ function ratchet.smtp.client:ehlo(ehlo_as)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:helo()
-function ratchet.smtp.client:helo(helo_as)
+-- {{{ helo()
+function helo(self, helo_as)
     local ehlo = common.smtp_reply.new("HELO")
     table.insert(self.recv_queue, ehlo)
 
@@ -77,8 +77,8 @@ function ratchet.smtp.client:helo(helo_as)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:starttls()
-function ratchet.smtp.client:starttls()
+-- {{{ starttls()
+function starttls(self)
     local starttls = common.smtp_reply.new("STARTTLS")
     table.insert(self.recv_queue, starttls)
 
@@ -91,8 +91,8 @@ function ratchet.smtp.client:starttls()
 end
 -- }}}
 
--- {{{ratchet.smtp.client:mailfrom()
-function ratchet.smtp.client:mailfrom(address, data_size)
+-- {{{ mailfrom()
+function mailfrom(self, address, data_size)
     local mailfrom = common.smtp_reply.new("MAIL FROM")
     table.insert(self.recv_queue, mailfrom)
 
@@ -110,8 +110,8 @@ function ratchet.smtp.client:mailfrom(address, data_size)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:rcptto()
-function ratchet.smtp.client:rcptto(address)
+-- {{{ rcptto()
+function rcptto(self, address)
     local rcptto = common.smtp_reply.new("RCPT TO")
     table.insert(self.recv_queue, rcptto)
 
@@ -126,8 +126,8 @@ function ratchet.smtp.client:rcptto(address)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:data()
-function ratchet.smtp.client:data()
+-- {{{ data()
+function data(self)
     local data = common.smtp_reply.new("DATA")
     table.insert(self.recv_queue, data)
 
@@ -140,8 +140,8 @@ function ratchet.smtp.client:data()
 end
 -- }}}
 
--- {{{ratchet.smtp.client:send_data()
-function ratchet.smtp.client:send_data(data)
+-- {{{ send_data()
+function send_data(self, data)
     local send_data = common.smtp_reply.new("[MESSAGE CONTENTS]")
     table.insert(self.recv_queue, send_data)
 
@@ -154,8 +154,8 @@ function ratchet.smtp.client:send_data(data)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:send_empty_data()
-function ratchet.smtp.client:send_empty_data()
+-- {{{ send_empty_data()
+function send_empty_data(self)
     local send_data = common.smtp_reply.new("[MESSAGE CONTENTS]")
     table.insert(self.recv_queue, send_data)
 
@@ -167,8 +167,8 @@ function ratchet.smtp.client:send_empty_data()
 end
 -- }}}
 
--- {{{ratchet.smtp.client:custom_command()
-function ratchet.smtp.client:custom_command(command, arg)
+-- {{{ custom_command()
+function custom_command(self, command, arg)
     local custom = common.smtp_reply.new(command:upper())
     table.insert(self.recv_queue, custom)
 
@@ -183,8 +183,8 @@ function ratchet.smtp.client:custom_command(command, arg)
 end
 -- }}}
 
--- {{{ratchet.smtp.client:rset()
-function ratchet.smtp.client:rset()
+-- {{{ rset()
+function rset(self)
     local rset = common.smtp_reply.new("RSET")
     table.insert(self.recv_queue, rset)
 
@@ -197,8 +197,8 @@ function ratchet.smtp.client:rset()
 end
 -- }}}
 
--- {{{ratchet.smtp.client:quit()
-function ratchet.smtp.client:quit()
+-- {{{ quit()
+function quit(self)
     local quit = common.smtp_reply.new("QUIT")
     table.insert(self.recv_queue, quit)
 
@@ -211,7 +211,5 @@ function ratchet.smtp.client:quit()
     return quit
 end
 -- }}}
-
-return ratchet.smtp.client
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

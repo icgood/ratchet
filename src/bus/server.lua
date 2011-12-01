@@ -3,13 +3,14 @@ require "ratchet"
 require "ratchet.socketpad"
 require "ratchet.bus.server_transaction"
 
-ratchet.bus.server = {}
-ratchet.bus.server.__index = ratchet.bus.server
+module("ratchet.bus.server", package.seeall)
+local class = getfenv()
+__index = class
 
--- {{{ ratchet.bus.server.new()
-function ratchet.bus.server.new(socket, request_from_bus, response_to_bus)
+-- {{{ new()
+function new(socket, request_from_bus, response_to_bus)
     local self = {}
-    setmetatable(self, ratchet.bus.server)
+    setmetatable(self, class)
 
     self.request_from_bus = request_from_bus or tostring
     self.response_to_bus = response_to_bus or tostring
@@ -135,8 +136,8 @@ local function check_for_full_requests(self)
 end
 -- }}}
 
--- {{{ ratchet.bus.server:recv_request()
-function ratchet.bus.server:recv_request()
+-- {{{ recv_request()
+function recv_request(self)
     local transaction, request
 
     repeat
@@ -151,7 +152,5 @@ function ratchet.bus.server:recv_request()
     return transaction, request
 end
 -- }}}
-
-return ratchet.bus.server
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
