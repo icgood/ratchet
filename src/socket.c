@@ -86,7 +86,7 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 /* {{{ call_tracer() */
 static int call_tracer (lua_State *L, int index, const char *type, int args)
 {
-	lua_getuservalue (L, index);
+	lua_getfenv (L, index);
 	lua_getfield (L, -1, "tracer");
 	if (!lua_toboolean (L, -1))
 	{
@@ -127,7 +127,7 @@ static int rsock_new (lua_State *L)
 	lua_createtable (L, 0, 1);
 	lua_pushnumber (L, (lua_Number) -1.0);
 	lua_setfield (L, -2, "timeout");
-	lua_setuservalue (L, -2);
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -164,12 +164,12 @@ static int rsock_new_pair (lua_State *L)
 	lua_createtable (L, 0, 1);
 	lua_pushnumber (L, (lua_Number) -1.0);
 	lua_setfield (L, -2, "timeout");
-	lua_setuservalue (L, -2);
+	lua_setfenv (L, -2);
 
 	lua_createtable (L, 0, 1);
 	lua_pushnumber (L, (lua_Number) -1.0);
 	lua_setfield (L, -2, "timeout");
-	lua_setuservalue (L, -3);
+	lua_setfenv (L, -3);
 
 	return 2;
 }
@@ -192,7 +192,7 @@ static int rsock_from_fd (lua_State *L)
 	lua_createtable (L, 0, 1);
 	lua_pushnumber (L, (lua_Number) -1.0);
 	lua_setfield (L, -2, "timeout");
-	lua_setuservalue (L, -2);
+	lua_setfenv (L, -2);
 
 	return 1;
 }
@@ -572,7 +572,7 @@ static int rsock_get_timeout (lua_State *L)
 {
 	(void) socket_fd (L, 1);
 
-	lua_getuservalue (L, 1);
+	lua_getfenv (L, 1);
 	lua_getfield (L, -1, "timeout");
 	return 1;
 }
@@ -584,7 +584,7 @@ static int rsock_set_timeout (lua_State *L)
 	(void) socket_fd (L, 1);
 	luaL_checknumber (L, 2);
 
-	lua_getuservalue (L, 1);
+	lua_getfenv (L, 1);
 	lua_pushvalue (L, 2);
 	lua_setfield (L, -2, "timeout");
 
@@ -622,7 +622,7 @@ static int rsock_bind (lua_State *L)
 	int sockfd = socket_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
-	socklen_t addrlen = (socklen_t) lua_rawlen (L, 2);
+	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
 
 	if (addr->sa_family == AF_UNIX)
 		unlink (((struct sockaddr_un *) addr)->sun_path);
@@ -701,7 +701,7 @@ static int rsock_set_tracer (lua_State *L)
 	(void) socket_fd (L, 1);
 	lua_settop (L, 2);
 
-	lua_getuservalue (L, 1);
+	lua_getfenv (L, 1);
 	lua_pushvalue (L, 2);
 	lua_setfield (L, -2, "tracer");
 
@@ -716,7 +716,7 @@ static int rsock_rawconnect (lua_State *L)
 	int sockfd = socket_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
-	socklen_t addrlen = (socklen_t) lua_rawlen (L, 2);
+	socklen_t addrlen = (socklen_t) lua_objlen (L, 2);
 
 	int ret = connect (sockfd, addr, addrlen);
 	if (ret < 0)
@@ -1052,19 +1052,19 @@ int luaopen_ratchet_socket (lua_State *L)
 	};
 
 	/* Set up the ratchet.socket namespace functions. */
-	luaL_newlib (L, empty);
+	luaI_openlib (L, "ratchet.socket", empty, 0);
 	lua_pushvalue (L, -1);
-	luaL_setfuncs (L, funcs, 1);
+	luaI_openlib (L, NULL, funcs, 1);
 	register_luafuncs (L, -1, luafuncs);
 
 	/* Set up the ratchet.socket class and metatables. */
 	luaL_newmetatable (L, "ratchet_socket_meta");
 	lua_newtable (L);
 	lua_pushvalue (L, -3);
-	luaL_setfuncs (L, meths, 1);
+	luaI_openlib (L, NULL, meths, 1);
 	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "methods");
-	luaL_setfuncs (L, metameths, 0);
+	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
 
 	return 1;

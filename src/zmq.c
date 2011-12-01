@@ -430,18 +430,17 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 	};
 
 	/* Set up the ratchet.zmqsocket namespace functions. */
-	luaL_newlibtable (L, funcs);
 	push_new_zmq_context (L);
-	luaL_setfuncs (L, funcs, 1);
+	luaI_openlib (L, "ratchet.zmqsocket", funcs, 1);
 
 	/* Set up the ratchet.zmqsocket class and metatables. */
 	luaL_newmetatable (L, "ratchet_zmqsocket_meta");
 	lua_newtable (L);
 	lua_pushvalue (L, -3);
-	luaL_setfuncs (L, meths, 1);
+	luaI_openlib (L, NULL, meths, 1);
 	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "__index");
-	luaL_setfuncs (L, metameths, 0);
+	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
 
 	return 1;

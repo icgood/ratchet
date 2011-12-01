@@ -213,16 +213,16 @@ int luaopen_ratchet_timerfd (lua_State *L)
 	};
 
 	/* Set up the ratchet.timerfd namespace functions. */
-	luaL_newlib (L, funcs);
+	luaI_openlib (L, "ratchet.timerfd", funcs, 0);
 
 	/* Set up the ratchet.timerfd class and metatables. */
 	luaL_newmetatable (L, "ratchet_timerfd_meta");
 	lua_newtable (L);
 	lua_pushvalue (L, -3);
-	luaL_setfuncs (L, meths, 1);
+	luaI_openlib (L, NULL, meths, 1);
 	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "__index");
-	luaL_setfuncs (L, metameths, 0);
+	luaI_openlib (L, NULL, metameths, 0);
 	lua_pop (L, 1);
 
 	return 1;
