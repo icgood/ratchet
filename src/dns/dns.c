@@ -494,6 +494,83 @@ static const char *ensure_arpa_string (lua_State *L, int index)
 }
 /* }}} */
 
+/* {{{ push_dns_resolver_table() */
+static int push_dns_resolver_table (lua_State *L, size_t num, int resconf_idx, int hosts_idx, int timeout_idx)
+{
+	lua_createtable (L, (int) num, 0);
+
+	size_t i;
+	for (i=1; i<=num; i++)
+	{
+		/* Construct a new ratchet.dns object. */
+		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
+		lua_getfield (L, -1, "new");
+		lua_pushvalue (L, resconf_idx);
+		lua_pushvalue (L, hosts_idx);
+		lua_pushvalue (L, timeout_idx);
+		lua_call (L, 3, 1);
+
+		lua_rawseti (L, -3, i);
+		lua_pop (L, 1);
+	}
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ submit_dns_queries() */
+static int submit_dns_queries (lua_State *L, size_t num, int res_idx, int data_idx, int types_idx)
+{
+	size_t i;
+
+	for (i=1; i<=num; i++)
+	{
+		lua_rawgeti (L, res_idx, i);
+
+		lua_getfield (L, -1, "submit_query");
+		lua_pushvalue (L, -2);
+		lua_pushvalue (L, data_idx);
+		lua_rawgeti (L, types_idx, i);
+		lua_call (L, 3, 0);
+
+		lua_pop (L, 1);
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* ---- Member Functions ---------------------------------------------------- */
+
+/* {{{ mydns_new() */
+static int mydns_new (lua_State *L)
+{
+	lua_settop (L, 3);
+	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, RATCHET_DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
+	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, RATCHET_DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
+	lua_Number expire_timeout = luaL_optnumber (L, 3, (lua_Number) 10.0);
+
+	struct dns_resolver **new = (struct dns_resolver **) lua_newuserdata (L, sizeof (struct dns_resolver *));
+	int error = 0;
+
+	*new = dns_res_open (resconf, hosts, dns_hints_mortal (dns_hints_local (resconf, &error)), NULL, dns_opts (), &error);
+	if (!*new)
+		return luaL_error (L, "dns_res_open: %s", dns_strerror (error));
+
+	luaL_getmetatable (L, "ratchet_dns_meta");
+	lua_setmetatable (L, -2);
+
+	lua_createtable (L, 0, 2);
+	lua_pushinteger (L, 0);
+	lua_setfield (L, -2, "tries");
+	lua_pushnumber (L, expire_timeout);
+	lua_setfield (L, -2, "expire_timeout");
+	lua_setuservalue (L, -2);
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ mydns_mx_get_i() */
 static int mydns_mx_get_i (lua_State *L)
 {
@@ -531,37 +608,6 @@ static int mydns_mx_get_i (lua_State *L)
 	lua_pop (L, 2);
 
 	return 0;
-}
-/* }}} */
-
-/* ---- Member Functions ---------------------------------------------------- */
-
-/* {{{ mydns_new() */
-static int mydns_new (lua_State *L)
-{
-	lua_settop (L, 3);
-	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, RATCHET_DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
-	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, RATCHET_DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
-	lua_Number expire_timeout = luaL_optnumber (L, 3, (lua_Number) 10.0);
-
-	struct dns_resolver **new = (struct dns_resolver **) lua_newuserdata (L, sizeof (struct dns_resolver *));
-	int error = 0;
-
-	*new = dns_res_open (resconf, hosts, dns_hints_mortal (dns_hints_local (resconf, &error)), NULL, dns_opts (), &error);
-	if (!*new)
-		return handle_error_str (L, "dns_res_open: %s", dns_strerror (error));
-
-	luaL_getmetatable (L, "ratchet_dns_meta");
-	lua_setmetatable (L, -2);
-
-	lua_createtable (L, 0, 2);
-	lua_pushinteger (L, 0);
-	lua_setfield (L, -2, "tries");
-	lua_pushnumber (L, expire_timeout);
-	lua_setfield (L, -2, "expire_timeout");
-	lua_setuservalue (L, -2);
-
-	return 1;
 }
 /* }}} */
 
@@ -653,25 +699,99 @@ static int mydns_query (lua_State *L)
 }
 /* }}} */
 
+/* {{{ mydns_query_all_reentry1() */
+static int mydns_query_all_reentry1 (lua_State *L)
+{
+	size_t num = lua_rawlen (L, 1);
+	size_t i;
+
+	int tries = 0, not_done = 0;
+	if (lua_getctx (L, &tries) == LUA_YIELD)
+		lua_pop (L, 1);
+
+	lua_pushliteral (L, "multi");
+	lua_newtable (L);
+
+	for (i=1; i<=num; i++)
+	{
+		lua_rawgeti (L, 1, i);
+		if (!lua_toboolean (L, -1))
+		{
+			lua_pop (L, 1);
+			continue;
+		}
+
+		lua_getfield (L, -1, "is_query_done");
+		lua_pushvalue (L, -2);
+		lua_call (L, 1, 1);
+		int is_query_done = lua_toboolean (L, -1);
+		lua_pop (L, 1);
+
+		if (is_query_done)
+		{
+			lua_getfield (L, -1, "parse_answer");
+			lua_pushvalue (L, -2);
+			lua_pushvalue (L, 2);
+			lua_rawgeti (L, 3, i);
+			lua_call (L, 3, 2);
+
+			/* Set the error to answers[type.."_error"]. */
+			lua_rawgeti (L, 3, i);
+			lua_pushliteral (L, "_error");
+			lua_concat (L, 2);
+			lua_pushvalue (L, -2);
+			lua_rawset (L, 4);
+
+			/* Set the result to answers[type]. */
+			lua_rawgeti (L, 3, i);
+			lua_pushvalue (L, -3);
+			lua_rawset (L, 4);
+
+			lua_pop (L, 3);
+			
+			lua_pushboolean (L, 0);
+			lua_rawseti (L, 1, i);
+		}
+		else
+			lua_rawseti (L, -2, ++not_done);
+	}
+
+	lua_pushnil (L);
+	lua_pushnumber (L, (lua_Number) DNS_GET_POLL_TIMEOUT (tries));
+
+	if (not_done > 0)
+		return lua_yieldk (L, 4, tries+1, mydns_query_all_reentry1);
+	else
+	{
+		lua_pop (L, 4);
+		return 1;
+	}
+}
+/* }}} */
+
 /* {{{ mydns_query_all() */
-#define mydns_query_all "return function (data, types, ...)\n" \
-	"	local dnsobjs, answers = {}, {}\n" \
-	"	if not types then\n" \
-	"		types = ratchet.dns.default_types\n" \
-	"	end\n" \
-	"	for i, t in ipairs(types) do\n" \
-	"		local dnsobj = ratchet.dns.new(...)\n" \
-	"		rawset(dnsobjs, t, dnsobj)\n" \
-	"		dnsobj:submit_query(data, t)\n" \
-	"	end\n" \
-	"	for t, dnsobj in pairs(dnsobjs) do\n" \
-	"		while not dnsobj:is_query_done() do\n" \
-	"			coroutine.yield('read', dnsobj)\n" \
-	"		end\n" \
-	"		answers[t], answers[t..'_error'] = dnsobj:parse_answer(data, t)\n" \
-	"	end\n" \
-	"	return answers\n" \
-	"end\n"
+static int mydns_query_all (lua_State *L)
+{
+	luaL_checkstring (L, 1);	/* Query data. */
+
+	if (lua_type (L, 2) != LUA_TTABLE)
+	{
+		lua_getfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
+		lua_replace (L, 2);
+	}
+	lua_settop (L, 5);
+
+	size_t num_types = lua_rawlen (L, 2);
+
+	push_dns_resolver_table (L, num_types, 3, 4, 5);
+	lua_insert (L, 1);
+	lua_settop (L, 3);
+	lua_createtable (L, 0, num_types);	/* Answer table. */
+
+	submit_dns_queries (L, num_types, 1, 2, 3);
+
+	return mydns_query_all_reentry1 (L);
+}
 /* }}} */
 
 /* {{{ mydns_submit_query() */
@@ -792,16 +912,9 @@ int luaopen_ratchet_dns (lua_State *L)
 	const luaL_Reg funcs[] = {
 		/* Documented methods. */
 		{"query", mydns_query},
-		/* Undocumented, helper methods. */
-		{"new", mydns_new},
-		{NULL}
-	};
-
-	/* Static functions implemented in Lua in the ratchet.dns namespace. */
-	const struct luafunc luafuncs[] = {
-		/* Documented methods. */
 		{"query_all", mydns_query_all},
 		/* Undocumented, helper methods. */
+		{"new", mydns_new},
 		{NULL}
 	};
 
@@ -833,7 +946,6 @@ int luaopen_ratchet_dns (lua_State *L)
 
 	/* Set up the ratchet.dns namespace functions. */
 	luaL_newlib (L, funcs);
-	register_luafuncs (L, -1, luafuncs);
 	lua_pushvalue (L, -1);
 	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
 
@@ -843,8 +955,8 @@ int luaopen_ratchet_dns (lua_State *L)
 	lua_rawseti (L, -2, 1);
 	lua_pushliteral (L, "ipv4");
 	lua_rawseti (L, -2, 2);
-	lua_setfield (L, -2, "default_types");
-	//lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
+	//lua_setfield (L, -2, "default_types");
+	lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
 
 	/* Load the resolv_conf and hosts sub-modules. */
 	luaL_requiref (L, "ratchet.dns.resolv_conf", luaopen_ratchet_dns_resolv_conf, 0);
