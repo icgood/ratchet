@@ -10,10 +10,6 @@ if HAVE_ZMQ
 allsources += zmq.c
 endif
 
-if HAVE_DNS
-allsources += dns.c
-endif
-
 if HAVE_TIMERFD
 allsources += timerfd.c
 endif
@@ -31,7 +27,7 @@ noinst_LTLIBRARIES = libratchet.la
 endif
 
 if HAVE_DNS
-libratchet_la_LIBADD = libdns/libdns.la
+libratchet_la_LIBADD = dns/libdns.la
 endif
 libratchet_la_CFLAGS = -std=gnu99 -Wall -Wno-unused-function -Wno-unused-label
 libratchet_la_LDFLAGS = 
@@ -56,7 +52,7 @@ SUBDIRS += socketpad
 endif
 
 if HAVE_DNS
-SUBDIRS += libdns
+SUBDIRS += dns
 endif
 
 if ENABLE_HTTP

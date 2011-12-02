@@ -285,6 +285,7 @@ AC_CONFIG_FILES([Makefile
 		 src/bus/Makefile
 	         src/smtp/Makefile
 		 src/socketpad/Makefile
-	         src/libdns/Makefile
+	         src/dns/Makefile
+	         src/dns/libdns/Makefile
 	         test/Makefile])
 AC_OUTPUT

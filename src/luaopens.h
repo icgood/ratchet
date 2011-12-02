@@ -3,7 +3,8 @@
 
 #include <lua.h>
 
-int luaopen_ratchet_dns (lua_State *L);
+#include "dns/dns.h"
+
 int luaopen_ratchet (lua_State *L);
 int luaopen_ratchet_socket (lua_State *L);
 int luaopen_ratchet_ssl (lua_State *L);
