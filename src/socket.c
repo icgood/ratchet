@@ -36,7 +36,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "luaopens.h"
+#include "ratchet.h"
 #include "misc.h"
 #include "sockopt.h"
 

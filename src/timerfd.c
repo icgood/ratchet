@@ -32,7 +32,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "luaopens.h"
+#include "ratchet.h"
 #include "misc.h"
 
 #define timerfd_fd(L, i) (int *) luaL_checkudata (L, i, "ratchet_timerfd_meta")

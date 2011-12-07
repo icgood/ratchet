@@ -30,7 +30,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#include "luaopens.h"
+#include "ratchet.h"
 #include "misc.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))

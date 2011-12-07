@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <zmq.h>
 
-#include "luaopens.h"
+#include "ratchet.h"
 #include "misc.h"
 
 #ifndef RATCHET_ZMQ_IO_THREADS

@@ -1,6 +1,5 @@
 allsources = ratchet.h ratchet.c \
-	     misc.h misc.c \
-	     luaopens.h
+	     misc.h misc.c
 
 if HAVE_SOCKET
 allsources += sockopt.h sockopt.c socket.c

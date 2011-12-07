@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 
-#include "luaopens.h"
+#include "ratchet.h"
 #include "misc.h"
 #include "dns.h"
 #include "libdns/dns.h"
