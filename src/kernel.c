@@ -33,10 +33,8 @@
 #include "ratchet.h"
 #include "misc.h"
 
-#define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
+#define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_kernel_meta"))
 #define get_thread(L, index, s) luaL_checktype (L, index, LUA_TTHREAD); lua_State *s = lua_tothread (L, index)
-
-const char *ratchet_version (void);
 
 /* {{{ return_first_upvalue() */
 static int return_first_upvalue (lua_State *L)
@@ -288,15 +286,15 @@ static void multi_event_triggered (int fd, short event, void *arg)
 
 /* ---- Namespace Functions ------------------------------------------------- */
 
-/* {{{ ratchet_new() */
-static int ratchet_new (lua_State *L)
+/* {{{ rkernel_new() */
+static int rkernel_new (lua_State *L)
 {
 	struct event_base **new = (struct event_base **) lua_newuserdata (L, sizeof (struct event_base *));
 	*new = event_base_new ();
 	if (!*new)
 		return luaL_error (L, "failed to create event_base structure");
 
-	luaL_getmetatable (L, "ratchet_meta");
+	luaL_getmetatable (L, "ratchet_kernel_meta");
 	lua_setmetatable (L, -2);
 
 	/* Set up persistance table. */
@@ -307,16 +305,16 @@ static int ratchet_new (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_stackdump() */
-static int ratchet_stackdump (lua_State *L)
+/* {{{ rkernel_stackdump() */
+static int rkernel_stackdump (lua_State *L)
 {
 	stackdump (L);
 	return 0;
 }
 /* }}} */
 
-/* {{{ ratchet_block_on() */
-static int ratchet_block_on (lua_State *L)
+/* {{{ rkernel_block_on() */
+static int rkernel_block_on (lua_State *L)
 {
 	lua_pushliteral (L, "multi");
 	lua_insert (L, 1);
@@ -328,8 +326,8 @@ static int ratchet_block_on (lua_State *L)
 
 /* ---- Member Functions ---------------------------------------------------- */
 
-/* {{{ ratchet_gc() */
-static int ratchet_gc (lua_State *L)
+/* {{{ rkernel_gc() */
+static int rkernel_gc (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
 	event_base_free (e_b);
@@ -338,18 +336,18 @@ static int ratchet_gc (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_event_gc() */
-static int ratchet_event_gc (lua_State *L)
+/* {{{ rkernel_event_gc() */
+static int rkernel_event_gc (lua_State *L)
 {
-	struct event *ev = (struct event *) luaL_checkudata (L, 1, "ratchet_event_internal_meta");
+	struct event *ev = (struct event *) luaL_checkudata (L, 1, "ratchet_kernel_event_internal_meta");
 	event_del (ev);
 
 	return 0;
 }
 /* }}} */
 
-/* {{{ ratchet_get_method() */
-static int ratchet_get_method (lua_State *L)
+/* {{{ rkernel_get_method() */
+static int rkernel_get_method (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
 	lua_pushstring (L, event_base_get_method (e_b));
@@ -357,8 +355,8 @@ static int ratchet_get_method (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_set_error_handler() */
-static int ratchet_set_error_handler (lua_State *L)
+/* {{{ rkernel_set_error_handler() */
+static int rkernel_set_error_handler (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	luaL_checkany (L, 2);
@@ -401,8 +399,8 @@ static int ratchet_set_error_handler (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_attach() */
-static int ratchet_attach (lua_State *L)
+/* {{{ rkernel_attach() */
+static int rkernel_attach (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	luaL_checkany (L, 2);	/* Function or callable object. */
@@ -421,8 +419,8 @@ static int ratchet_attach (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_attach_background() */
-static int ratchet_attach_background (lua_State *L)
+/* {{{ rkernel_attach_background() */
+static int rkernel_attach_background (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	luaL_checkany (L, 2);	/* Function or callable object. */
@@ -441,8 +439,8 @@ static int ratchet_attach_background (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_wait_all() */
-static int ratchet_wait_all (lua_State *L)
+/* {{{ rkernel_wait_all() */
+static int rkernel_wait_all (lua_State *L)
 {
 	int i;
 	(void) get_event_base (L, 1);
@@ -481,8 +479,8 @@ static int ratchet_wait_all (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_thread_space() */
-static int ratchet_thread_space (lua_State *L)
+/* {{{ rkernel_thread_space() */
+static int rkernel_thread_space (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	lua_settop (L, 2);
@@ -519,8 +517,8 @@ static int ratchet_thread_space (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_running_thread() */
-static int ratchet_running_thread (lua_State *L)
+/* {{{ rkernel_running_thread() */
+static int rkernel_running_thread (lua_State *L)
 {
 	if (lua_pushthread (L))
 		lua_pushnil (L);
@@ -528,8 +526,8 @@ static int ratchet_running_thread (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_timer() */
-static int ratchet_timer (lua_State *L)
+/* {{{ rkernel_timer() */
+static int rkernel_timer (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	if (lua_pushthread (L))
@@ -544,8 +542,8 @@ static int ratchet_timer (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_pause() */
-static int ratchet_pause (lua_State *L)
+/* {{{ rkernel_pause() */
+static int rkernel_pause (lua_State *L)
 {
 	if (lua_pushthread (L))
 		return luaL_error (L, "pause cannot be called from main thread");
@@ -555,8 +553,8 @@ static int ratchet_pause (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_unpause() */
-static int ratchet_unpause (lua_State *L)
+/* {{{ rkernel_unpause() */
+static int rkernel_unpause (lua_State *L)
 {
 	get_thread (L, 1, L1);
 
@@ -582,8 +580,8 @@ static int ratchet_unpause (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_loop() */
-static int ratchet_loop (lua_State *L)
+/* {{{ rkernel_loop() */
+static int rkernel_loop (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
 	lua_settop (L, 1);
@@ -639,8 +637,8 @@ static int ratchet_loop (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_start_threads_ready() */
-static int ratchet_start_threads_ready (lua_State *L)
+/* {{{ rkernel_start_threads_ready() */
+static int rkernel_start_threads_ready (lua_State *L)
 {
 	int some_ready = 0;
 
@@ -676,8 +674,8 @@ static int ratchet_start_threads_ready (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_start_threads_done_waiting() */
-static int ratchet_start_threads_done_waiting (lua_State *L)
+/* {{{ rkernel_start_threads_done_waiting() */
+static int rkernel_start_threads_done_waiting (lua_State *L)
 {
 	int some_ready = 0;
 
@@ -716,8 +714,8 @@ static int ratchet_start_threads_done_waiting (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_run_thread() */
-static int ratchet_run_thread (lua_State *L)
+/* {{{ rkernel_run_thread() */
+static int rkernel_run_thread (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
@@ -756,8 +754,8 @@ static int ratchet_run_thread (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_yield_thread() */
-static int ratchet_yield_thread (lua_State *L)
+/* {{{ rkernel_yield_thread() */
+static int rkernel_yield_thread (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
@@ -799,8 +797,8 @@ static int ratchet_yield_thread (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_handle_thread_error() */
-static int ratchet_handle_thread_error (lua_State *L)
+/* {{{ rkernel_handle_thread_error() */
+static int rkernel_handle_thread_error (lua_State *L)
 {
 	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
@@ -833,8 +831,8 @@ static int ratchet_handle_thread_error (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_wait_for_write() */
-static int ratchet_wait_for_write (lua_State *L)
+/* {{{ rkernel_wait_for_write() */
+static int rkernel_wait_for_write (lua_State *L)
 {
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
@@ -861,7 +859,7 @@ static int ratchet_wait_for_write (lua_State *L)
 
 	/* Build event. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	luaL_getmetatable (L1, "ratchet_kernel_event_internal_meta");
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
@@ -873,8 +871,8 @@ static int ratchet_wait_for_write (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_wait_for_read() */
-static int ratchet_wait_for_read (lua_State *L)
+/* {{{ rkernel_wait_for_read() */
+static int rkernel_wait_for_read (lua_State *L)
 {
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
@@ -901,7 +899,7 @@ static int ratchet_wait_for_read (lua_State *L)
 
 	/* Build event. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	luaL_getmetatable (L1, "ratchet_kernel_event_internal_meta");
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
@@ -913,8 +911,8 @@ static int ratchet_wait_for_read (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_wait_for_timeout() */
-static int ratchet_wait_for_timeout (lua_State *L)
+/* {{{ rkernel_wait_for_timeout() */
+static int rkernel_wait_for_timeout (lua_State *L)
 {
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
@@ -932,8 +930,8 @@ static int ratchet_wait_for_timeout (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_wait_for_multi() */
-static int ratchet_wait_for_multi (lua_State *L)
+/* {{{ rkernel_wait_for_multi() */
+static int rkernel_wait_for_multi (lua_State *L)
 {
 	/* Gather args into usable data. */
 	struct event_base *e_b = get_event_base (L, 1);
@@ -957,7 +955,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 	/* Create timeout event. */
 	struct event *timeout = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	luaL_getmetatable (L1, "ratchet_kernel_event_internal_meta");
 	lua_setmetatable (L1, -2);
 	lua_rawseti (L1, -2, 1);
 
@@ -978,7 +976,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 		/* Build event. */
 		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-		luaL_getmetatable (L1, "ratchet_event_internal_meta");
+		luaL_getmetatable (L1, "ratchet_kernel_event_internal_meta");
 		lua_setmetatable (L1, -2);
 		lua_rawseti (L1, -2, i+1);
 
@@ -999,7 +997,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 		/* Build event. */
 		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-		luaL_getmetatable (L1, "ratchet_event_internal_meta");
+		luaL_getmetatable (L1, "ratchet_kernel_event_internal_meta");
 		lua_setmetatable (L1, -2);
 		lua_rawseti (L1, -2, nread+i+1);
 
@@ -1015,57 +1013,57 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 /* ---- Public Functions ---------------------------------------------------- */
 
-/* {{{ luaopen_ratchet() */
-int luaopen_ratchet (lua_State *L)
+/* {{{ luaopen_ratchet_kernel() */
+int luaopen_ratchet_kernel (lua_State *L)
 {
 	static const luaL_Reg funcs[] = {
-		{"new", ratchet_new},
-		{"stackdump", ratchet_stackdump},
-		{"pause", ratchet_pause},
-		{"unpause", ratchet_unpause},
-		{"running_thread", ratchet_running_thread},
-		{"block_on", ratchet_block_on},
+		{"new", rkernel_new},
+		{"stackdump", rkernel_stackdump},
+		{"pause", rkernel_pause},
+		{"unpause", rkernel_unpause},
+		{"running_thread", rkernel_running_thread},
+		{"block_on", rkernel_block_on},
 		{NULL}
 	};
 
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
-		{"get_method", ratchet_get_method},
-		{"set_error_handler", ratchet_set_error_handler},
-		{"attach", ratchet_attach},
-		{"attach_background", ratchet_attach_background},
-		{"wait_all", ratchet_wait_all},
-		{"thread_space", ratchet_thread_space},
-		{"timer", ratchet_timer},
-		{"loop", ratchet_loop},
+		{"get_method", rkernel_get_method},
+		{"set_error_handler", rkernel_set_error_handler},
+		{"attach", rkernel_attach},
+		{"attach_background", rkernel_attach_background},
+		{"wait_all", rkernel_wait_all},
+		{"thread_space", rkernel_thread_space},
+		{"timer", rkernel_timer},
+		{"loop", rkernel_loop},
 		/* Undocumented, helper methods. */
-		{"run_thread", ratchet_run_thread},
-		{"yield_thread", ratchet_yield_thread},
-		{"handle_thread_error", ratchet_handle_thread_error},
-		{"wait_for_write", ratchet_wait_for_write},
-		{"wait_for_read", ratchet_wait_for_read},
-		{"wait_for_timeout", ratchet_wait_for_timeout},
-		{"wait_for_multi", ratchet_wait_for_multi},
-		{"start_threads_ready", ratchet_start_threads_ready},
-		{"start_threads_done_waiting", ratchet_start_threads_done_waiting},
+		{"run_thread", rkernel_run_thread},
+		{"yield_thread", rkernel_yield_thread},
+		{"handle_thread_error", rkernel_handle_thread_error},
+		{"wait_for_write", rkernel_wait_for_write},
+		{"wait_for_read", rkernel_wait_for_read},
+		{"wait_for_timeout", rkernel_wait_for_timeout},
+		{"wait_for_multi", rkernel_wait_for_multi},
+		{"start_threads_ready", rkernel_start_threads_ready},
+		{"start_threads_done_waiting", rkernel_start_threads_done_waiting},
 		{NULL}
 	};
 
 	static const luaL_Reg metameths[] = {
-		{"__gc", ratchet_gc},
+		{"__gc", rkernel_gc},
 		{NULL}
 	};
 
 	static const luaL_Reg eventmetameths[] = {
-		{"__gc", ratchet_event_gc},
+		{"__gc", rkernel_event_gc},
 		{NULL}
 	};
 
-	luaL_newmetatable (L, "ratchet_event_internal_meta");
+	luaL_newmetatable (L, "ratchet_kernel_event_internal_meta");
 	luaL_setfuncs (L, eventmetameths, 0);
 	lua_pop (L, 1);
 
-	luaL_newmetatable (L, "ratchet_meta");
+	luaL_newmetatable (L, "ratchet_kernel_meta");
 	lua_newtable (L);
 	luaL_setfuncs (L, meths, 0);
 	lua_setfield (L, -2, "__index");
@@ -1073,41 +1071,8 @@ int luaopen_ratchet (lua_State *L)
 	lua_pop (L, 1);
 
 	luaL_newlib (L, funcs);
-	lua_pushvalue (L, -1);
-	lua_setglobal (L, "ratchet");
-
-#if HAVE_SOCKET
-	luaL_requiref (L, "ratchet.socket", luaopen_ratchet_socket, 0);
-	lua_setfield (L, -2, "socket");
-#endif
-#if HAVE_OPENSSL
-	luaL_requiref (L, "ratchet.ssl", luaopen_ratchet_ssl, 0);
-	lua_setfield (L, -2, "ssl");
-#endif
-#if HAVE_ZMQ
-	luaL_requiref (L, "ratchet.zmqsocket", luaopen_ratchet_zmqsocket, 0);
-	lua_setfield (L, -2, "zmqsocket");
-#endif
-#if HAVE_DNS
-	luaL_requiref (L, "ratchet.dns", luaopen_ratchet_dns, 0);
-	lua_setfield (L, -2, "dns");
-#endif
-#if HAVE_TIMERFD
-	luaL_requiref (L, "ratchet.timerfd", luaopen_ratchet_timerfd, 0);
-	lua_setfield (L, -2, "timerfd");
-#endif
-
-	lua_pushstring (L, PACKAGE_VERSION);
-	lua_setfield (L, -2, "version");
 
 	return 1;
-}
-/* }}} */
-
-/* {{{ ratchet_version() */
-const char *ratchet_version (void)
-{
-	return PACKAGE_VERSION;
 }
 /* }}} */
 

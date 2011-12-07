@@ -8,7 +8,7 @@ end
 local obj = {data = "beep beep"}
 setmetatable(obj, {__call = call_it})
 
-local r = ratchet.new()
+local r = ratchet.kernel.new()
 r:attach(obj)
 r:loop()
 

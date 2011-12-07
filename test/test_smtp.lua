@@ -124,7 +124,7 @@ function client_ctx(where)
 end
 -- }}}
 
-kernel = ratchet.new()
+kernel = ratchet.kernel.new()
 kernel:attach(server_ctx, "tcp://*:10025")
 kernel:loop()
 

@@ -10,6 +10,7 @@
 const char *ratchet_version (void);
 
 int luaopen_ratchet (lua_State *L);
+int luaopen_ratchet_kernel (lua_State *L);
 int luaopen_ratchet_socket (lua_State *L);
 int luaopen_ratchet_ssl (lua_State *L);
 int luaopen_ratchet_timerfd (lua_State *L);

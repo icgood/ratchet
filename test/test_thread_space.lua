@@ -29,7 +29,7 @@ function ctx3(r)
     check_ctx3_space(r)
 end
 
-local r = ratchet.new()
+local r = ratchet.kernel.new()
 r:attach(ctx1, r)
 r:attach(ctx2, r)
 r:attach(ctx3, r)

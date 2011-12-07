@@ -1,4 +1,5 @@
 allsources = ratchet.h ratchet.c \
+	     kernel.c \
 	     misc.h misc.c
 
 if HAVE_SOCKET

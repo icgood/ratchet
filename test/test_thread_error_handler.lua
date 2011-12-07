@@ -15,7 +15,7 @@ function on_error(err)
     error("thread error handler did not override global one.")
 end
 
-r = ratchet.new()
+r = ratchet.kernel.new()
 r:set_error_handler(on_error)
 r:attach(ctx1)
 r:loop()

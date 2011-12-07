@@ -30,7 +30,7 @@ function ctx2(where)
     socket:send("ooga")
 end
 
-kernel = ratchet.new()
+kernel = ratchet.kernel.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 

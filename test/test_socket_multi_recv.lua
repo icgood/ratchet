@@ -61,7 +61,7 @@ function client2(where)
     socket:close()
 end
 
-kernel = ratchet.new()
+kernel = ratchet.kernel.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 

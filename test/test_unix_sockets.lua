@@ -41,7 +41,7 @@ function ctx3(where)
     assert(data == "bar")
 end
 
-kernel = ratchet.new()
+kernel = ratchet.kernel.new()
 kernel:attach(ctx1, "unix:/tmp/ratchet-tests.sock")
 kernel:loop()
 

@@ -39,7 +39,7 @@ function client_bus_2(bus)
     assert("yes" == response)
 end
 
-kernel = ratchet.new()
+kernel = ratchet.kernel.new()
 kernel:attach(ctx1)
 kernel:loop()
 

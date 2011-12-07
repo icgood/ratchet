@@ -3,15 +3,15 @@
 --  mechanism for large numbers of sockets without using threads or losing the ease
 --  of synchronous socket programming. Along with networking, the library provides
 --  a sort of kernel to allow side-by-side execution of different streams of logic.
-module "ratchet"
+module "ratchet.kernel"
 
---- Constructs and returns a new ratchet object. This also creates a new libevent
+--- Constructs and returns a new kernel object. This also creates a new libevent
 --  control structure that is freed when the object is collected.
---  @return a new ratchet object.
+--  @return a new kernel object.
 function new()
 
 --- Returns the polling method used behind-the-scenes by libevent.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @return a string identifying the kernel event mechanism (kqueue, epoll, etc.).
 function get_method(self)
 
@@ -20,7 +20,7 @@ function get_method(self)
 --  handler as the default. Error handlers set in threads apply only to that thead.
 --  Extra arguments to this function are given to the handler function. The last
 --  parameter in the call will be the error object.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param func the function to call.
 --  @param ... extra parameters to the function, before error object.
 function set_error_handler(self, func, ...)
@@ -29,7 +29,7 @@ function set_error_handler(self, func, ...)
 --  arguments as its parameters. The thread is not started by this method, instead
 --  it is started on next iteration of the loop. All threads attached with
 --  this method must be completed before loop() will finish.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param func the function to run in the thread.
 --  @param ... extra parameters to function.
 --  @return a Lua thread object.
@@ -40,7 +40,7 @@ function attach(self, func, ...)
 --  it is started on next iteration of the loop. Threads attached with this method
 --  as opposed to attach() will be destroyed when loop() finishes, whether
 --  completed or not.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param func the function to run in the thread.
 --  @param ... extra parameters to function.
 --  @return a Lua thread object.
@@ -48,14 +48,14 @@ function attach_background(self, func, ...)
 
 --- Pauses the current thread until all threads listed in the given table have
 --  completed their execution either normally or by error.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param threads table containing threads to wait for.
 function wait_all(self, threads)
 
 --- Returns a table that is specific to the currently-running thread that can be
 --  used as scratch-space for thread-scope data. This table is not created until
 --  the first time this method is called for in thread.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param premade optionally pass in a pre-existing object to be stored as the
 --                 thread's scratch space instead of the default a new table.
 --  @return a table specific to the current thread.
@@ -67,7 +67,7 @@ function thread_space(self)
 function running_thread()
 
 --- Pauses the current thread for the given period.
---  @param self the ratchet object.
+--  @param self the kernel object.
 --  @param seconds resume thread after this many seconds elapse.
 function timer(self, seconds)
 
@@ -97,7 +97,7 @@ function block_on(reads, writes, timeout)
 --  all recently unpaused threads, runs all threads that are done waiting on
 --  others, and finally starts waiting for and handling network/socket events. The
 --  loop will continue until all threads created with attach() are completed.
---  @param self the ratchet object.
+--  @param self the kernel object.
 function loop(self)
 
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

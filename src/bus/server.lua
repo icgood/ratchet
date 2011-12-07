@@ -37,7 +37,7 @@ end
 
 -- {{{ receive_connections_and_data()
 local function receive_connections_and_data(self)
-    local ready, err = ratchet.block_on(build_socket_array(self.sockets))
+    local ready, err = ratchet.kernel.block_on(build_socket_array(self.sockets))
     if not ready then
         return nil, err
     end

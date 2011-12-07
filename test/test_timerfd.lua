@@ -10,7 +10,7 @@ function ctx1 (r)
     end
 end
 
-local r = ratchet.new()
+local r = ratchet.kernel.new()
 r:attach(ctx1, r)
 r:loop()
 
