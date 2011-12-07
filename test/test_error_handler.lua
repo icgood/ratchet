@@ -9,7 +9,7 @@ function on_error(err)
     error_happened = true
 end
 
-local r = ratchet.kernel.new()
+local r = ratchet.new()
 r:set_error_handler(on_error)
 r:attach(ctx1)
 r:loop()

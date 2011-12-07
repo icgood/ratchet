@@ -4,7 +4,7 @@ function ctx1 (r)
     r:timer(5.0)
 end
 
-local r = ratchet.kernel.new()
+local r = ratchet.new()
 r:attach(ctx1, r)
 r:loop()
 

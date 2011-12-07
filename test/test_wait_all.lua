@@ -18,7 +18,7 @@ local function ctx2(r)
     count = count + 6
 end
 
-local r = ratchet.kernel.new()
+local r = ratchet.new()
 
 r:attach(ctx2, r)
 

@@ -26,7 +26,7 @@ function ctx2(where)
     assert(socket.SO_SNDBUF == 2048, "SO_SNDBUF (" .. socket.SO_SNDBUF .. ") != 2048")
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:attach(ctx2, "tcp://localhost:10025")
 kernel:loop()

@@ -24,7 +24,7 @@ function ctx2(socket_b)
     assert(data == "bar")
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1)
 kernel:loop()
 

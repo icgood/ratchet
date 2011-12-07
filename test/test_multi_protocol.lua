@@ -57,7 +57,7 @@ function zmqctx2(where)
     socket:send("rld")
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(tcpctx1, "tcp://*:10025")
 kernel:attach(zmqctx1, "zmq:req:tcp://*:10026")
 kernel:loop()

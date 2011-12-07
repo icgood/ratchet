@@ -4,7 +4,7 @@ function ctx1 ()
     error("uh oh")
 end
 
-local r = ratchet.kernel.new()
+local r = ratchet.new()
 r:attach(ctx1)
 r:loop()
 

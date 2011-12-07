@@ -21,7 +21,7 @@ function ctx2(where)
     socket:connect(rec.addr)
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://*:10025")
 kernel:loop()
 

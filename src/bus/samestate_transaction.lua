@@ -20,7 +20,7 @@ function ratchet.bus.samestate_transaction:send_response(res)
     self.response = res
 
     if self.waiting_thread then
-        ratchet.kernel.unpause(self.waiting_thread, res)
+        ratchet.unpause(self.waiting_thread, res)
     end
 end
 -- }}}
@@ -30,8 +30,8 @@ function ratchet.bus.samestate_transaction:recv_response()
     if self.response then
         return self.response
     else
-        self.waiting_thread = ratchet.kernel.running_thread()
-        local ret = ratchet.kernel.pause()
+        self.waiting_thread = ratchet.running_thread()
+        local ret = ratchet.pause()
         self.waiting_thread = nil
         return ret
     end

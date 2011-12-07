@@ -81,7 +81,7 @@ function client_bus_2(socket)
     assert(7357 == response)
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 

@@ -12,7 +12,7 @@ function ctx1(where)
     assert(not client, "accept failed to timeout")
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 

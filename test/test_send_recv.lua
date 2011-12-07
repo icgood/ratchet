@@ -41,7 +41,7 @@ function ctx3(where)
     assert(data == "bar")
 end
 
-kernel = ratchet.kernel.new()
+kernel = ratchet.new()
 kernel:attach(ctx1, "tcp://localhost:10025")
 kernel:loop()
 
