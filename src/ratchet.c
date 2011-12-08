@@ -851,8 +851,15 @@ static int ratchet_wait_for_multi (lua_State *L)
 /* ---- ratchet.thread Functions -------------------------------------------- */
 
 /* {{{ ratchet_attach() */
-static int ratchet_attach_reentry1 (lua_State *L)
+static int ratchet_attach (lua_State *L)
 {
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushliteral (L, "get");
+		return lua_yieldk (L, 1, ctx, ratchet_attach);
+	}
+
 	lua_insert (L, 1);
 	(void) get_event_base (L, 1);
 
@@ -870,17 +877,18 @@ static int ratchet_attach_reentry1 (lua_State *L)
 	lua_pushvalue (L, 2);
 	return 1;
 }
-
-static int ratchet_attach (lua_State *L)
-{
-	lua_pushliteral (L, "get");
-	return lua_yieldk (L, 1, 0, ratchet_attach_reentry1);
-}
 /* }}} */
 
 /* {{{ ratchet_attach_background() */
-static int ratchet_attach_background_reentry1 (lua_State *L)
+static int ratchet_attach_background (lua_State *L)
 {
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushliteral (L, "get");
+		return lua_yieldk (L, 1, ctx, ratchet_attach_background);
+	}
+
 	lua_insert (L, 1);
 	(void) get_event_base (L, 1);
 
@@ -898,12 +906,6 @@ static int ratchet_attach_background_reentry1 (lua_State *L)
 	lua_pushvalue (L, 2);
 	return 1;
 }
-
-static int ratchet_attach_background (lua_State *L)
-{
-	lua_pushliteral (L, "get");
-	return lua_yieldk (L, 1, 0, ratchet_attach_background_reentry1);
-}
 /* }}} */
 
 /* {{{ ratchet_block_on() */
@@ -918,8 +920,15 @@ static int ratchet_block_on (lua_State *L)
 /* }}} */
 
 /* {{{ ratchet_wait_all() */
-static int ratchet_wait_all_reentry1 (lua_State *L)
+static int ratchet_wait_all (lua_State *L)
 {
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushliteral (L, "get");
+		return lua_yieldk (L, 1, ctx, ratchet_wait_all);
+	}
+
 	lua_insert (L, 1);
 	(void) get_event_base (L, 1);
 
@@ -957,17 +966,18 @@ static int ratchet_wait_all_reentry1 (lua_State *L)
 
 	return lua_yield (L, 0);
 }
-
-static int ratchet_wait_all (lua_State *L)
-{
-	lua_pushliteral (L, "get");
-	return lua_yieldk (L, 1, 0, ratchet_wait_all_reentry1);
-}
 /* }}} */
 
 /* {{{ ratchet_thread_space() */
-static int ratchet_thread_space_reentry1 (lua_State *L)
+static int ratchet_thread_space (lua_State *L)
 {
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushliteral (L, "get");
+		return lua_yieldk (L, 1, ctx, ratchet_thread_space);
+	}
+
 	lua_insert (L, 1);
 	(void) get_event_base (L, 1);
 
@@ -1002,12 +1012,6 @@ static int ratchet_thread_space_reentry1 (lua_State *L)
 	}
 
 	return 1;
-}
-
-static int ratchet_thread_space (lua_State *L)
-{
-	lua_pushliteral (L, "get");
-	return lua_yieldk (L, 1, 0, ratchet_thread_space_reentry1);
 }
 /* }}} */
 
