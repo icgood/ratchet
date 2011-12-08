@@ -344,45 +344,112 @@ static int rzmq_rawrecv (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rzmq_send() */
+static int rzmq_send (lua_State *L)
+{
+	int nargs = lua_gettop (L);
+	if (LUA_YIELD == lua_getctx (L, &nargs))
+	{
+		if (!lua_toboolean (L, nargs+1))
+			return 0;
+		lua_settop (L, nargs);
+	}
+
+	lua_getfield (L, 1, "is_writable");
+	lua_pushvalue (L, 1);
+	lua_call (L, 1, 1);
+	int is_writable = lua_toboolean (L, -1);
+	lua_pop (L, 1);
+
+	if (is_writable)
+	{
+		int nargs = lua_gettop (L);
+		lua_getfield (L, 1, "rawsend");
+		lua_insert (L, 1);
+		lua_call (L, nargs, LUA_MULTRET);
+		return lua_gettop (L);
+	}
+
+	lua_pushliteral (L, "write");
+	lua_pushvalue (L, 1);
+	return lua_yieldk (L, 2, nargs, rzmq_send);
+}
+/* }}} */
+
+/* {{{ rzmq_recv() */
+static int rzmq_recv (lua_State *L)
+{
+	int nargs = lua_gettop (L);
+	if (LUA_YIELD == lua_getctx (L, &nargs))
+	{
+		if (!lua_toboolean (L, nargs+1))
+			return 0;
+		lua_settop (L, nargs);
+	}
+
+	lua_getfield (L, 1, "is_readable");
+	lua_pushvalue (L, 1);
+	lua_call (L, 1, 1);
+	int is_readable = lua_toboolean (L, -1);
+	lua_pop (L, 1);
+
+	if (is_readable)
+	{
+		int nargs = lua_gettop (L);
+		lua_getfield (L, 1, "rawrecv");
+		lua_insert (L, 1);
+		lua_call (L, nargs, LUA_MULTRET);
+		return lua_gettop (L);
+	}
+
+	lua_pushliteral (L, "read");
+	lua_pushvalue (L, 1);
+	return lua_yieldk (L, 2, nargs, rzmq_recv);
+}
+/* }}} */
+
+/* {{{ rzmq_recv_all() */
+static int rzmq_recv_all (lua_State *L)
+{
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_settop (L, 1);
+		lua_newtable (L);
+	}
+	else
+	{
+		int more, i;
+received:
+		more = lua_toboolean (L, -1);
+		lua_pop (L, 1);
+		i = lua_rawlen (L, 2)+1;
+		lua_rawseti (L, 2, i);
+
+		if (!more)
+		{
+			int j;
+			luaL_Buffer buff;
+			luaL_buffinit (L, &buff);
+			for (j=1; j<=i; j++)
+			{
+				lua_rawgeti (L, 2, j);
+				luaL_addvalue (&buff);
+			}
+			luaL_pushresult (&buff);
+			return 1;
+		}
+	}
+
+	lua_getfield (L, 1, "recv");
+	lua_pushvalue (L, 1);
+	lua_callk (L, 1, 2, ctx, rzmq_recv_all);
+
+	goto received;
+}
+/* }}} */
+
 /* ---- Lua-implemented Functions ------------------------------------------- */
-
-/* {{{ send() */
-#define rzmq_send "return function (self, ...)\n" \
-	"	while not self:is_writable() do\n" \
-	"		if not coroutine.yield('write', self) then\n" \
-	"			return\n" \
-	"		end\n" \
-	"	end\n" \
-	"	return self:rawsend(...)\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ recv() */
-#define rzmq_recv "return function (self, ...)\n" \
-	"	while not self:is_readable() do\n" \
-	"		if not coroutine.yield('read', self) then\n" \
-	"			return\n" \
-	"		end\n" \
-	"	end\n" \
-	"	return self:rawrecv()\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ recv_all() */
-#define rzmq_recv_all "return function (self, ...)\n" \
-	"	while not self:is_readable() do\n" \
-	"		if not coroutine.yield('read', self) then\n" \
-	"			return\n" \
-	"		end\n" \
-	"	end\n" \
-	"   local ret = ''\n" \
-	"   repeat\n" \
-	"       local data, more = self:recv()\n" \
-	"       ret = ret .. data\n" \
-	"   until not more\n" \
-	"   return ret\n" \
-	"end\n"
-/* }}} */
 
 /* ---- Public Functions ---------------------------------------------------- */
 
@@ -410,22 +477,15 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 		{"set_timeout", rzmq_set_timeout},
 		{"bind", rzmq_bind},
 		{"connect", rzmq_connect},
+		{"send", rzmq_send},
+		{"recv", rzmq_recv},
+		{"recv_all", rzmq_recv_all},
 		/* Undocumented, helper methods. */
 		{"is_readable", rzmq_is_readable},
 		{"is_writable", rzmq_is_writable},
 		{"is_rcvmore", rzmq_is_rcvmore},
 		{"rawsend", rzmq_rawsend},
 		{"rawrecv", rzmq_rawrecv},
-		{NULL}
-	};
-
-	/* Methods in the ratchet.zmqsocket class implemented in Lua. */
-	static const struct luafunc luameths[] = {
-		/* Documented methods. */
-		{"send", rzmq_send},
-		{"recv", rzmq_recv},
-		{"recv_all", rzmq_recv_all},
-		/* Undocumented, helper methods. */
 		{NULL}
 	};
 
@@ -439,7 +499,6 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 	lua_newtable (L);
 	lua_pushvalue (L, -3);
 	luaL_setfuncs (L, meths, 1);
-	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "__index");
 	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);
