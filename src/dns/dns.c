@@ -646,8 +646,8 @@ static int mydns_get_timeout (lua_State *L)
 }
 /* }}} */
 
-/* {{{ mydns_query_reentry1() */
-static int mydns_query_reentry1 (lua_State *L)
+/* {{{ mydns_query_collect_results() */
+static int mydns_query_collect_results (lua_State *L)
 {
 	lua_getfield (L, 1, "is_query_done");
 	lua_pushvalue (L, 1);
@@ -670,7 +670,7 @@ static int mydns_query_reentry1 (lua_State *L)
 
 		lua_pushliteral (L, "read");
 		lua_pushvalue (L, 1);
-		return lua_yieldk (L, 2, 0, mydns_query_reentry1);
+		return lua_yieldk (L, 2, 0, mydns_query_collect_results);
 	}
 }
 /* }}} */
@@ -695,12 +695,12 @@ static int mydns_query (lua_State *L)
 	lua_pushvalue (L, 3);
 	lua_call (L, 3, 0);
 
-	return mydns_query_reentry1 (L);
+	return mydns_query_collect_results (L);
 }
 /* }}} */
 
-/* {{{ mydns_query_all_reentry1() */
-static int mydns_query_all_reentry1 (lua_State *L)
+/* {{{ mydns_query_all_collect_results() */
+static int mydns_query_all_collect_results (lua_State *L)
 {
 	size_t num = lua_rawlen (L, 1);
 	size_t i;
@@ -760,7 +760,7 @@ static int mydns_query_all_reentry1 (lua_State *L)
 	lua_pushnumber (L, (lua_Number) DNS_GET_POLL_TIMEOUT (tries));
 
 	if (not_done > 0)
-		return lua_yieldk (L, 4, tries+1, mydns_query_all_reentry1);
+		return lua_yieldk (L, 4, tries+1, mydns_query_all_collect_results);
 	else
 	{
 		lua_pop (L, 4);
@@ -790,7 +790,7 @@ static int mydns_query_all (lua_State *L)
 
 	submit_dns_queries (L, num_types, 1, 2, 3);
 
-	return mydns_query_all_reentry1 (L);
+	return mydns_query_all_collect_results (L);
 }
 /* }}} */
 

@@ -140,9 +140,18 @@ static int rtfd_close (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rtfd_read_reentry1() */
-static int rtfd_read_reentry1 (lua_State *L)
+/* {{{ rtfd_read() */
+static int rtfd_read (lua_State *L)
 {
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushliteral (L, "read");
+		lua_pushvalue (L, 1);
+
+		return lua_yieldk (L, 2, 0, rtfd_read);
+	}
+
 	lua_settop (L, 1);
 	int tfd = *timerfd_fd (L, 1);
 	uint64_t fires;
@@ -166,18 +175,6 @@ static int rtfd_read_reentry1 (lua_State *L)
 	lua_pushnumber (L, (lua_Number) fires);
 
 	return 1;
-}
-/* }}} */
-
-/* {{{ rtfd_read() */
-static int rtfd_read (lua_State *L)
-{
-	(void) timerfd_fd (L, 1);
-
-	lua_pushliteral (L, "read");
-	lua_pushvalue (L, 1);
-
-	return lua_yieldk (L, 2, 0, rtfd_read_reentry1);
 }
 /* }}} */
 
