@@ -1,21 +1,21 @@
 require "ratchet"
 
 local function ctx2()
-    ratchet.unpause(t1, "beep beep")
-    local ret = ratchet.pause()
+    ratchet.thread.unpause(t1, "beep beep")
+    local ret = ratchet.thread.pause()
     assert(ret == "boop boop")
 end
 
 local function ctx1()
-    local ret = ratchet.pause()
+    local ret = ratchet.thread.pause()
     assert(ret == "beep beep")
-    ratchet.unpause(t2, "boop boop")
+    ratchet.thread.unpause(t2, "boop boop")
 end
 
-local r = ratchet.new()
-
-t1 = r:attach(ctx1)
-t2 = r:attach(ctx2)
+local r = ratchet.new(function ()
+    t1 = ratchet.thread.attach(ctx1)
+    t2 = ratchet.thread.attach(ctx2)
+end)
 
 r:loop()
 

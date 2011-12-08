@@ -1,19 +1,12 @@
 require "ratchet"
 require "ratchet.bus"
 
-function ctx1()
-    local bus = ratchet.bus.new_local(kernel)
-
-    kernel:attach(server_bus, bus)
-    kernel:attach(client_bus_1, bus)
-end
-
 function server_bus(bus)
     local test_response_1 = {data = "important answer!"}
     local test_response_2 = "yes"
 
     local transaction_1, request_1 = bus:recv_request()
-    kernel:attach(client_bus_2, bus)
+    ratchet.thread.attach(client_bus_2, bus)
     local transaction_2, request_2 = bus:recv_request()
 
     assert("important question!" == request_1.data)
@@ -39,8 +32,12 @@ function client_bus_2(bus)
     assert("yes" == response)
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1)
+kernel = ratchet.new(function ()
+    local bus = ratchet.bus.new_local(kernel)
+
+    ratchet.thread.attach(server_bus, bus)
+    ratchet.thread.attach(client_bus_1, bus)
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

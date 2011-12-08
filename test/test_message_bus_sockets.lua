@@ -40,8 +40,8 @@ function ctx1(where)
     local c2_socket = ratchet.socket.new(c2_rec.family, c2_rec.socktype, c2_rec.protocol)
     c2_socket:connect(c2_rec.addr)
 
-    kernel:attach(server_bus, s_socket, c2_socket)
-    kernel:attach(client_bus_1, c1_socket)
+    ratchet.thread.attach(server_bus, s_socket, c2_socket)
+    ratchet.thread.attach(client_bus_1, c1_socket)
 end
 
 function server_bus(socket, c2_socket)
@@ -51,7 +51,7 @@ function server_bus(socket, c2_socket)
     assert(request1.id == "operation falcon")
     assert(request1.stuff == "important")
 
-    kernel:attach(client_bus_2, c2_socket)
+    ratchet.thread.attach(client_bus_2, c2_socket)
 
     local transaction2, request2 = bus:recv_request()
     assert(request2.id == "operation condor")
@@ -81,8 +81,9 @@ function client_bus_2(socket)
     assert(7357 == response)
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "tcp://localhost:10025")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

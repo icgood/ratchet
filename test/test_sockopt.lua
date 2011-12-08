@@ -21,14 +21,15 @@ function ctx2(where)
 
     assert(socket.SO_ACCEPTCONN == false, "SO_ACCEPTCONN != false")
 
-    -- Kernel doubles whatever value you set to SO_SND/RCVBUF.
+    -- Linux kernel doubles whatever value you set to SO_SND/RCVBUF.
     socket.SO_SNDBUF = 1024
     assert(socket.SO_SNDBUF == 2048, "SO_SNDBUF (" .. socket.SO_SNDBUF .. ") != 2048")
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "tcp://localhost:10025")
-kernel:attach(ctx2, "tcp://localhost:10025")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx2, "tcp://localhost:10025")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

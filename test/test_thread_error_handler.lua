@@ -1,7 +1,7 @@
 require "ratchet"
 
 function ctx1 ()
-    r:set_error_handler(on_thread_error, "error thread")
+    kernel:set_error_handler(on_thread_error, "error thread")
     error("uh oh")
 end
 
@@ -15,10 +15,11 @@ function on_error(err)
     error("thread error handler did not override global one.")
 end
 
-r = ratchet.new()
-r:set_error_handler(on_error)
-r:attach(ctx1)
-r:loop()
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1)
+end)
+kernel:set_error_handler(on_error)
+kernel:loop()
 assert(error_happened)
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
