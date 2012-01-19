@@ -3,7 +3,7 @@ require "ratchet"
 function ctx1()
     local socket_a, socket_b = ratchet.socket.new_pair()
 
-    kernel:attach(ctx2, socket_b)
+    ratchet.thread.attach(ctx2, socket_b)
 
     socket_a:send("hello")
     local data = socket_a:recv()
@@ -24,8 +24,9 @@ function ctx2(socket_b)
     assert(data == "bar")
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1)
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1)
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

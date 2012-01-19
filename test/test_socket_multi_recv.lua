@@ -7,8 +7,8 @@ function ctx1(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(client1, where)
-    kernel:attach(client2, where)
+    ratchet.thread.attach(client1, where)
+    ratchet.thread.attach(client2, where)
 
     local c1 = socket:accept()
     local c2 = socket:accept()
@@ -61,8 +61,9 @@ function client2(where)
     socket:close()
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "tcp://localhost:10025")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

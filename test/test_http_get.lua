@@ -60,7 +60,7 @@ function server_ctx(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(client_ctx, "tcp://127.0.0.1:10080")
+    ratchet.thread.attach(client_ctx, "tcp://127.0.0.1:10080")
 
     local client, from = socket:accept()
     if debugging then client:set_tracer(debug_print) end
@@ -92,8 +92,9 @@ function client_ctx(where)
 end
 -- }}}
 
-kernel = ratchet.new()
-kernel:attach(server_ctx, "tcp://*:10080")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(server_ctx, "tcp://*:10080")
+end)
 kernel:loop()
 
 assert(server_received_command)

@@ -9,7 +9,7 @@ function ctx1(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(ctx2, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx2, "tcp://localhost:10025")
 
     local client = socket:accept()
 
@@ -72,8 +72,9 @@ ssl1:load_certs("cert.pem")
 ssl2 = ratchet.ssl.new(ratchet.ssl.SSLv3_client)
 ssl2:load_cas(nil, "cert.pem")
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "tcp://localhost:10025")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+end)
 kernel:loop()
 
 assert(counter == 3)

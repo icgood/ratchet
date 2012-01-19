@@ -8,8 +8,9 @@ end
 local obj = {data = "beep beep"}
 setmetatable(obj, {__call = call_it})
 
-local r = ratchet.new()
-r:attach(obj)
+local r = ratchet.new(function ()
+    ratchet.thread.attach(obj)
+end)
 r:loop()
 
 assert(run, "object did not get called")

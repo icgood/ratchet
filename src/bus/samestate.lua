@@ -20,8 +20,8 @@ end
 -- {{{ wait_for_transaction()
 local function wait_for_transaction(self)
     if not self.queue[1] then
-        self.waiting_thread = ratchet.running_thread()
-        local ret = ratchet.pause()
+        self.waiting_thread = ratchet.thread.self()
+        local ret = ratchet.thread.pause()
         self.waiting_thread = nil
         return ret
     else
@@ -40,7 +40,7 @@ end
 -- {{{ send_or_queue_transaction()
 function send_or_queue_transaction(self, data)
     if self.waiting_thread then
-        ratchet.unpause(self.waiting_thread, data)
+        ratchet.thread.unpause(self.waiting_thread, data)
     else
         table.insert(self.queue, data)
     end

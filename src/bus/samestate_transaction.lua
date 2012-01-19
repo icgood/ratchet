@@ -21,7 +21,7 @@ function send_response(self, res)
     self.response = res
 
     if self.waiting_thread then
-        ratchet.unpause(self.waiting_thread, res)
+        ratchet.thread.unpause(self.waiting_thread, res)
     end
 end
 -- }}}
@@ -31,8 +31,8 @@ function recv_response(self)
     if self.response then
         return self.response
     else
-        self.waiting_thread = ratchet.running_thread()
-        local ret = ratchet.pause()
+        self.waiting_thread = ratchet.thread.self()
+        local ret = ratchet.thread.pause()
         self.waiting_thread = nil
         return ret
     end

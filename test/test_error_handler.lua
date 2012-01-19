@@ -9,9 +9,10 @@ function on_error(err)
     error_happened = true
 end
 
-local r = ratchet.new()
+local r = ratchet.new(function ()
+    ratchet.thread.attach(ctx1)
+end)
 r:set_error_handler(on_error)
-r:attach(ctx1)
 r:loop()
 assert(error_happened)
 

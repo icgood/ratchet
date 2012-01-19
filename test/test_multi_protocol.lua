@@ -7,7 +7,7 @@ function tcpctx1(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(tcpctx2, "tcp://localhost:10025")
+    ratchet.thread.attach(tcpctx2, "tcp://localhost:10025")
 
     local client = socket:accept()
 
@@ -35,7 +35,7 @@ function zmqctx1(where)
     local socket = ratchet.zmqsocket.new(rec.type)
     socket:bind(rec.endpoint)
 
-    kernel:attach(zmqctx2, "zmq:rep:tcp://127.0.0.1:10026")
+    ratchet.thread.attach(zmqctx2, "zmq:rep:tcp://127.0.0.1:10026")
 
     -- Portion being tested.
     --
@@ -57,9 +57,10 @@ function zmqctx2(where)
     socket:send("rld")
 end
 
-kernel = ratchet.new()
-kernel:attach(tcpctx1, "tcp://*:10025")
-kernel:attach(zmqctx1, "zmq:req:tcp://*:10026")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(tcpctx1, "tcp://*:10025")
+    ratchet.thread.attach(zmqctx1, "zmq:req:tcp://*:10026")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

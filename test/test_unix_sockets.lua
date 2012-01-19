@@ -7,10 +7,10 @@ function ctx1(where)
     socket:bind(rec.addr)
     socket:listen()
 
-    kernel:attach(ctx3, "unix:/tmp/ratchet-tests.sock")
+    ratchet.thread.attach(ctx3, "unix:/tmp/ratchet-tests.sock")
 
     local client = socket:accept()
-    kernel:attach(ctx2, client)
+    ratchet.thread.attach(ctx2, client)
 end
 
 function ctx2(socket)
@@ -41,8 +41,9 @@ function ctx3(where)
     assert(data == "bar")
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "unix:/tmp/ratchet-tests.sock")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "unix:/tmp/ratchet-tests.sock")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

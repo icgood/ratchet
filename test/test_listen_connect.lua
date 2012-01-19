@@ -21,8 +21,9 @@ function ctx2(where)
     socket:connect(rec.addr)
 end
 
-kernel = ratchet.new()
-kernel:attach(ctx1, "tcp://*:10025")
+kernel = ratchet.new(function ()
+    ratchet.thread.attach(ctx1, "tcp://*:10025")
+end)
 kernel:loop()
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

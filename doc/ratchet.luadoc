@@ -7,8 +7,9 @@ module "ratchet"
 
 --- Constructs and returns a new ratchet object. This also creates a new libevent
 --  control structure that is freed when the object is collected.
+--  @param entry called initially as the entry-point ratchet thread.
 --  @return a new ratchet object.
-function new()
+function new(entry)
 
 --- Returns the polling method used behind-the-scenes by libevent.
 --  @param self the ratchet object.
@@ -25,79 +26,17 @@ function get_method(self)
 --  @param ... extra parameters to the function, before error object.
 function set_error_handler(self, func, ...)
 
---- Queues a new thread for execution. The thread calls func and gives it any extra
---  arguments as its parameters. The thread is not started by this method, instead
---  it is started on next iteration of the loop. All threads attached with
---  this method must be completed before loop() will finish.
---  @param self the ratchet object.
---  @param func the function to run in the thread.
---  @param ... extra parameters to function.
---  @return a Lua thread object.
-function attach(self, func, ...)
-
---- Queues a new thread for execution. The thread calls func and gives it any extra
---  arguments as its parameters. The thread is not started by this method, instead
---  it is started on next iteration of the loop. Threads attached with this method
---  as opposed to attach() will be destroyed when loop() finishes, whether
---  completed or not.
---  @param self the ratchet object.
---  @param func the function to run in the thread.
---  @param ... extra parameters to function.
---  @return a Lua thread object.
-function attach_background(self, func, ...)
-
---- Pauses the current thread until all threads listed in the given table have
---  completed their execution either normally or by error.
---  @param self the ratchet object.
---  @param threads table containing threads to wait for.
-function wait_all(self, threads)
-
---- Returns a table that is specific to the currently-running thread that can be
---  used as scratch-space for thread-scope data. This table is not created until
---  the first time this method is called for in thread.
---  @param self the ratchet object.
---  @param premade optionally pass in a pre-existing object to be stored as the
---                 thread's scratch space instead of the default a new table.
---  @return a table specific to the current thread.
-function thread_space(self)
-
---- Returns the Lua thread object that is currently running, or nil for the main
---  thread.
---  @return thread object or nil.
-function running_thread()
-
---- Pauses the current thread for the given period.
---  @param self the ratchet object.
---  @param seconds resume thread after this many seconds elapse.
-function timer(self, seconds)
-
---- Pauses the current thread indefinitely. The thread must be resumed by a call
---  to unpause() from another thread.
---  @return any extra arguments passed to unpause() from other thread.
-function pause()
-
---- Unpauses the given thread. The paused thread will resume on next iteration
---  of the main loop. Extra parameters to this function will be given to the
---  paused thread as return values from pause().
---  @param thread the thread to unpause.
---  @param ... extra parameters will be returned by pause().
-function unpause(thread, ...)
-
---- Blocks on multiple items, with a single timeout. This function will block
---  until the first event on any one of the items. Items given in the read and
---  write argument tables must have a get_fd() method that returns its file
---  descriptor.
---  @param reads Table of items to wait for read events on.
---  @param writes Table of items to wait for write events on.
---  @param timeout Returns nil if this many seconds elapse with no events.
---  @return The item from the read or write table that triggered an event.
-function block_on(reads, writes, timeout)
-
---- Starts the main loop. Every iteration of this loop runs all new threads, runs
---  all recently unpaused threads, runs all threads that are done waiting on
---  others, and finally starts waiting for and handling network/socket events. The
---  loop will continue until all threads created with attach() are completed.
+--- Processes thread events in a loop. This function simply runs loop_once() with
+--  blocking until it returns false.
 --  @param self the ratchet object.
 function loop(self)
+
+--- Executes one iteration of event processing. This may include starting a new
+--  thread or resuming one that was paused manually or by an event. This function
+--  may block unless noblock is given true.
+--  @param self the ratchet object.
+--  @param noblock given as true, this function will not block waiting for events.
+--  @return false if all threads have completed execution, true otherwise.
+function loop_once(self, noblock)
 
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:
