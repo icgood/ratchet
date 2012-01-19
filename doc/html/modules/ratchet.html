@@ -81,6 +81,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
 	</li>
 
@@ -115,68 +119,28 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#attach">attach</a>&nbsp;(self, func, ...)</td>
-	<td class="summary">Queues a new thread for execution.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#attach_background">attach_background</a>&nbsp;(self, func, ...)</td>
-	<td class="summary">Queues a new thread for execution.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#block_on">block_on</a>&nbsp;(reads, writes, timeout)</td>
-	<td class="summary">Blocks on multiple items, with a single timeout.</td>
-	</tr>
-
-	<tr>
 	<td class="name" nowrap><a href="#get_method">get_method</a>&nbsp;(self)</td>
 	<td class="summary">Returns the polling method used behind-the-scenes by libevent.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#loop">loop</a>&nbsp;(self)</td>
-	<td class="summary">Starts the main loop.</td>
+	<td class="summary">Processes thread events in a loop.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;()</td>
+	<td class="name" nowrap><a href="#loop_once">loop_once</a>&nbsp;(self, noblock)</td>
+	<td class="summary">Executes one iteration of event processing.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(entry)</td>
 	<td class="summary">Constructs and returns a new ratchet object.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#pause">pause</a>&nbsp;()</td>
-	<td class="summary">Pauses the current thread indefinitely.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#running_thread">running_thread</a>&nbsp;()</td>
-	<td class="summary">Returns the Lua thread object that is currently running, or nil for the main thread.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#set_error_handler">set_error_handler</a>&nbsp;(self, func, ...)</td>
 	<td class="summary">Sets the new error handler for threads.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#thread_space">thread_space</a>&nbsp;(self, premade)</td>
-	<td class="summary">Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#timer">timer</a>&nbsp;(self, seconds)</td>
-	<td class="summary">Pauses the current thread for the given period.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#unpause">unpause</a>&nbsp;(thread, ...)</td>
-	<td class="summary">Unpauses the given thread.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#wait_all">wait_all</a>&nbsp;(self, threads)</td>
-	<td class="summary">Pauses the current thread until all threads listed in the given table have completed their execution either normally or by error.</td>
 	</tr>
 
 </table>
@@ -193,117 +157,6 @@
 
 <h2><a name="functions"></a>Functions</h2>
 <dl class="function">
-
-
-
-<dt><a name="attach"></a><strong>attach</strong>&nbsp;(self, func, ...)</dt>
-<dd>
-Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. All threads attached with this method must be completed before loop() will finish.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  func: the function to run in the thread.
-	</li>
-	
-	<li>
-	  ...: extra parameters to function.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-a Lua thread object.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="attach_background"></a><strong>attach_background</strong>&nbsp;(self, func, ...)</dt>
-<dd>
-Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. Threads attached with this method as opposed to attach() will be destroyed when loop() finishes, whether completed or not.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  func: the function to run in the thread.
-	</li>
-	
-	<li>
-	  ...: extra parameters to function.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-a Lua thread object.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="block_on"></a><strong>block_on</strong>&nbsp;(reads, writes, timeout)</dt>
-<dd>
-Blocks on multiple items, with a single timeout. This function will block until the first event on any one of the items. Items given in the read and write argument tables must have a get_fd() method that returns its file descriptor.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  reads: Table of items to wait for read events on.
-	</li>
-	
-	<li>
-	  writes: Table of items to wait for write events on.
-	</li>
-	
-	<li>
-	  timeout: Returns nil if this many seconds elapse with no events.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-The item from the read or write table that triggered an event.
-
-
-
-</dd>
-
 
 
 
@@ -338,7 +191,7 @@ a string identifying the kernel event mechanism (kqueue, epoll, etc.).
 
 <dt><a name="loop"></a><strong>loop</strong>&nbsp;(self)</dt>
 <dd>
-Starts the main loop. Every iteration of this loop runs all new threads, runs all recently unpaused threads, runs all threads that are done waiting on others, and finally starts waiting for and handling network/socket events. The loop will continue until all threads created with attach() are completed.
+Processes thread events in a loop. This function simply runs loop_once() with blocking until it returns false.
 
 
 <h3>Parameters</h3>
@@ -362,10 +215,52 @@ Starts the main loop. Every iteration of this loop runs all new threads, runs al
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;()</dt>
+<dt><a name="loop_once"></a><strong>loop_once</strong>&nbsp;(self, noblock)</dt>
+<dd>
+Executes one iteration of event processing. This may include starting a new thread or resuming one that was paused manually or by an event. This function may block unless noblock is given true.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ratchet object.
+	</li>
+	
+	<li>
+	  noblock: given as true, this function will not block waiting for events.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+false if all threads have completed execution, true otherwise.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="new"></a><strong>new</strong>&nbsp;(entry)</dt>
 <dd>
 Constructs and returns a new ratchet object. This also creates a new libevent control structure that is freed when the object is collected.
 
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  entry: called initially as the entry-point ratchet thread.
+	</li>
+	
+</ul>
 
 
 
@@ -374,46 +269,6 @@ Constructs and returns a new ratchet object. This also creates a new libevent co
 
 <h3>Return value:</h3>
 a new ratchet object.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="pause"></a><strong>pause</strong>&nbsp;()</dt>
-<dd>
-Pauses the current thread indefinitely. The thread must be resumed by a call to unpause() from another thread.
-
-
-
-
-
-
-
-<h3>Return value:</h3>
-any extra arguments passed to unpause() from other thread.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="running_thread"></a><strong>running_thread</strong>&nbsp;()</dt>
-<dd>
-Returns the Lua thread object that is currently running, or nil for the main thread.
-
-
-
-
-
-
-
-<h3>Return value:</h3>
-thread object or nil.
 
 
 
@@ -440,129 +295,6 @@ Sets the new error handler for threads. The scope of the error handler depends o
 	
 	<li>
 	  ...: extra parameters to the function, before error object.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
-<dt><a name="thread_space"></a><strong>thread_space</strong>&nbsp;(self, premade)</dt>
-<dd>
-Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data. This table is not created until the first time this method is called for in thread.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  premade: optionally pass in a pre-existing object to be stored as the thread's scratch space instead of the default a new table.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-a table specific to the current thread.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="timer"></a><strong>timer</strong>&nbsp;(self, seconds)</dt>
-<dd>
-Pauses the current thread for the given period.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  seconds: resume thread after this many seconds elapse.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
-<dt><a name="unpause"></a><strong>unpause</strong>&nbsp;(thread, ...)</dt>
-<dd>
-Unpauses the given thread. The paused thread will resume on next iteration of the main loop. Extra parameters to this function will be given to the paused thread as return values from pause().
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  thread: the thread to unpause.
-	</li>
-	
-	<li>
-	  ...: extra parameters will be returned by pause().
-	</li>
-	
-</ul>
-
-
-
-
-
-
-
-
-</dd>
-
-
-
-
-<dt><a name="wait_all"></a><strong>wait_all</strong>&nbsp;(self, threads)</dt>
-<dd>
-Pauses the current thread until all threads listed in the given table have completed their execution either normally or by error.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  threads: table containing threads to wait for.
 	</li>
 	
 </ul>
