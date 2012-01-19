@@ -26,11 +26,17 @@ function get_method(self)
 --  @param ... extra parameters to the function, before error object.
 function set_error_handler(self, func, ...)
 
---- Starts the main loop. Every iteration of this loop runs all new threads, runs
---  all recently unpaused threads, runs all threads that are done waiting on
---  others, and finally starts waiting for and handling network/socket events. The
---  loop will continue until all threads created with attach() are completed.
+--- Processes thread events in a loop. This function simply runs loop_once() with
+--  blocking until it returns false.
 --  @param self the ratchet object.
 function loop(self)
+
+--- Executes one iteration of event processing. This may include starting a new
+--  thread or resuming one that was paused manually or by an event. This function
+--  may block unless noblock is given true.
+--  @param self the ratchet object.
+--  @param noblock given as true, this function will not block waiting for events.
+--  @return false if all threads have completed execution, true otherwise.
+function loop_once(self, noblock)
 
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

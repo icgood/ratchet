@@ -1,8 +1,7 @@
 
---- The purpose of the ratchet library is to provide a generic socket control
---  mechanism for large numbers of sockets without using threads or losing the ease
---  of synchronous socket programming. Along with networking, the library provides
---  a sort of kernel to allow side-by-side execution of different streams of logic.
+--- This module provides as set of functions for creating and controlling threads
+--  from within the context of a running ratchet. These functions do not need to
+--  be passed a ratchet object, they will deduce it from the current thread.
 module "ratchet.thread"
 
 --- Queues a new thread for execution. The thread calls func and gives it any extra

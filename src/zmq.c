@@ -449,8 +449,6 @@ received:
 }
 /* }}} */
 
-/* ---- Lua-implemented Functions ------------------------------------------- */
-
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_zmqsocket() */
