@@ -24,7 +24,7 @@ which double as sample usages, executed with "make check".
 Build Information
 =================
 
-Lua 5.1+ is required to build, as this is a Lua library. Other than that, it
+Lua 5.2+ is required to build, as this is a Lua library. Other than that, it
 should work on most modern GNU/Linux systems with kernel 2.6+ and glibc2. If
 your Lua installation is custom, you may need to explicitly point the configure
 script to its paths:
@@ -109,7 +109,7 @@ All other configure options are standard from GNU autotools.
 Dependencies
 ============
 
- * Lua 5.1+ (http://www.lua.org)
+ * Lua 5.2+ (http://www.lua.org)
  * libevent 1.4.10+ (http://monkey.org/~provos/libevent/)
 
  * Without --disable-zeromq:  ZeroMQ 2.1.0+ (http://www.zeromq.org)
