@@ -1,13 +1,13 @@
 require "ratchet"
 
-function ctx1(where)
-    local rec = ratchet.socket.prepare_uri(where, {"ipv4"})
+function ctx1(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port, {"ipv4"})
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 
-    ctx2("tcp://localhost:10025")
+    connect_client("localhost", port)
 
     local client, from = socket:accept()
 
@@ -15,14 +15,14 @@ function ctx1(where)
     assert(ptr and ptr[1] == "localhost.")
 end
 
-function ctx2(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function connect_client(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "tcp://*:10025")
+    ratchet.thread.attach(ctx1, "*", 10025)
 end)
 kernel:loop()
 

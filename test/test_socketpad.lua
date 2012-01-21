@@ -1,14 +1,14 @@
 require "ratchet"
 require "ratchet.socketpad"
 
-function ctx1(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function ctx1(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 
-    ratchet.thread.attach(ctx3, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx3, host, port)
 
     local client = socket:accept()
     ratchet.thread.attach(ctx2, client)
@@ -40,8 +40,8 @@ function ctx2(socket)
     socket:send('break')
 end
 
-function ctx3(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function ctx3(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -61,7 +61,7 @@ function ctx3(where)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx1, "localhost", 10025)
 end)
 kernel:loop()
 

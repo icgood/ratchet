@@ -25,18 +25,18 @@ function response_from_bus(data)
 end
 -- }}}
 
-function ctx1(where)
-    local s_rec = ratchet.socket.prepare_uri(where)
+function ctx1(host, port)
+    local s_rec = ratchet.socket.prepare_tcp(host, port)
     local s_socket = ratchet.socket.new(s_rec.family, s_rec.socktype, s_rec.protocol)
     s_socket.SO_REUSEADDR = true
     s_socket:bind(s_rec.addr)
     s_socket:listen()
 
-    local c1_rec = ratchet.socket.prepare_uri(where)
+    local c1_rec = ratchet.socket.prepare_tcp(host, port)
     local c1_socket = ratchet.socket.new(c1_rec.family, c1_rec.socktype, c1_rec.protocol)
     c1_socket:connect(c1_rec.addr)
 
-    local c2_rec = ratchet.socket.prepare_uri(where)
+    local c2_rec = ratchet.socket.prepare_tcp(host, port)
     local c2_socket = ratchet.socket.new(c2_rec.family, c2_rec.socktype, c2_rec.protocol)
     c2_socket:connect(c2_rec.addr)
 
@@ -82,7 +82,7 @@ function client_bus_2(socket)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx1, "localhost", 10025)
 end)
 kernel:loop()
 

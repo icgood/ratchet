@@ -1127,6 +1127,10 @@ int luaopen_ratchet (lua_State *L)
 	lua_pushstring (L, PACKAGE_VERSION);
 	lua_setfield (L, -2, "version");
 
+	/* Save class to registry. */
+	lua_pushvalue (L, -1);
+	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_class");
+
 	return 1;
 }
 /* }}} */

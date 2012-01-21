@@ -1,7 +1,7 @@
 require "ratchet"
 
-function ctx1(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function ctx1(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
@@ -13,7 +13,7 @@ function ctx1(where)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "tcp://localhost:10025")
+    ratchet.thread.attach(ctx1, "localhost", 10025)
 end)
 kernel:loop()
 

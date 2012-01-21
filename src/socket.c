@@ -117,6 +117,190 @@ static int throw_fd_errors (lua_State *L, int fd)
 }
 /* }}} */
 
+/* {{{ push_type_and_info_from_uri() */
+static int push_type_and_info_from_uri (lua_State *L, int index)
+{
+	/* Check for form: schema://[127.0.0.1]:25
+	 * or: schema://[01:02:03:04:05:06:07:08]:25 */
+	if (strmatch (L, index, "^([tu][cd]p)%:%/+%[(.-)%]%:(%d+)$"))
+		return 1;
+
+	/* Check for form: schema://127.0.0.1:25 */
+	else if (strmatch (L, index, "^([tu][cd]p)%:%/+([^%:]*)%:(%d+)$"))
+		return 1;
+
+	/* Check for form: tcp://127.0.0.1
+	 * or: tcp://01:02:03:04:05:06:07:08
+	 * Always uses default port. */
+	else if (strmatch (L, index, "^([tu][cd]p)%:%/+(.*)$"))
+	{
+		lua_pushinteger (L, DEFAULT_TCPUDP_PORT);
+		return 1;
+	}
+
+	else if (strmatch (L, index, "^(unix)%:(.*)$"))
+		return 1;
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ build_tcp_info() */
+static int build_tcp_info (lua_State *L)
+{
+	luaL_checktype (L, 1, LUA_TTABLE);
+	luaL_checkstring (L, 2);
+	int port = luaL_checkint (L, 3);
+	lua_settop (L, 3);
+
+	lua_createtable (L, 0, 5);
+
+	lua_pushinteger (L, SOCK_STREAM);
+	lua_setfield (L, 4, "socktype");
+
+	lua_pushinteger (L, 0);
+	lua_setfield (L, 4, "protocol");
+
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 4, "host");
+
+	/* Check first for IPv6. */
+	lua_getfield (L, 1, "ipv6");
+	if (!lua_isnil (L, -1))
+	{
+		lua_pushinteger (L, AF_INET6);
+		lua_setfield (L, 4, "family");
+
+		lua_rawgeti (L, -1, 1);
+		lua_remove (L, -2);
+		if (!lua_isnil (L, -1))
+		{
+			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
+
+			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
+			memset (addr, 0, sizeof (struct sockaddr_in6));
+			addr->sin6_family = AF_INET6;
+			addr->sin6_port = htons (port);
+			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
+
+			lua_setfield (L, 4, "addr");
+			lua_pop (L, 1);
+
+			return 1;
+		}
+		lua_pop (L, 1);
+	}
+	lua_pop (L, 1);
+
+	/* Check second for IPv4. */
+	lua_getfield (L, 1, "ipv4");
+	if (!lua_isnil (L, -1))
+	{
+		lua_pushinteger (L, AF_INET);
+		lua_setfield (L, 4, "family");
+
+		lua_rawgeti (L, -1, 1);
+		lua_remove (L, -2);
+		if (!lua_isnil (L, -1))
+		{
+			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
+
+			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
+			memset (addr, 0, sizeof (struct sockaddr_in));
+			addr->sin_family = AF_INET;
+			addr->sin_port = htons (port);
+			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
+
+			lua_setfield (L, 4, "addr");
+			lua_pop (L, 1);
+
+			return 1;
+		}
+		lua_pop (L, 1);
+	}
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ build_udp_info() */
+static int build_udp_info (lua_State *L)
+{
+	luaL_checktype (L, 1, LUA_TTABLE);
+	luaL_checkstring (L, 2);
+	int port = luaL_checkint (L, 3);
+	lua_settop (L, 3);
+
+	lua_createtable (L, 0, 5);
+
+	lua_pushinteger (L, SOCK_DGRAM);
+	lua_setfield (L, 4, "socktype");
+
+	lua_pushinteger (L, 0);
+	lua_setfield (L, 4, "protocol");
+
+	lua_pushvalue (L, 2);
+	lua_setfield (L, 4, "host");
+
+	/* Check first for IPv6. */
+	lua_getfield (L, 1, "ipv6");
+	if (!lua_isnil (L, -1))
+	{
+		lua_pushinteger (L, AF_INET6);
+		lua_setfield (L, 4, "family");
+
+		lua_rawgeti (L, -1, 1);
+		if (!lua_isnil (L, -1))
+		{
+			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
+
+			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
+			memset (addr, 0, sizeof (struct sockaddr_in6));
+			addr->sin6_family = AF_INET6;
+			addr->sin6_port = htons (port);
+			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
+
+			lua_setfield (L, 4, "addr");
+			lua_pop (L, 1);
+
+			return 1;
+		}
+		lua_pop (L, 1);
+	}
+	lua_pop (L, 1);
+
+	/* Check second for IPv4. */
+	lua_getfield (L, 1, "ipv4");
+	if (!lua_isnil (L, -1))
+	{
+		lua_pushinteger (L, AF_INET);
+		lua_setfield (L, 4, "family");
+
+		lua_rawgeti (L, -1, 1);
+		if (!lua_isnil (L, -1))
+		{
+			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
+
+			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
+			memset (addr, 0, sizeof (struct sockaddr_in));
+			addr->sin_family = AF_INET;
+			addr->sin_port = htons (port);
+			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
+
+			lua_setfield (L, 4, "addr");
+			lua_pop (L, 1);
+
+			return 1;
+		}
+		lua_pop (L, 1);
+	}
+	lua_pop (L, 1);
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ rsock_new() */
@@ -211,193 +395,6 @@ static int rsock_from_fd (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_type_and_info_from_uri() */
-static int rsock_type_and_info_from_uri (lua_State *L)
-{
-	luaL_checkstring (L, 1);
-	lua_settop (L, 1);
-
-	/* Check for form: schema://[127.0.0.1]:25
-	 * or: schema://[01:02:03:04:05:06:07:08]:25 */
-	if (strmatch (L, 1, "^([tu][cd]p)%:%/+%[(.-)%]%:(%d+)$"))
-		return 3;
-
-	/* Check for form: schema://127.0.0.1:25 */
-	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+([^%:]*)%:(%d+)$"))
-		return 3;
-
-	/* Check for form: tcp://127.0.0.1
-	 * or: tcp://01:02:03:04:05:06:07:08
-	 * Always uses default port. */
-	else if (strmatch (L, 1, "^([tu][cd]p)%:%/+(.*)$"))
-	{
-		lua_pushinteger (L, DEFAULT_TCPUDP_PORT);
-		return 3;
-	}
-
-	else if (strmatch (L, 1, "^(unix)%:(.*)$"))
-		return 2;
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ rsock_build_tcp_info() */
-static int rsock_build_tcp_info (lua_State *L)
-{
-	luaL_checktype (L, 1, LUA_TTABLE);
-	luaL_checkstring (L, 2);
-	int port = luaL_checkint (L, 3);
-	lua_settop (L, 3);
-
-	lua_createtable (L, 0, 4);
-
-	lua_pushinteger (L, SOCK_STREAM);
-	lua_setfield (L, 4, "socktype");
-
-	lua_pushinteger (L, 0);
-	lua_setfield (L, 4, "protocol");
-
-	lua_pushvalue (L, 2);
-	lua_setfield (L, 4, "host");
-
-	/* Check first for IPv6. */
-	lua_getfield (L, 1, "ipv6");
-	if (!lua_isnil (L, -1))
-	{
-		lua_pushinteger (L, AF_INET6);
-		lua_setfield (L, 4, "family");
-
-		lua_rawgeti (L, -1, 1);
-		lua_remove (L, -2);
-		if (!lua_isnil (L, -1))
-		{
-			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
-
-			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
-			memset (addr, 0, sizeof (struct sockaddr_in6));
-			addr->sin6_family = AF_INET6;
-			addr->sin6_port = htons (port);
-			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
-
-			lua_setfield (L, 4, "addr");
-			lua_pop (L, 1);
-
-			return 1;
-		}
-		lua_pop (L, 1);
-	}
-	lua_pop (L, 1);
-
-	/* Check second for IPv4. */
-	lua_getfield (L, 1, "ipv4");
-	if (!lua_isnil (L, -1))
-	{
-		lua_pushinteger (L, AF_INET);
-		lua_setfield (L, 4, "family");
-
-		lua_rawgeti (L, -1, 1);
-		lua_remove (L, -2);
-		if (!lua_isnil (L, -1))
-		{
-			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
-
-			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
-			memset (addr, 0, sizeof (struct sockaddr_in));
-			addr->sin_family = AF_INET;
-			addr->sin_port = htons (port);
-			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
-
-			lua_setfield (L, 4, "addr");
-			lua_pop (L, 1);
-
-			return 1;
-		}
-		lua_pop (L, 1);
-	}
-	lua_pop (L, 1);
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ rsock_build_udp_info() */
-static int rsock_build_udp_info (lua_State *L)
-{
-	luaL_checktype (L, 1, LUA_TTABLE);
-	luaL_checkstring (L, 2);
-	int port = luaL_checkint (L, 3);
-	lua_settop (L, 3);
-
-	lua_createtable (L, 0, 5);
-
-	lua_pushinteger (L, SOCK_DGRAM);
-	lua_setfield (L, 4, "socktype");
-
-	lua_pushinteger (L, 0);
-	lua_setfield (L, 4, "protocol");
-
-	lua_pushvalue (L, 2);
-	lua_setfield (L, 4, "host");
-
-	/* Check first for IPv6. */
-	lua_getfield (L, 1, "ipv6");
-	if (!lua_isnil (L, -1))
-	{
-		lua_pushinteger (L, AF_INET6);
-		lua_setfield (L, 4, "family");
-
-		lua_rawgeti (L, -1, 1);
-		if (!lua_isnil (L, -1))
-		{
-			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
-
-			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
-			memset (addr, 0, sizeof (struct sockaddr_in6));
-			addr->sin6_family = AF_INET6;
-			addr->sin6_port = htons (port);
-			memcpy (&addr->sin6_addr, iaddr, sizeof (struct in6_addr));
-
-			lua_setfield (L, 4, "addr");
-			lua_pop (L, 1);
-
-			return 1;
-		}
-		lua_pop (L, 1);
-	}
-	lua_pop (L, 1);
-
-	/* Check second for IPv4. */
-	lua_getfield (L, 1, "ipv4");
-	if (!lua_isnil (L, -1))
-	{
-		lua_pushinteger (L, AF_INET);
-		lua_setfield (L, 4, "family");
-
-		lua_rawgeti (L, -1, 1);
-		if (!lua_isnil (L, -1))
-		{
-			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
-
-			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
-			memset (addr, 0, sizeof (struct sockaddr_in));
-			addr->sin_family = AF_INET;
-			addr->sin_port = htons (port);
-			memcpy (&addr->sin_addr, iaddr, sizeof (struct in_addr));
-
-			lua_setfield (L, 4, "addr");
-			lua_pop (L, 1);
-
-			return 1;
-		}
-		lua_pop (L, 1);
-	}
-	lua_pop (L, 1);
-
-	return 0;
-}
-/* }}} */
-
 /* {{{ rsock_prepare_unix() */
 static int rsock_prepare_unix (lua_State *L)
 {
@@ -422,6 +419,76 @@ static int rsock_prepare_unix (lua_State *L)
 	lua_setfield (L, 2, "addr");
 
 	return 1;
+}
+/* }}} */
+
+/* {{{ rsock_prepare_tcp() */
+static int rsock_prepare_tcp (lua_State *L)
+{
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+
+	if (ctx == 0)
+	{
+		lua_settop (L, 3);
+
+		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
+		lua_getfield (L, -1, "query_all");
+		lua_remove (L, -2);
+
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 3);
+		lua_callk (L, 2, 2, 1, rsock_prepare_tcp);
+	}
+
+	if (lua_toboolean (L, 4))
+	{
+		lua_settop (L, 4);
+
+		lua_pushcfunction (L, build_tcp_info);
+		lua_pushvalue (L, 4);
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_call (L, 3, 1);
+		return 1;
+	}
+	else
+		return 2;
+}
+/* }}} */
+
+/* {{{ rsock_prepare_udp() */
+static int rsock_prepare_udp (lua_State *L)
+{
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+
+	if (ctx == 0)
+	{
+		lua_settop (L, 3);
+
+		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
+		lua_getfield (L, -1, "query_all");
+		lua_remove (L, -2);
+
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 3);
+		lua_callk (L, 2, 2, 1, rsock_prepare_udp);
+	}
+
+	if (lua_toboolean (L, 4))
+	{
+		lua_settop (L, 4);
+
+		lua_pushcfunction (L, build_udp_info);
+		lua_pushvalue (L, 4);
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_call (L, 3, 1);
+		return 1;
+	}
+	else
+		return 2;
 }
 /* }}} */
 
@@ -838,9 +905,11 @@ static int rsock_accept (lua_State *L)
 	}
 
 	/* Create the new socket object from file descriptor. */
-	lua_getfield (L, lua_upvalueindex (1), "from_fd");
+	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_socket_class");
+	lua_getfield (L, -1, "from_fd");
 	lua_pushinteger (L, clientfd);
 	lua_call (L, 1, 1);
+	lua_remove (L, -2);
 
 	push_inet_ntop (L, (struct sockaddr *) &addr);
 
@@ -1000,64 +1069,11 @@ static int rsock_try_encrypted_recv (lua_State *L)
 /* }}} */
 #endif
 
-/* ---- Lua-implemented Functions ------------------------------------------- */
-
-/* {{{ prepare_uri() */
-#define rsock_prepare_uri "return function (uri, query_types)\n" \
-	"	local class = ratchet.socket\n" \
-	"	local schema, dest, port = class.type_and_info_from_uri(uri)\n" \
-	"	if schema == 'tcp' then\n" \
-	"		local dnsrec, err = ratchet.dns.query_all(dest, query_types)\n" \
-	"		if dnsrec then\n" \
-	"			return class.build_tcp_info(dnsrec, dest, port)\n" \
-	"		else\n" \
-	"			return nil, err\n" \
-	"		end\n" \
-	"	elseif schema == 'udp' then\n" \
-	"		local dnsrec = ratchet.dns.query_all(dest, query_types)\n" \
-	"		if dnsrec then\n" \
-	"			return class.build_udp_info(dnsrec, dest, port)\n" \
-	"		else\n" \
-	"			return nil, err\n" \
-	"		end\n" \
-	"	\n" \
-	"	elseif schema == 'unix' then\n" \
-	"		return class.prepare_unix(dest)\n" \
-	"	else\n" \
-	"		error('unrecognized URI string: ' .. uri)\n" \
-	"	end\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ prepare_tcp() */
-#define rsock_prepare_tcp "return function (host, port, query_types)\n" \
-	"	local dnsrec, err = ratchet.dns.query_all(host, query_types)\n" \
-	"	if dnsrec then\n" \
-	"		return ratchet.socket.build_tcp_info(dnsrec, host, port)\n" \
-	"	else\n" \
-	"		return nil, err\n" \
-	"	end\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ prepare_udp() */
-#define rsock_prepare_udp "return function (host, port, query_types)\n" \
-	"	local dnsrec = ratchet.dns.query_all(host, query_types)\n" \
-	"	if dnsrec then\n" \
-	"		return ratchet.socket.build_udp_info(dnsrec, host, port)\n" \
-	"	else\n" \
-	"		return nil, err\n" \
-	"	end\n" \
-	"end\n"
-/* }}} */
-
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_socket() */
 int luaopen_ratchet_socket (lua_State *L)
 {
-	static const luaL_Reg empty[] = {{NULL}};
-
 	/* Static functions in the ratchet.socket namespace. */
 	static const luaL_Reg funcs[] = {
 		/* Documented methods. */
@@ -1070,17 +1086,6 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"hton16", rsock_hton16},
 		{"multi_recv", rsock_multi_recv},
 		{"prepare_unix", rsock_prepare_unix},
-		/* Undocumented, helper methods. */
-		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
-		{"build_tcp_info", rsock_build_tcp_info},
-		{"build_udp_info", rsock_build_udp_info},
-		{NULL}
-	};
-
-	/* Static Lua functions in the ratchet.socket namespace. */
-	static const struct luafunc luafuncs[] = {
-		/* Documented methods. */
-		{"prepare_uri", rsock_prepare_uri},
 		{"prepare_tcp", rsock_prepare_tcp},
 		{"prepare_udp", rsock_prepare_udp},
 		/* Undocumented, helper methods. */
@@ -1124,16 +1129,13 @@ int luaopen_ratchet_socket (lua_State *L)
 	};
 
 	/* Set up the ratchet.socket namespace functions. */
-	luaL_newlib (L, empty);
+	luaL_newlib (L, funcs);
 	lua_pushvalue (L, -1);
-	luaL_setfuncs (L, funcs, 1);
-	register_luafuncs (L, -1, luafuncs);
+	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_socket_class");
 
 	/* Set up the ratchet.socket class and metatables. */
 	luaL_newmetatable (L, "ratchet_socket_meta");
-	lua_newtable (L);
-	lua_pushvalue (L, -3);
-	luaL_setfuncs (L, meths, 1);
+	luaL_newlib (L, meths);
 	lua_setfield (L, -2, "methods");
 	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);

@@ -5,7 +5,7 @@ function ctx1(where)
     local socket = ratchet.zmqsocket.new(rec.type)
     socket:bind(rec.endpoint)
 
-    ratchet.thread.attach(ctx2, "zmq:rep:tcp://127.0.0.1:10025")
+    ratchet.thread.attach(ctx2, "rep:tcp://127.0.0.1:10025")
 
     -- Portion being tested.
     --
@@ -28,7 +28,7 @@ function ctx2(where)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "zmq:req:tcp://127.0.0.1:10025")
+    ratchet.thread.attach(ctx1, "req:tcp://127.0.0.1:10025")
 end)
 kernel:loop()
 

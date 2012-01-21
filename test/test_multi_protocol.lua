@@ -1,13 +1,13 @@
 require "ratchet"
 
-function tcpctx1(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function tcpctx1(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 
-    ratchet.thread.attach(tcpctx2, "tcp://localhost:10025")
+    ratchet.thread.attach(tcpctx2, host, port)
 
     local client = socket:accept()
 
@@ -18,8 +18,8 @@ function tcpctx1(where)
     assert(data == "there")
 end
 
-function tcpctx2(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function tcpctx2(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -35,7 +35,7 @@ function zmqctx1(where)
     local socket = ratchet.zmqsocket.new(rec.type)
     socket:bind(rec.endpoint)
 
-    ratchet.thread.attach(zmqctx2, "zmq:rep:tcp://127.0.0.1:10026")
+    ratchet.thread.attach(zmqctx2, "rep:tcp://127.0.0.1:10026")
 
     -- Portion being tested.
     --
@@ -58,8 +58,8 @@ function zmqctx2(where)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(tcpctx1, "tcp://*:10025")
-    ratchet.thread.attach(zmqctx1, "zmq:req:tcp://*:10026")
+    ratchet.thread.attach(tcpctx1, "localhost", 10025)
+    ratchet.thread.attach(zmqctx1, "req:tcp://*:10026")
 end)
 kernel:loop()
 

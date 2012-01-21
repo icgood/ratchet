@@ -52,15 +52,15 @@ end
 -- }}}
 
 -- {{{ server_ctx()
-function server_ctx(where)
-    local rec = ratchet.socket.prepare_uri(where, {"ipv4"})
+function server_ctx(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port, {"ipv4"})
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     if debugging then socket:set_tracer(debug_print) end
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 
-    ratchet.thread.attach(client_ctx, "tcp://127.0.0.1:10080")
+    ratchet.thread.attach(client_ctx, host, port)
 
     local client, from = socket:accept()
     if debugging then client:set_tracer(debug_print) end
@@ -74,8 +74,8 @@ end
 -- }}}
 
 -- {{{ client_ctx()
-function client_ctx(where)
-    local rec = ratchet.socket.prepare_uri(where, {"ipv4"})
+function client_ctx(host, port)
+    local rec = ratchet.socket.prepare_tcp(host, port, {"ipv4"})
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     if debugging then socket:set_tracer(debug_print) end
     socket:connect(rec.addr)
@@ -93,7 +93,7 @@ end
 -- }}}
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(server_ctx, "tcp://*:10080")
+    ratchet.thread.attach(server_ctx, "localhost", 10080)
 end)
 kernel:loop()
 

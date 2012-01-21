@@ -955,7 +955,6 @@ int luaopen_ratchet_dns (lua_State *L)
 	lua_rawseti (L, -2, 1);
 	lua_pushliteral (L, "ipv4");
 	lua_rawseti (L, -2, 2);
-	//lua_setfield (L, -2, "default_types");
 	lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
 
 	/* Load the resolv_conf and hosts sub-modules. */

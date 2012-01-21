@@ -1,13 +1,13 @@
 require "ratchet"
 
-function ctx1(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function ctx1(file)
+    local rec = ratchet.socket.prepare_unix(file)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)
     socket:listen()
 
-    ratchet.thread.attach(ctx3, "unix:/tmp/ratchet-tests.sock")
+    ratchet.thread.attach(ctx3, file)
 
     local client = socket:accept()
     ratchet.thread.attach(ctx2, client)
@@ -25,8 +25,8 @@ function ctx2(socket)
     socket:send("bar")
 end
 
-function ctx3(where)
-    local rec = ratchet.socket.prepare_uri(where)
+function ctx3(file)
+    local rec = ratchet.socket.prepare_unix(file)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket:connect(rec.addr)
 
@@ -42,7 +42,7 @@ function ctx3(where)
 end
 
 kernel = ratchet.new(function ()
-    ratchet.thread.attach(ctx1, "unix:/tmp/ratchet-tests.sock")
+    ratchet.thread.attach(ctx1, "/tmp/ratchet-tests.sock")
 end)
 kernel:loop()
 

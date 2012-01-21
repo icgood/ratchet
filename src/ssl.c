@@ -721,6 +721,8 @@ int luaopen_ratchet_ssl (lua_State *L)
 	lua_pop (L, 1);
 
 	luaL_newlib (L, funcs);
+	lua_pushvalue (L, -1);
+	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_ssl_class");
 
 	setup_ssl_methods (L);
 

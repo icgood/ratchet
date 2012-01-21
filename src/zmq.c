@@ -145,7 +145,7 @@ static int rzmq_prepare_uri (lua_State *L)
 
 	/* Check for form: schema:TYPE:endpoint
 	 * example: zmq:PAIR:tcp://localhost:10025 */
-	if (strmatch (L, 1, "^zmq%:(.-)%:(.*)$"))
+	if (strmatch (L, 1, "^(.-)%:(.*)$"))
 	{
 		lua_getfield (L, 3, "upper");
 		lua_pushvalue (L, 3);
@@ -489,6 +489,8 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 
 	/* Set up the ratchet.zmqsocket namespace functions. */
 	luaL_newlibtable (L, funcs);
+	lua_pushvalue (L, -1);
+	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_zmq_class");
 	push_new_zmq_context (L);
 	luaL_setfuncs (L, funcs, 1);
 
