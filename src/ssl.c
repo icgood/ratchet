@@ -76,7 +76,7 @@ void setup_ssl_methods (lua_State *L)
 static int rssl_ctx_new (lua_State *L)
 {
 	typedef SSL_METHOD *(*ssl_meth) (void);
-	ssl_meth meth = SSLv3_method;
+	ssl_meth meth = (ssl_meth) SSLv3_method;
 	SSL_CTX *ctx;
 
 	/* Check for override of default method. */
@@ -423,12 +423,48 @@ static int rssl_session_get_cipher (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rssl_session_rawread() */
-static int rssl_session_rawread (lua_State *L)
+/* {{{ rssl_session_shutdown() */
+static int rssl_session_shutdown (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
-	luaL_Buffer buffer;
 
+	int ret = SSL_shutdown (session);
+	unsigned long error = SSL_get_error (session, ret);
+	switch (error)
+	{
+		case SSL_ERROR_NONE:
+			lua_pushboolean (L, 1);
+			return 1;
+
+		case SSL_ERROR_WANT_READ:
+			lua_pushliteral (L, "read");
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_shutdown);
+
+		case SSL_ERROR_WANT_WRITE:
+			lua_pushliteral (L, "write");
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_shutdown);
+
+		default:
+			error = ERR_get_error ();
+			return luaL_error (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
+	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ rssl_session_read() */
+static int rssl_session_read (lua_State *L)
+{
+	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+
+	luaL_Buffer buffer;
 	luaL_buffinit (L, &buffer);
 	char *prepped = luaL_prepbuffer (&buffer);
 
@@ -442,31 +478,33 @@ static int rssl_session_rawread (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_ZERO_RETURN:
-			lua_pushboolean (L, 0);
-			lua_pushliteral (L, "shutdown");
-			return 2;
+			return rssl_session_shutdown (L);
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_read);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_read);
 
 		default:
 			error = ERR_get_error ();
-			return handle_error_str (L, "SSL_read: %s", ERR_error_string (error, NULL));
+			return luaL_error (L, "SSL_read: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
 }
 /* }}} */
 
-/* {{{ rssl_session_rawwrite() */
-static int rssl_session_rawwrite (lua_State *L)
+/* {{{ rssl_session_write() */
+static int rssl_session_write (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 	size_t size;
@@ -481,58 +519,30 @@ static int rssl_session_rawwrite (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_write);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_write);
 
 		default:
 			error = ERR_get_error ();
-			return handle_error_str (L, "SSL_write: %s", ERR_error_string (error, NULL));
+			return luaL_error (L, "SSL_write: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
 }
 /* }}} */
 
-/* {{{ rssl_session_rawshutdown() */
-static int rssl_session_rawshutdown (lua_State *L)
-{
-	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
-
-	int ret = SSL_shutdown (session);
-	unsigned long error = SSL_get_error (session, ret);
-	switch (error)
-	{
-		case SSL_ERROR_NONE:
-			lua_pushliteral (L, "");
-			return 1;
-
-		case SSL_ERROR_WANT_READ:
-			lua_pushboolean (L, 0);
-			lua_pushliteral (L, "read");
-			return 2;
-
-		case SSL_ERROR_WANT_WRITE:
-			lua_pushboolean (L, 0);
-			lua_pushliteral (L, "write");
-			return 2;
-
-		default:
-			error = ERR_get_error ();
-			return handle_error_str (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
-	}
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ rssl_session_rawconnect() */
-static int rssl_session_rawconnect (lua_State *L)
+/* {{{ rssl_session_connect() */
+static int rssl_session_connect (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
@@ -545,26 +555,30 @@ static int rssl_session_rawconnect (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_connect);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_connect);
 
 		default:
 			error = ERR_get_error ();
-			return handle_error_str (L, "SSL_connect: %s", ERR_error_string (error, NULL));
+			return luaL_error (L, "SSL_connect: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
 }
 /* }}} */
 
-/* {{{ rssl_session_rawaccept() */
-static int rssl_session_rawaccept (lua_State *L)
+/* {{{ rssl_session_accept() */
+static int rssl_session_accept (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
@@ -577,18 +591,22 @@ static int rssl_session_rawaccept (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "read");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_accept);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushboolean (L, 0);
 			lua_pushliteral (L, "write");
-			return 2;
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "engine");
+			lua_remove (L, -2);
+			return lua_yieldk (L, 2, 0, rssl_session_accept);
 
 		default:
 			error = ERR_get_error ();
-			return handle_error_str (L, "SSL_accept: %s", ERR_error_string (error, NULL));
+			return luaL_error (L, "SSL_accept: %s", ERR_error_string (error, NULL));
 	}
 
 	return 0;
@@ -634,75 +652,6 @@ int rsock_encrypt (lua_State *L)
 }
 /* }}} */
 
-/* ---- Lua-implemented Functions ------------------------------------------- */
-
-/* {{{ read() */
-#define rssl_session_read "return function (self, ...)\n" \
-	"	repeat\n" \
-	"		local ret, yield_on = self:rawread(...)\n" \
-	"		if ret then\n" \
-	"			return ret\n" \
-	"		elseif ret == nil then\n" \
-	"			return nil, yield_on\n" \
-	"		elseif yield_on == 'shutdown' then\n" \
-	"			return self:shutdown()\n" \
-	"		end\n" \
-	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ write() */
-#define rssl_session_write "return function (self, ...)\n" \
-	"	repeat\n" \
-	"		local ret, yield_on = self:rawwrite(...)\n" \
-	"		if ret then\n" \
-	"			return ret\n" \
-	"		elseif ret == nil then\n" \
-	"			return nil, yield_on\n" \
-	"		end\n" \
-	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ connect() */
-#define rssl_session_connect "return function (self, ...)\n" \
-	"	repeat\n" \
-	"		local ret, yield_on = self:rawconnect(...)\n" \
-	"		if ret then\n" \
-	"			return ret\n" \
-	"		elseif ret == nil then\n" \
-	"			return nil, yield_on\n" \
-	"		end\n" \
-	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ accept() */
-#define rssl_session_accept "return function (self, ...)\n" \
-	"	repeat\n" \
-	"		local ret, yield_on = self:rawaccept(...)\n" \
-	"		if ret then\n" \
-	"			return ret\n" \
-	"		elseif ret == nil then\n" \
-	"			return nil, yield_on\n" \
-	"		end\n" \
-	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ shutdown() */
-#define rssl_session_shutdown "return function (self, ...)\n" \
-	"	repeat\n" \
-	"		local ret, yield_on = self:rawshutdown(...)\n" \
-	"		if ret then\n" \
-	"			return ret\n" \
-	"		elseif ret == nil then\n" \
-	"			return nil, yield_on\n" \
-	"		end\n" \
-	"	until not coroutine.yield(yield_on, self:get_engine())\n" \
-	"end\n"
-/* }}} */
-
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_ssl() */
@@ -737,17 +686,6 @@ int luaopen_ratchet_ssl (lua_State *L)
 		{"verify_certificate", rssl_session_verify_certificate},
 		{"get_rfc2253", rssl_session_get_rfc2253},
 		{"get_cipher", rssl_session_get_cipher},
-		/* Undocumented, helper methods. */
-		{"rawread", rssl_session_rawread},
-		{"rawwrite", rssl_session_rawwrite},
-		{"rawshutdown", rssl_session_rawshutdown},
-		{"rawconnect", rssl_session_rawconnect},
-		{"rawaccept", rssl_session_rawaccept},
-		{NULL}
-	};
-
-	static const struct luafunc sslluameths[] = {
-		/* Documented methods. */
 		{"read", rssl_session_read},
 		{"write", rssl_session_write},
 		{"shutdown", rssl_session_shutdown},
@@ -774,7 +712,6 @@ int luaopen_ratchet_ssl (lua_State *L)
 	luaL_newmetatable (L, "ratchet_ssl_session_meta");
 	lua_newtable (L);
 	luaL_setfuncs (L, sslmeths, 0);
-	register_luafuncs (L, -1, sslluameths);
 	lua_setfield (L, -2, "__index");
 	luaL_setfuncs (L, sslmetameths, 0);
 	lua_pop (L, 1);
