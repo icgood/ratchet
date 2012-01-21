@@ -505,6 +505,48 @@ static int rsock_hton16 (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rsock_multi_recv() */
+static int rsock_multi_recv (lua_State *L)
+{
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+
+	if (ctx == 0)
+	{
+		lua_settop (L, 3);
+
+		lua_pushliteral (L, "multi");
+		lua_pushvalue (L, 1);
+		lua_pushnil (L);
+		lua_pushvalue (L, 2);
+		return lua_yieldk (L, 4, 1, rsock_multi_recv);
+	}
+
+	else if (ctx == 1)
+	{
+		if (!lua_toboolean (L, 4))
+		{
+			lua_pushnil (L);
+			return 1;
+		}
+		
+		lua_settop (L, 4);
+
+		lua_getfield (L, 4, "recv");
+		lua_pushvalue (L, 4);
+		lua_pushvalue (L, 3);
+		lua_callk (L, 2, 2, 2, rsock_multi_recv);
+	}
+
+	if (!lua_toboolean (L, 5))
+		return 2;
+
+	lua_pushvalue (L, 5);
+	lua_pushvalue (L, 4);
+	return 2;
+}
+/* }}} */
+
 /* ---- Member Functions ---------------------------------------------------- */
 
 /* {{{ rsock_gc() */
@@ -1009,21 +1051,6 @@ static int rsock_try_encrypted_recv (lua_State *L)
 	"end\n"
 /* }}} */
 
-/* {{{ multi_recv() */
-#define rsock_multi_recv "return function (socks, timeout, ...)\n" \
-	"	local sock = coroutine.yield('multi', socks, nil, timeout)\n" \
-	"	if not sock then\n" \
-	"		return nil\n" \
-	"	end\n" \
-	"	local ret, err = sock:recv(...)\n" \
-	"	if ret then\n" \
-	"		return ret, sock\n" \
-	"	else\n" \
-	"		return nil, err\n" \
-	"	end\n" \
-	"end\n"
-/* }}} */
-
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_socket() */
@@ -1041,6 +1068,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"hton", rsock_hton},
 		{"ntoh16", rsock_ntoh16},
 		{"hton16", rsock_hton16},
+		{"multi_recv", rsock_multi_recv},
 		{"prepare_unix", rsock_prepare_unix},
 		/* Undocumented, helper methods. */
 		{"type_and_info_from_uri", rsock_type_and_info_from_uri},
@@ -1055,7 +1083,6 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"prepare_uri", rsock_prepare_uri},
 		{"prepare_tcp", rsock_prepare_tcp},
 		{"prepare_udp", rsock_prepare_udp},
-		{"multi_recv", rsock_multi_recv},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
@@ -1096,13 +1123,6 @@ int luaopen_ratchet_socket (lua_State *L)
 		{NULL}
 	};
 
-	/* Methods in the ratchet.socket class implemented in Lua. */
-	static const struct luafunc luameths[] = {
-		/* Documented methods. */
-		/* Undocumented, helper methods. */
-		{NULL}
-	};
-
 	/* Set up the ratchet.socket namespace functions. */
 	luaL_newlib (L, empty);
 	lua_pushvalue (L, -1);
@@ -1114,7 +1134,6 @@ int luaopen_ratchet_socket (lua_State *L)
 	lua_newtable (L);
 	lua_pushvalue (L, -3);
 	luaL_setfuncs (L, meths, 1);
-	register_luafuncs (L, -1, luameths);
 	lua_setfield (L, -2, "methods");
 	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);
