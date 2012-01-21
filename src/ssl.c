@@ -468,7 +468,11 @@ static int rssl_session_read (lua_State *L)
 	luaL_buffinit (L, &buffer);
 	char *prepped = luaL_prepbuffer (&buffer);
 
-	int ret = SSL_read (session, prepped, LUAL_BUFFERSIZE);
+	size_t len = (size_t) luaL_optunsigned (L, 2, (lua_Unsigned) LUAL_BUFFERSIZE);
+	if (len > LUAL_BUFFERSIZE)
+		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
+
+	int ret = SSL_read (session, prepped, len);
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
@@ -499,7 +503,7 @@ static int rssl_session_read (lua_State *L)
 			return luaL_error (L, "SSL_read: %s", ERR_error_string (error, NULL));
 	}
 
-	return 0;
+	return luaL_error (L, "unreachable");
 }
 /* }}} */
 
@@ -537,7 +541,7 @@ static int rssl_session_write (lua_State *L)
 			return luaL_error (L, "SSL_write: %s", ERR_error_string (error, NULL));
 	}
 
-	return 0;
+	return luaL_error (L, "unreachable");
 }
 /* }}} */
 

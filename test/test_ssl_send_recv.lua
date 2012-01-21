@@ -25,7 +25,7 @@ function ctx1(where)
     assert("AES256-SHA" == enc:get_cipher())
 
     client:send("hello")
-    local data = client:recv()
+    local data = client:recv(5)
     assert(data == "world")
 
     local data = client:recv()
@@ -55,7 +55,7 @@ function ctx2(where)
     assert("AES256-SHA" == enc:get_cipher())
     assert("CN=localhost" == enc:get_rfc2253())
 
-    local data = socket:recv()
+    local data = socket:recv(5)
     assert(data == "hello")
     socket:send("world")
 

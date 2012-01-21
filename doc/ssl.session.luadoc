@@ -50,8 +50,9 @@ function shutdown(self)
 --  method. The return value will be an empty string if the other side has
 --  shut down.
 --  @param self the ssl session object.
+--  @param maxlen optional maximum number of bytes to read.
 --  @return string of data received on the session, or nil on timeout.
-function read(self)
+function read(self, maxlen)
 
 --- Writes data on the encrypted session. This method is rarely called directly,
 --  as it is usually called by the communication engine itself. For example,

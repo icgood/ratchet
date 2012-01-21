@@ -104,6 +104,19 @@ static int call_tracer (lua_State *L, int index, const char *type, int args)
 }
 /* }}} */
 
+/* {{{ throw_fd_errors() */
+static int throw_fd_errors (lua_State *L, int fd)
+{
+	int error = 0;
+	socklen_t errorlen = sizeof (int);
+
+	if (getsockopt (fd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
+		return throw_perror (L);
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ rsock_new() */
@@ -604,7 +617,7 @@ static int rsock_check_errors (lua_State *L)
 		if (errno == EBADF)
 			error = errno;
 		else
-			return handle_perror (L);
+			return throw_perror (L);
 	}
 
 	if (error)
@@ -709,37 +722,61 @@ static int rsock_set_tracer (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_rawconnect() */
-static int rsock_rawconnect (lua_State *L)
+/* {{{ rsock_connect() */
+static int rsock_connect (lua_State *L)
 {
-	lua_settop (L, 2);
 	int sockfd = socket_fd (L, 1);
 	luaL_checktype (L, 2, LUA_TUSERDATA);
 	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
 	socklen_t addrlen = (socklen_t) lua_rawlen (L, 2);
 
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+	{
+		lua_pushnil (L);
+		lua_pushliteral (L, "Timed out on connect.");
+		return 2;
+	}
+	lua_settop (L, 2);
+
 	int ret = connect (sockfd, addr, addrlen);
 	if (ret < 0)
 	{
-		if (errno == EALREADY || errno == EINPROGRESS || errno == EISCONN)
-			lua_pushboolean (L, 0);
+		if (errno == EALREADY || errno == EINPROGRESS)
+		{
+			lua_pushliteral (L, "write");
+			lua_pushvalue (L, 1);
+			return lua_yieldk (L, 2, 1, rsock_connect);
+		}
 		else
-			return handle_perror (L);
+			return throw_perror (L);
 	}
-	else
-		lua_pushboolean (L, 1);
+
+	throw_fd_errors (L, sockfd);
 
 	lua_pushvalue (L, 2);
 	call_tracer (L, 1, "connect", 1);
 
+	lua_pushboolean (L, 1);
 	return 1;
 }
 /* }}} */
 
-/* {{{ rsock_rawaccept() */
-static int rsock_rawaccept (lua_State *L)
+/* {{{ rsock_accept() */
+static int rsock_accept (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
+
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 2))
+	{
+		lua_pushnil (L);
+		lua_pushliteral (L, "Timed out on accept.");
+		return 2;
+	}
+	lua_settop (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
 	struct sockaddr_storage addr;
@@ -749,14 +786,13 @@ static int rsock_rawaccept (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_getfield (L, 1, "accept");
+			lua_pushliteral (L, "read");
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 2);
-			return 2;
+			return lua_yieldk (L, 2, 1, rsock_accept);
 		}
 
 		else
-			return handle_perror (L);
+			return throw_perror (L);
 	}
 
 	/* Create the new socket object from file descriptor. */
@@ -773,14 +809,23 @@ static int rsock_rawaccept (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_rawsend() */
-static int rsock_rawsend (lua_State *L)
+/* {{{ rsock_send() */
+static int rsock_send (lua_State *L)
 {
-	lua_settop (L, 2);
 	int sockfd = socket_fd (L, 1);
 	size_t data_len;
 	const char *data = luaL_checklstring (L, 2, &data_len);
 	ssize_t ret;
+
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+	{
+		lua_pushnil (L);
+		lua_pushliteral (L, "Timed out on send.");
+		return 2;
+	}
+	lua_settop (L, 2);
 
 	int flags = MSG_NOSIGNAL;
 	ret = send (sockfd, data, data_len, flags);
@@ -788,15 +833,12 @@ static int rsock_rawsend (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_getfield (L, 1, "send");
+			lua_pushliteral (L, "write");
 			lua_pushvalue (L, 1);
-			lua_pushvalue (L, 2);
-			lua_call (L, 2, 2);
-			return 2;
+			return lua_yieldk (L, 2, 1, rsock_send);
 		}
-
 		else
-			return handle_perror (L);
+			return throw_perror (L);
 	}
 
 	lua_pushvalue (L, 2);
@@ -807,30 +849,41 @@ static int rsock_rawsend (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_rawrecv() */
-static int rsock_rawrecv (lua_State *L)
+/* {{{ rsock_recv() */
+static int rsock_recv (lua_State *L)
 {
-	lua_settop (L, 1);
 	int sockfd = socket_fd (L, 1);
 	luaL_Buffer buffer;
 	ssize_t ret;
 
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+	{
+		lua_pushnil (L);
+		lua_pushliteral (L, "Timed out on recv.");
+		return 2;
+	}
+	lua_settop (L, 2);
+
 	luaL_buffinit (L, &buffer);
 	char *prepped = luaL_prepbuffer (&buffer);
 
-	ret = recv (sockfd, prepped, LUAL_BUFFERSIZE, 0);
+	size_t len = (size_t) luaL_optunsigned (L, 2, (lua_Unsigned) LUAL_BUFFERSIZE);
+	if (len > LUAL_BUFFERSIZE)
+		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
+
+	ret = recv (sockfd, prepped, len, 0);
 	if (ret == -1)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_getfield (L, 1, "recv");
+			lua_pushliteral (L, "read");
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 2);
-			return 2;
+			return lua_yieldk (L, 2, 1, rsock_recv);
 		}
-
 		else
-			return handle_perror (L);
+			return throw_perror (L);
 	}
 
 	luaL_addsize (&buffer, (size_t) ret);
@@ -843,69 +896,69 @@ static int rsock_rawrecv (lua_State *L)
 }
 /* }}} */
 
+#if HAVE_OPENSSL
+/* {{{ rsock_try_encrypted_send() */
+static int rsock_try_encrypted_send (lua_State *L)
+{
+	(void) socket_fd (L, 1);
+	int ctx = 0;
+	if (LUA_YIELD == lua_getctx (L, &ctx))
+		return 2;
+
+	lua_settop (L, 2);
+
+	lua_getfield (L, 1, "get_encryption");
+	lua_pushvalue (L, 1);
+	lua_call (L, 1, 1);
+
+	if (lua_toboolean (L, -1))
+	{
+		lua_getfield (L, -1, "write");
+		lua_pushvalue (L, -2);
+		lua_pushvalue (L, 2);
+		lua_callk (L, 2, 2, 1, rsock_try_encrypted_send);
+		return 2;
+	}
+	else
+	{
+		lua_settop (L, 2);
+		return rsock_send (L);
+	}
+}
+/* }}} */
+
+/* {{{ rsock_try_encrypted_recv() */
+static int rsock_try_encrypted_recv (lua_State *L)
+{
+	(void) socket_fd (L, 1);
+	int ctx = 0;
+	if (LUA_YIELD == lua_getctx (L, &ctx))
+		return 2;
+
+	lua_settop (L, 2);
+
+	lua_getfield (L, 1, "get_encryption");
+	lua_pushvalue (L, 1);
+	lua_call (L, 1, 1);
+
+	if (lua_toboolean (L, -1))
+	{
+		lua_getfield (L, -1, "read");
+		lua_pushvalue (L, -2);
+		lua_pushvalue (L, 2);
+		lua_callk (L, 2, 2, 1, rsock_try_encrypted_recv);
+		return 2;
+	}
+	else
+	{
+		lua_settop (L, 2);
+		return rsock_recv (L);
+	}
+}
+/* }}} */
+#endif
+
 /* ---- Lua-implemented Functions ------------------------------------------- */
-
-/* {{{ send() */
-#if HAVE_OPENSSL
-#define rsock_send "return function (self, ...)\n" \
-	"	local enc = self:get_encryption()\n" \
-	"	if enc then\n" \
-	"		return enc:write(...)\n" \
-	"	elseif coroutine.yield('write', self) then\n" \
-	"		return self:rawsend(...)\n" \
-	"	end\n" \
-	"end\n"
-#else
-#define rsock_send "return function (self, ...)\n" \
-	"	if coroutine.yield('write', self) then\n" \
-	"		return self:rawsend(...)\n" \
-	"	end\n" \
-	"end\n"
-#endif
-/* }}} */
-
-/* {{{ recv() */
-#if HAVE_OPENSSL
-#define rsock_recv "return function (self, ...)\n" \
-	"	local enc = self:get_encryption()\n" \
-	"	if enc then\n" \
-	"		return enc:read(...)\n" \
-	"	elseif coroutine.yield('read', self) then\n" \
-	"		return self:rawrecv(...)\n" \
-	"	end\n" \
-	"end\n"
-#else
-#define rsock_recv "return function (self, ...)\n" \
-	"	if coroutine.yield('read', self) then\n" \
-	"		return self:rawrecv(...)\n" \
-	"	end\n" \
-	"end\n"
-#endif
-/* }}} */
-
-/* {{{ accept() */
-#define rsock_accept "return function (self, ...)\n" \
-	"	if coroutine.yield('read', self) then\n" \
-	"		return self:rawaccept(...)\n" \
-	"	else\n" \
-	"		return nil, 'Timed out.'\n" \
-	"	end\n" \
-	"end\n"
-/* }}} */
-
-/* {{{ connect() */
-#define rsock_connect "return function (self, ...)\n" \
-	"	local ret, err = self:rawconnect(...)\n" \
-	"	if err then\n" \
-	"		return nil, err\n" \
-	"	elseif not ret then\n" \
-	"		if not coroutine.yield('write', self) then\n" \
-	"			return nil, 'Timed out.'\n" \
-	"		end\n" \
-	"	end\n" \
-	"	return self:check_errors()\n" \
-	"end\n"
-/* }}} */
 
 /* {{{ prepare_uri() */
 #define rsock_prepare_uri "return function (uri, query_types)\n" \
@@ -1025,28 +1078,27 @@ int luaopen_ratchet_socket (lua_State *L)
 #if HAVE_OPENSSL
 		{"get_encryption", rsock_get_encryption},
 		{"encrypt", rsock_encrypt},
+		{"send", rsock_try_encrypted_send},
+		{"recv", rsock_try_encrypted_recv},
+#else
+		{"send", rsock_send},
+		{"recv", rsock_recv},
 #endif
 		{"bind", rsock_bind},
 		{"listen", rsock_listen},
 		{"check_errors", rsock_check_errors},
+		{"connect", rsock_connect},
+		{"accept", rsock_accept},
 		{"shutdown", rsock_shutdown},
 		{"close", rsock_close},
 		{"set_tracer", rsock_set_tracer},
 		/* Undocumented, helper methods. */
-		{"rawconnect", rsock_rawconnect},
-		{"rawaccept", rsock_rawaccept},
-		{"rawsend", rsock_rawsend},
-		{"rawrecv", rsock_rawrecv},
 		{NULL}
 	};
 
 	/* Methods in the ratchet.socket class implemented in Lua. */
 	static const struct luafunc luameths[] = {
 		/* Documented methods. */
-		{"send", rsock_send},
-		{"recv", rsock_recv},
-		{"accept", rsock_accept},
-		{"connect", rsock_connect},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

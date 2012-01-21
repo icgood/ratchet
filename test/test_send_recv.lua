@@ -17,7 +17,7 @@ function ctx2(socket)
     -- Portion being tested.
     --
     socket:send("hello")
-    local data = socket:recv()
+    local data = socket:recv(5)
     assert(data == "world")
 
     local data = socket:recv()
@@ -32,7 +32,7 @@ function ctx3(where)
 
     -- Portion being tested.
     --
-    local data = socket:recv()
+    local data = socket:recv(5)
     assert(data == "hello")
     socket:send("world")
 

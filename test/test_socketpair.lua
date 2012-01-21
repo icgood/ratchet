@@ -6,7 +6,7 @@ function ctx1()
     ratchet.thread.attach(ctx2, socket_b)
 
     socket_a:send("hello")
-    local data = socket_a:recv()
+    local data = socket_a:recv(5)
     assert(data == "world")
 
     local data = socket_a:recv()
@@ -15,7 +15,7 @@ function ctx1()
 end
 
 function ctx2(socket_b)
-    local data = socket_b:recv()
+    local data = socket_b:recv(5)
     assert(data == "hello")
     socket_b:send("world")
 

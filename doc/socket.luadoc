@@ -174,8 +174,9 @@ function send(self, data)
 --  data is available. As in the system call, recv() will return an empty
 --  string if the other end has shut down.
 --  @param self the socket object.
+--  @param maxlen optional maximum number of bytes to receive.
 --  @return string of data received on the socket.
-function recv(self)
+function recv(self, maxlen)
 
 --- Gets the current state of the socket. Returns true if the socket is
 --  connected and not in an error state, or returns nil and an error otherwise.
