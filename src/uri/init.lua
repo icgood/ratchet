@@ -3,8 +3,6 @@ require "ratchet"
 
 ratchet.uri = {}
 local parse_handlers = {}
-local connect_handlers = {}
-local listen_handlers = {}
 
 -- {{{ parse_handlers
 
@@ -84,9 +82,19 @@ end
 
 -- }}}
 
+-- {{{ ratchet.uri.register()
+function ratchet.uri.register(schema, handler)
+    if not schema:match("^%w[%w%-]$") then
+        error("Schema name invalid, alphanumerics and \"-\" only: " .. schema)
+    end
+
+    parse_handlers[schema] = handler
+end
+-- }}}
+
 -- {{{ ratchet.uri.parse()
 function ratchet.uri.parse(str, ...)
-    local schema, data = str:match("^([%w%-]-)%:(.*)$")
+    local schema, data = str:match("^([%w%-]+)%:(.*)$")
     if not schema then
         error("Could not parse URI schema: " .. str)
     end
