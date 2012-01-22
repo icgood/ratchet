@@ -5,8 +5,10 @@ TESTS_ENVIRONMENT = LUA_CPATH="../src/.libs/?.so;;" @LUA@
 else
 TESTS_ENVIRONMENT = @LUA@ -e 'package.preload["ratchet"] = package.loadlib("../src/.libs/libratchet.so", "luaopen_ratchet")'
 endif
+TESTS_ENVIRONMENT += -e 'package.preload["ratchet.uri"] = assert(loadfile("../src/uri/init.lua"))'
 
 TESTS = test_listen_connect.lua \
+	test_uri_listen_connect.lua \
 	test_send_recv.lua \
 	test_error_handler.lua \
 	test_wait_all.lua \
