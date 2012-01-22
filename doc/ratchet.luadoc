@@ -16,15 +16,12 @@ function new(entry)
 --  @return a string identifying the kernel event mechanism (kqueue, epoll, etc.).
 function get_method(self)
 
---- Sets the new error handler for threads. The scope of the error handler depends
---  on where this method is called. Calling from the main thread will use this
---  handler as the default. Error handlers set in threads apply only to that thead.
---  Extra arguments to this function are given to the handler function. The last
---  parameter in the call will be the error object.
+--- Returns the number of active threads the ratchet object is managing. This
+--  includes threads that are currently running and threads that are paused, but
+--  not any that have completed or errored.
 --  @param self the ratchet object.
---  @param func the function to call.
---  @param ... extra parameters to the function, before error object.
-function set_error_handler(self, func, ...)
+--  @return the number of active threads.
+function get_num_threads(self)
 
 --- Processes thread events in a loop. This function simply runs loop_once() with
 --  blocking until it returns false.

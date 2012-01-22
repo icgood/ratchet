@@ -10,10 +10,9 @@ TESTS_ENVIRONMENT += -e 'package.preload["ratchet.uri"] = assert(loadfile("../sr
 TESTS = test_listen_connect.lua \
 	test_uri_listen_connect.lua \
 	test_send_recv.lua \
-	test_error_handler.lua \
+	test_pcall_errors.lua \
 	test_wait_all.lua \
 	test_thread_space.lua \
-	test_thread_error_handler.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \
 	test_socketpad.lua \
