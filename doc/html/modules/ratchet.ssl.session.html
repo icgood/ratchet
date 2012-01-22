@@ -89,6 +89,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
 	</li>
 
@@ -139,7 +143,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#read">read</a>&nbsp;(self)</td>
+	<td class="name" nowrap><a href="#read">read</a>&nbsp;(self, maxlen)</td>
 	<td class="summary">Reads data on the encrypted session.</td>
 	</tr>
 
@@ -293,7 +297,7 @@ see RFC 2253.
 
 
 
-<dt><a name="read"></a><strong>read</strong>&nbsp;(self)</dt>
+<dt><a name="read"></a><strong>read</strong>&nbsp;(self, maxlen)</dt>
 <dd>
 Reads data on the encrypted session. This method is rarely called directly, as it is usually called by the communication engine itself. For example, with socket objects, calling recv() after encrypt() will actually call this method. The return value will be an empty string if the other side has shut down.
 
@@ -303,6 +307,10 @@ Reads data on the encrypted session. This method is rarely called directly, as i
 	
 	<li>
 	  self: the ssl session object.
+	</li>
+	
+	<li>
+	  maxlen: optional maximum number of bytes to read.
 	</li>
 	
 </ul>
