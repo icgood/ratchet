@@ -428,6 +428,12 @@ static int rssl_session_shutdown (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 2))
+		return luaL_error (L, "Timed out on shutdown.");
+	lua_settop (L, 1);
+
 	int ret = SSL_shutdown (session);
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -441,21 +447,21 @@ static int rssl_session_shutdown (lua_State *L)
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_shutdown);
+			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
 		case SSL_ERROR_WANT_WRITE:
 			lua_pushliteral (L, "write");
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_shutdown);
+			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
 		default:
 			error = ERR_get_error ();
 			return luaL_error (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
 	}
 
-	return 0;
+	return luaL_error (L, "unreachable");
 }
 /* }}} */
 
@@ -463,6 +469,12 @@ static int rssl_session_shutdown (lua_State *L)
 static int rssl_session_read (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+		return luaL_error (L, "Timed out on recv.");
+	lua_settop (L, 2);
 
 	luaL_Buffer buffer;
 	luaL_buffinit (L, &buffer);
@@ -489,14 +501,14 @@ static int rssl_session_read (lua_State *L)
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_read);
+			return lua_yieldk (L, 2, 1, rssl_session_read);
 
 		case SSL_ERROR_WANT_WRITE:
 			lua_pushliteral (L, "write");
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_read);
+			return lua_yieldk (L, 2, 1, rssl_session_read);
 
 		default:
 			error = ERR_get_error ();
@@ -514,6 +526,12 @@ static int rssl_session_write (lua_State *L)
 	size_t size;
 	const char *data = luaL_checklstring (L, 2, &size);
 
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+		return luaL_error (L, "Timed out on send.");
+	lua_settop (L, 2);
+
 	int ret = SSL_write (session, data, (int) size);
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -527,14 +545,14 @@ static int rssl_session_write (lua_State *L)
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_write);
+			return lua_yieldk (L, 2, 1, rssl_session_write);
 
 		case SSL_ERROR_WANT_WRITE:
 			lua_pushliteral (L, "write");
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_write);
+			return lua_yieldk (L, 2, 1, rssl_session_write);
 
 		default:
 			error = ERR_get_error ();
@@ -550,6 +568,12 @@ static int rssl_session_connect (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
 
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 2))
+		return luaL_error (L, "Timed out on client_handshake.");
+	lua_settop (L, 1);
+
 	int ret = SSL_connect (session);
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -563,21 +587,21 @@ static int rssl_session_connect (lua_State *L)
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_connect);
+			return lua_yieldk (L, 2, 1, rssl_session_connect);
 
 		case SSL_ERROR_WANT_WRITE:
 			lua_pushliteral (L, "write");
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_connect);
+			return lua_yieldk (L, 2, 1, rssl_session_connect);
 
 		default:
 			error = ERR_get_error ();
 			return luaL_error (L, "SSL_connect: %s", ERR_error_string (error, NULL));
 	}
 
-	return 0;
+	return luaL_error (L, "unreachable");
 }
 /* }}} */
 
@@ -585,6 +609,12 @@ static int rssl_session_connect (lua_State *L)
 static int rssl_session_accept (lua_State *L)
 {
 	SSL *session = *(SSL **) luaL_checkudata (L, 1, "ratchet_ssl_session_meta");
+
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 2))
+		return luaL_error (L, "Timed out on server_handshake.");
+	lua_settop (L, 1);
 
 	int ret = SSL_accept (session);
 	unsigned long error = SSL_get_error (session, ret);
@@ -599,21 +629,21 @@ static int rssl_session_accept (lua_State *L)
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_accept);
+			return lua_yieldk (L, 2, 1, rssl_session_accept);
 
 		case SSL_ERROR_WANT_WRITE:
 			lua_pushliteral (L, "write");
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
-			return lua_yieldk (L, 2, 0, rssl_session_accept);
+			return lua_yieldk (L, 2, 1, rssl_session_accept);
 
 		default:
 			error = ERR_get_error ();
 			return luaL_error (L, "SSL_accept: %s", ERR_error_string (error, NULL));
 	}
 
-	return 0;
+	return luaL_error (L, "unreachable");
 }
 /* }}} */
 

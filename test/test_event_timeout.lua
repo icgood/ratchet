@@ -8,8 +8,7 @@ function ctx1(host, port)
     socket:listen()
 
     socket:set_timeout(0.0)
-    local client = socket:accept()
-    assert(not client, "accept failed to timeout")
+    assert(not pcall(socket.accept, socket), "accept failed to timeout")
 end
 
 kernel = ratchet.new(function ()

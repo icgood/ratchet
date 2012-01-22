@@ -842,11 +842,7 @@ static int rsock_connect (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-	{
-		lua_pushnil (L);
-		lua_pushliteral (L, "Timed out on connect.");
-		return 2;
-	}
+		return luaL_error (L, "Timed out on connect.");
 	lua_settop (L, 2);
 
 	int ret = connect (sockfd, addr, addrlen);
@@ -867,8 +863,7 @@ static int rsock_connect (lua_State *L)
 	lua_pushvalue (L, 2);
 	call_tracer (L, 1, "connect", 1);
 
-	lua_pushboolean (L, 1);
-	return 1;
+	return 0;
 }
 /* }}} */
 
@@ -880,11 +875,7 @@ static int rsock_accept (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-	{
-		lua_pushnil (L);
-		lua_pushliteral (L, "Timed out on accept.");
-		return 2;
-	}
+		return luaL_error (L, "Timed out on accept.");
 	lua_settop (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
@@ -931,11 +922,7 @@ static int rsock_send (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-	{
-		lua_pushnil (L);
-		lua_pushliteral (L, "Timed out on send.");
-		return 2;
-	}
+		return luaL_error (L, "Timed out on send.");
 	lua_settop (L, 2);
 
 	int flags = MSG_NOSIGNAL;
@@ -955,8 +942,7 @@ static int rsock_send (lua_State *L)
 	lua_pushvalue (L, 2);
 	call_tracer (L, 1, "send", 1);
 
-	lua_pushboolean (L, 1);
-	return 1;
+	return 0;
 }
 /* }}} */
 
@@ -970,11 +956,7 @@ static int rsock_recv (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-	{
-		lua_pushnil (L);
-		lua_pushliteral (L, "Timed out on recv.");
-		return 2;
-	}
+		return luaL_error (L, "Timed out on recv.");
 	lua_settop (L, 2);
 
 	luaL_buffinit (L, &buffer);
