@@ -89,6 +89,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
 	</li>
 
@@ -229,7 +233,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#recv">recv</a>&nbsp;(self)</td>
+	<td class="name" nowrap><a href="#recv">recv</a>&nbsp;(self, maxlen)</td>
 	<td class="summary">Attempts to receive data from across the socket, pausing the thread until data is available.</td>
 	</tr>
 
@@ -926,7 +930,7 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 
 
-<dt><a name="recv"></a><strong>recv</strong>&nbsp;(self)</dt>
+<dt><a name="recv"></a><strong>recv</strong>&nbsp;(self, maxlen)</dt>
 <dd>
 Attempts to receive data from across the socket, pausing the thread until data is available. As in the system call, recv() will return an empty string if the other end has shut down.
 
@@ -936,6 +940,10 @@ Attempts to receive data from across the socket, pausing the thread until data i
 	
 	<li>
 	  self: the socket object.
+	</li>
+	
+	<li>
+	  maxlen: optional maximum number of bytes to receive.
 	</li>
 	
 </ul>

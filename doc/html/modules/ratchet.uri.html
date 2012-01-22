@@ -50,8 +50,10 @@
 		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
 
-	<li><strong>ratchet.http.client</strong></li>
-	
+	<li>
+		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+	</li>
+
 	<li>
 		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
 	</li>
@@ -88,10 +90,8 @@
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
 	</li>
 
-	<li>
-		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
-	</li>
-
+	<li><strong>ratchet.uri</strong></li>
+	
 	<li>
 		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
 	</li>
@@ -111,9 +111,9 @@
 
 <div id="content">
 
-<h1>Module <code>ratchet.http.client</code></h1>
+<h1>Module <code>ratchet.uri</code></h1>
 
-<p>This library provides client-side access to an HTTP service, commonly used in many different cases across the Web. Currently the client only supports HTTP/1.0, with no current plans to support 1.1 or higher, as it is only provided for convenience and as an example of using the ratchet libraries.</p>
+<p>This module provides a parser for generic RFC 2396 URI strings. Some built-in schema parsers are included, such as "tcp", "udp", and "unix" which each return ratchet.socket objects. New URIs schemas may be registered.</p>
 
 
 
@@ -123,13 +123,13 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size)</td>
-	<td class="summary">Creates a new HTTP client object.</td>
+	<td class="name" nowrap><a href="#parse">parse</a>&nbsp;(uri, ...)</td>
+	<td class="summary">Parses a URI string and calls its handler.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#query">query</a>&nbsp;(self, command, uri, headers, data)</td>
-	<td class="summary">Sends an HTTP query, and returns the results.</td>
+	<td class="name" nowrap><a href="#register">register</a>&nbsp;(schema, handler)</td>
+	<td class="summary">This function registers a new schema to be handled by the given handler function.</td>
 	</tr>
 
 </table>
@@ -149,20 +149,20 @@
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, send_size)</dt>
+<dt><a name="parse"></a><strong>parse</strong>&nbsp;(uri, ...)</dt>
 <dd>
-Creates a new HTTP client object.
+Parses a URI string and calls its handler. The handler is passed the rest of the URI after the schema portion and the first ":" character, as well as any additional arguments sent to this function. Any values returned from the handler are passed on the caller of this function.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  socket: Used as the underlying socket for the query, under the assumption that encryption has been established as needed and no other I/O has taken place.
+	  uri: the URI string.
 	</li>
 	
 	<li>
-	  send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+	  ...: additional parameters to send to the handler.
 	</li>
 	
 </ul>
@@ -173,7 +173,7 @@ Creates a new HTTP client object.
 
 
 <h3>Return value:</h3>
-a new http.client object.
+any values returned by the handler are returned by this function.
 
 
 
@@ -182,32 +182,20 @@ a new http.client object.
 
 
 
-<dt><a name="query"></a><strong>query</strong>&nbsp;(self, command, uri, headers, data)</dt>
+<dt><a name="register"></a><strong>register</strong>&nbsp;(schema, handler)</dt>
 <dd>
-Sends an HTTP query, and returns the results.
+This function registers a new schema to be handled by the given handler function. The schema name can only include alpha-numeric characters and hyphens and must begin with an alpha-numeric character.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  self: the http.client object.
+	  schema: the schema name.
 	</li>
 	
 	<li>
-	  command: The HTTP command to use, such as "PUT" or "GET".
-	</li>
-	
-	<li>
-	  uri: The URI to query.
-	</li>
-	
-	<li>
-	  headers: A table whose keys are header names and values are arrays of strings. Each string in the value array will result in a new header of the given name.
-	</li>
-	
-	<li>
-	  data: Additional data to send in the body of the query. It is usually important to specify a "Content-Length" header with the length of this string.
+	  handler: the function to call when parsing a URI of this schema.
 	</li>
 	
 </ul>
@@ -216,9 +204,6 @@ Sends an HTTP query, and returns the results.
 
 
 
-
-<h3>Return value:</h3>
-In order: the return code of the query, the descriptive return message, additional headers returned (in the same format as the headers parameter), and a string of data returned by the query (if any).
 
 
 
