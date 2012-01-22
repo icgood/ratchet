@@ -21,11 +21,6 @@
 
 #define stackdump(L) stackdump_ln (L, __FILE__, __LINE__)
 
-struct luafunc {
-	const char *fname;
-	char *fstr;
-};
-
 int return_perror_ln (lua_State *L, const char *file, int line);
 int throw_perror_ln (lua_State *L, const char *file, int line);
 int return_error_str_ln (lua_State *L, const char *file, int line, const char *err, ...);
@@ -33,8 +28,6 @@ int throw_error_str_ln (lua_State *L, const char *file, int line, const char *er
 int return_error_top_ln (lua_State *L, const char *file, int line);
 int throw_error__ln (lua_State *L, const char *file, int line);
 
-void build_lua_function (lua_State *L, const char *fstr);
-void register_luafuncs (lua_State *L, int index, const struct luafunc *fs);
 int strmatch (lua_State *L, int index, const char *match);
 int strequal (lua_State *L, int index, const char *s2);
 double fromtimeval (struct timeval *tv);

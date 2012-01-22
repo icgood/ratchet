@@ -122,31 +122,6 @@ int throw_error_top_ln (lua_State *L, const char *file, int line)
 }
 /* }}} */
 
-/* {{{ build_lua_function() */
-void build_lua_function (lua_State *L, const char *fstr)
-{
-	if (luaL_loadstring (L, fstr) != 0)
-		lua_error (L);
-	lua_call (L, 0, 1);
-}
-/* }}} */
-
-/* {{{ register_luafuncs() */
-void register_luafuncs (lua_State *L, int index, const struct luafunc *fs)
-{
-	const struct luafunc *it;
-
-	if (index < 0)
-		index = lua_gettop (L) + index + 1;
-
-	for (it = fs; it->fname != NULL; it++)
-	{
-		build_lua_function (L, it->fstr);
-		lua_setfield (L, index, it->fname);
-	}
-}
-/* }}} */
-
 /* {{{ strmatch() */
 int strmatch (lua_State *L, int index, const char *match)
 {
