@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "ratchet.h"
+#include "error.h"
 #include "misc.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
@@ -255,7 +256,7 @@ static int ratchet_new (lua_State *L)
 	struct event_base **new = (struct event_base **) lua_newuserdata (L, sizeof (struct event_base *));
 	*new = event_base_new ();
 	if (!*new)
-		return luaL_error (L, "failed to create event_base structure");
+		return rerror_error (L, "ratchet.new()", NULL, "Failed to create event_base structure.");
 
 	luaL_getmetatable (L, "ratchet_meta");
 	lua_setmetatable (L, -2);
@@ -380,9 +381,9 @@ static int ratchet_loop_once (lua_State *L)
 	/* Call event loop, break if we're out of events. */
 	int ret = event_base_loop (e_b, EVLOOP_ONCE | extra_flags);
 	if (ret < 0)
-		return luaL_error (L, "libevent internal error");
+		return rerror_error (L, "ratchet.loop_once()", NULL, "libevent internal error.");
 	else if (ret > 0)
-		return luaL_error (L, "non-IO deadlock detected");
+		return rerror_error (L, "ratchet.loop_once()", "DEADLOCK", "Non-IO deadlock detected.");
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -531,7 +532,8 @@ restart_thread:
 		/* Remove the entry from the persistance table. */
 		end_thread_persist (L, 2);
 
-		lua_error (L1);
+		lua_xmove (L1, L, 1);
+		lua_error (L);
 	}
 
 	return 0;
@@ -591,7 +593,7 @@ static int ratchet_wait_for_write (lua_State *L)
 	double timeout = get_timeout_from_object (L, 3);
 
 	if (fd < 0)
-		return luaL_error (L1, "Invalid file descriptor: %d", fd);
+		return rerror_error (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
 
 	/* Build timeout data. */
 	struct timeval tv;
@@ -621,7 +623,7 @@ static int ratchet_wait_for_read (lua_State *L)
 	double timeout = get_timeout_from_object (L, 3);
 
 	if (fd < 0)
-		return luaL_error (L1, "Invalid file descriptor: %d", fd);
+		return rerror_error (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
 
 	/* Build timeout data. */
 	struct timeval tv;
@@ -800,7 +802,7 @@ static int ratchet_wait_all (lua_State *L)
 	luaL_checktype (L, 2, LUA_TTABLE);
 	lua_settop (L, 2);
 	if (lua_pushthread (L))
-		return luaL_error (L, "wait_all cannot be called from main thread");
+		return luaL_error (L, "ratchet.thread.wait_all() cannot be called from main thread.");
 	lua_pop (L, 1);
 
 	lua_getuservalue (L, 1);
@@ -860,7 +862,7 @@ static int ratchet_thread_space (lua_State *L)
 	lua_settop (L, 2);
 
 	if (lua_pushthread (L))
-		return luaL_error (L, "thread_space cannot be called from main thread");
+		return luaL_error (L, "ratchet.thread.space() cannot be called from main thread.");
 
 	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "thread_space");
@@ -904,7 +906,7 @@ static int ratchet_running_thread (lua_State *L)
 static int ratchet_timer (lua_State *L)
 {
 	if (lua_pushthread (L))
-		return luaL_error (L, "timer cannot be called from main thread");
+		return luaL_error (L, "ratchet.thread.timer() cannot be called from main thread.");
 	lua_pop (L, 1);
 
 	int nargs = lua_gettop (L);
@@ -919,7 +921,7 @@ static int ratchet_timer (lua_State *L)
 static int ratchet_pause (lua_State *L)
 {
 	if (lua_pushthread (L))
-		return luaL_error (L, "pause cannot be called from main thread");
+		return luaL_error (L, "ratchet.thread.pause() cannot be called from main thread.");
 	lua_pop (L, 1);
 
 	return lua_yield (L, 0);
@@ -940,7 +942,7 @@ static int ratchet_unpause (lua_State *L)
 
 	/* Make sure it's unpause-able. */
 	if (lua_status (L1) != LUA_YIELD)
-		return luaL_error (L, "thread is not yielding, cannot unpause");
+		return rerror_error (L, "ratchet.thread.unpause()", NULL, "Thread is not yielding, cannot unpause.");
 
 	/* Set up the extra arguments as return values from pause(). */
 	int nargs = lua_gettop (L) - 2;
@@ -1021,6 +1023,9 @@ int luaopen_ratchet (lua_State *L)
 
 	luaL_newlib (L, thread_funcs);
 	lua_setfield (L, -2, "thread");
+
+	luaL_requiref (L, "ratchet.error", luaopen_ratchet_error, 0);
+	lua_setfield (L, -2, "error");
 
 #if HAVE_SOCKET
 	luaL_requiref (L, "ratchet.socket", luaopen_ratchet_socket, 0);

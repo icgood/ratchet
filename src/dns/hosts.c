@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 
 #include "ratchet.h"
+#include "error.h"
 #include "misc.h"
 #include "dns.h"
 #include "libdns/dns.h"
@@ -96,7 +97,7 @@ static int myhosts_new (lua_State *L)
 	struct dns_hosts **new = (struct dns_hosts **) lua_newuserdata (L, sizeof (struct dns_hosts *));
 	*new = load_hosts (L, 1);
 	if (!*new)
-		return handle_error_top (L);
+		return rerror_error_top (L, "ratchet.dns.hosts.new()", NULL);
 
 	luaL_getmetatable (L, "ratchet_dns_hosts_meta");
 	lua_setmetatable (L, -2);

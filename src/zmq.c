@@ -33,6 +33,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "error.h"
 
 #ifndef RATCHET_ZMQ_IO_THREADS
 #define RATCHET_ZMQ_IO_THREADS 10
@@ -41,14 +42,7 @@
 #define socket_ptr(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->socket)
 #define socket_timeout(L, i) (((struct socket_data *) luaL_checkudata (L, i, "ratchet_zmqsocket_meta"))->timeout)
 
-#if RATCHET_THROW_ERRORS
-#define handle_zmq_error raise_zmq_error
-#else
-#define handle_zmq_error return_zmq_error
-#endif
-
-#define raise_zmq_error(L) raise_zmq_error_ln (L, __FILE__, __LINE__)
-#define return_zmq_error(L) return_zmq_error_ln (L, __FILE__, __LINE__)
+#define raise_zmq_error(L, f) raise_zmq_error_ln (L, f, __FILE__, __LINE__)
 
 struct socket_data
 {
@@ -57,19 +51,24 @@ struct socket_data
 };
 
 /* {{{ raise_zmq_error_ln() */
-static int raise_zmq_error_ln (lua_State *L, const char *file, int line)
+static int raise_zmq_error_ln (lua_State *L, const char *func, const char *file, int line)
 {
-	lua_pushfstring (L, "%s:%d: %s", file, line, zmq_strerror (errno));
-	return lua_error (L);
-}
-/* }}} */
+	int e = zmq_errno ();
 
-/* {{{ return_zmq_error_ln() */
-static int return_zmq_error_ln (lua_State *L, const char *file, int line)
-{
+	rerror_push_constructor (L);
+	lua_pushstring (L, zmq_strerror (e));
+	rerror_push_code (L, e);
+	if (func)
+		lua_pushstring (L, func);
+	else
+		lua_pushnil (L);
+	lua_pushstring (L, file);
+	lua_pushinteger (L, line);
 	lua_pushnil (L);
-	lua_pushfstring (L, "%s:%d: %s", file, line, zmq_strerror (errno));
-	return 2;
+	lua_pushinteger (L, e);
+	lua_call (L, 7, 1);
+
+	return lua_error (L);
 }
 /* }}} */
 
@@ -98,7 +97,7 @@ static int push_new_zmq_context (lua_State *L)
 		return 1;
 	}
 	else
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, NULL);
 }
 /* }}} */
 
@@ -131,7 +130,7 @@ static int rzmq_new (lua_State *L)
 		return 1;
 	}
 	else
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.new()");
 }
 /* }}} */
 
@@ -189,7 +188,7 @@ static int rzmq_get_fd (lua_State *L)
 
 	int ret = zmq_getsockopt (socket, ZMQ_FD, &fd, &fd_len);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.get_fd()");
 
 	lua_pushinteger (L, fd);
 	return 1;
@@ -224,7 +223,7 @@ static int rzmq_is_readable (lua_State *L)
 
 	int ret = zmq_getsockopt (socket, ZMQ_EVENTS, &events, &events_len);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.is_readable()");
 
 	lua_pushboolean (L, (events & ZMQ_POLLIN));
 
@@ -241,7 +240,7 @@ static int rzmq_is_writable (lua_State *L)
 
 	int ret = zmq_getsockopt (socket, ZMQ_EVENTS, &events, &events_len);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.is_writable()");
 
 	lua_pushboolean (L, (events & ZMQ_POLLOUT));
 
@@ -258,7 +257,7 @@ static int rzmq_is_rcvmore (lua_State *L)
 
 	int ret = zmq_getsockopt (socket, ZMQ_RCVMORE, &rcvmore, &rcvmore_len);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.is_rcvmore()");
 
 	lua_pushboolean (L, rcvmore);
 	return 1;
@@ -273,7 +272,7 @@ static int rzmq_bind (lua_State *L)
 
 	int ret = zmq_bind (socket, endpoint);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.bind()");
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -288,7 +287,7 @@ static int rzmq_connect (lua_State *L)
 
 	int ret = zmq_connect (socket, endpoint);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.connect()");
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -310,7 +309,7 @@ static int rzmq_rawsend (lua_State *L)
 
 	int ret = zmq_send (socket, &msg, flags);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.send()");
 	zmq_msg_close (&msg);
 
 	lua_pushboolean (L, 1);
@@ -330,7 +329,7 @@ static int rzmq_rawrecv (lua_State *L)
 
 	int ret = zmq_recv (socket, &msg, flags);
 	if (ret == -1)
-		return handle_zmq_error (L);
+		return raise_zmq_error (L, "ratchet.zmqsocket.recv()");
 
 	/* Build Lua string from zmq_msg_t. */
 	lua_pushlstring (L, (const char *) zmq_msg_data (&msg), zmq_msg_size (&msg));

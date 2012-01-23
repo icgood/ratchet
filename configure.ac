@@ -81,9 +81,9 @@ fi
 AX_LUA_HEADERS
 AX_LUA_HEADERS_VERSION([502])
 AX_LUA_LIBS
-if test "x${LUA_LIB}" == "x"; then
-	AC_MSG_ERROR([Lua development libraries required for building.])
-fi
+#if test "x${LUA_LIB}" == "x"; then
+#	AC_MSG_ERROR([Lua development libraries required for building.])
+#fi
 AC_SUBST([LUA], ["$LUA"])
 AM_CONDITIONAL([HAVE_LUA_INTERPRETER], [test "x${LUA}" != "x"])
 

@@ -38,6 +38,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+#include "error.h"
 #include "misc.h"
 
 /* {{{ password_cb() */
@@ -89,7 +90,7 @@ static int rssl_ctx_new (lua_State *L)
 	/* Create context. */
 	ctx = SSL_CTX_new (meth ());
 	if (!ctx)
-		return handle_error_str (L, "Creation of SSL_CTX object failed");
+		return rerror_error (L, "ratchet.ssl.new()", NULL, "Creation of SSL_CTX object failed");
 
 	/* Set up Lua object. */
 	SSL_CTX **new = (SSL_CTX **) lua_newuserdata (L, sizeof (SSL_CTX *));
@@ -137,7 +138,7 @@ static int rssl_ctx_create_session (lua_State *L)
 
 	SSL *ssl = SSL_new (ctx);
 	if (!ssl)
-		return handle_error_str (L, "Could not create SSL object");
+		return rerror_error (L, "ratchet.ssl.create_session()", NULL, "Could not create SSL object");
 	SSL_set_bio (ssl, rbio, wbio);
 
 	/* Set up Lua object. */
@@ -192,14 +193,14 @@ static int rssl_ctx_load_certs (lua_State *L)
 
 	/* Load keys and certificates. */
 	if (!SSL_CTX_use_certificate_chain_file (ctx, certchainfile))
-		return handle_error_str (L, "Could not read certificate chain file: %s", certchainfile);
+		return rerror_error (L, "ratchet.ssl.load_certs()", NULL, "Could not read certificate chain file: %s", certchainfile);
 	if (password)
 	{
 		SSL_CTX_set_default_passwd_cb (ctx, password_cb);
 		SSL_CTX_set_default_passwd_cb_userdata (ctx, (void *) password);
 	}
 	if (!SSL_CTX_use_PrivateKey_file (ctx, privkeyfile, SSL_FILETYPE_PEM))
-		return handle_error_str (L, "Could not read key file: %s", privkeyfile);
+		return rerror_error (L, "ratchet.ssl.load_certs()", NULL, "Could not read key file: %s", privkeyfile);
 
 	return 0;
 }
@@ -219,11 +220,11 @@ static int rssl_ctx_load_cas (lua_State *L)
 	if (!SSL_CTX_load_verify_locations (ctx, ca_file, ca_path))
 	{
 		if (ca_path && ca_file)
-			return handle_error_str (L, "Could not read CA locations: %s %s", ca_file, ca_path);
+			return rerror_error (L, "ratchet.ssl.load_cas()", NULL, "Could not read CA locations: %s %s", ca_file, ca_path);
 		else if (ca_path)
-			return handle_error_str (L, "Could not read CA path: %s", ca_path);
+			return rerror_error (L, "ratchet.ssl.load_cas()", NULL, "Could not read CA path: %s", ca_path);
 		else
-			return handle_error_str (L, "Could not read CA file: %s", ca_file);
+			return rerror_error (L, "ratchet.ssl.load_cas()", NULL, "Could not read CA file: %s", ca_file);
 	}
 	SSL_CTX_set_verify_depth (ctx, depth);
 
@@ -243,9 +244,9 @@ static int rssl_ctx_load_randomness (lua_State *L)
 	if (!random)
 		random = RAND_file_name (buffer, LUAL_BUFFERSIZE);
 	if (!random)
-		return luaL_argerror (L, 5, "Could not find default random file");
+		return luaL_argerror (L, 2, "Could not find default random file");
 	if (!RAND_load_file (random, rand_max_bytes))
-		return handle_error_str (L, "Could not load randomness: %s", random);
+		return rerror_error (L, "ratchet.ssl.load_randomness()", NULL, "Could not load randomness: %s", random);
 
 	return 0;
 }
@@ -259,15 +260,15 @@ static int rssl_ctx_load_dh_params (lua_State *L)
 
 	BIO *bio = BIO_new_file (file, "r");
 	if (!bio)
-		return handle_error_str (L, "Could not open DH params file: %s", file);
+		return rerror_error (L, "ratchet.ssl.load_dh_params()", NULL, "Could not open DH params file: %s", file);
 
 	DH *ret = PEM_read_bio_DHparams (bio, NULL, NULL, NULL);
 	BIO_free (bio);
 	if (!ret)
-		return handle_error_str (L, "Could not read DH params file: %s", file);
+		return rerror_error (L, "ratchet.ssl.load_dh_params()", NULL, "Could not read DH params file: %s", file);
 
 	if (SSL_CTX_set_tmp_dh (ctx, ret) < 0)
-		return handle_error_str (L, "Could not set DH params: %s", file);
+		return rerror_error (L, "ratchet.ssl.load_dh_params()", NULL, "Could not set DH params: %s", file);
 
 	return 0;
 }
@@ -282,10 +283,10 @@ static int rssl_ctx_generate_tmp_rsa (lua_State *L)
 
 	RSA *rsa = RSA_generate_key (bits, e, NULL, NULL);
 	if (!rsa)
-		return handle_error_str (L, "Could not generate a %d-bit RSA key", bits);
+		return rerror_error (L, "ratchet.ssl.generate_tmp_rsa()", NULL, "Could not generate a %d-bit RSA key", bits);
 
 	if (!SSL_CTX_set_tmp_rsa (ctx, rsa))
-		return handle_error_str (L, "Could not set set temporary RSA key");
+		return rerror_error (L, "ratchet.ssl.generate_tmp_rsa()", NULL, "Could not set set temporary RSA key");
 
 	RSA_free (rsa);
 
@@ -431,7 +432,7 @@ static int rssl_session_shutdown (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return luaL_error (L, "Timed out on shutdown.");
+		return rerror_error (L, "ratchet.ssl.session.shutdown()", "TIMEOUT", "Timed out on shutdown.");
 	lua_settop (L, 1);
 
 	int ret = SSL_shutdown (session);
@@ -458,7 +459,7 @@ static int rssl_session_shutdown (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_shutdown: %s", ERR_error_string (error, NULL));
+			return rerror_error (L, "ratchet.ssl.session.shutdown()", NULL, "SSL_shutdown: %s", ERR_error_string (error, NULL));
 	}
 
 	return luaL_error (L, "unreachable");
@@ -473,7 +474,7 @@ static int rssl_session_read (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return luaL_error (L, "Timed out on recv.");
+		return rerror_error (L, "ratchet.ssl.session.read()", "TIMEOUT", "Timed out on read.");
 	lua_settop (L, 2);
 
 	luaL_Buffer buffer;
@@ -482,7 +483,7 @@ static int rssl_session_read (lua_State *L)
 
 	size_t len = (size_t) luaL_optunsigned (L, 2, (lua_Unsigned) LUAL_BUFFERSIZE);
 	if (len > LUAL_BUFFERSIZE)
-		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
+		return rerror_error (L, "ratchet.ssl.session.read()", "EINVAL", "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
 
 	int ret = SSL_read (session, prepped, len);
 	unsigned long error = SSL_get_error (session, ret);
@@ -512,7 +513,7 @@ static int rssl_session_read (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_read: %s", ERR_error_string (error, NULL));
+			return rerror_error (L, "ratchet.ssl.session.read()", NULL, "SSL_read: %s", ERR_error_string (error, NULL));
 	}
 
 	return luaL_error (L, "unreachable");
@@ -529,7 +530,7 @@ static int rssl_session_write (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return luaL_error (L, "Timed out on send.");
+		return rerror_error (L, "ratchet.ssl.session.write()", "TIMEOUT", "Timed out on write.");
 	lua_settop (L, 2);
 
 	int ret = SSL_write (session, data, (int) size);
@@ -556,7 +557,7 @@ static int rssl_session_write (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_write: %s", ERR_error_string (error, NULL));
+			return rerror_error (L, "ratchet.ssl.session.write()", NULL, "SSL_write: %s", ERR_error_string (error, NULL));
 	}
 
 	return luaL_error (L, "unreachable");
@@ -571,7 +572,7 @@ static int rssl_session_connect (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return luaL_error (L, "Timed out on client_handshake.");
+		return rerror_error (L, "ratchet.ssl.session.client_handshake()", "TIMEOUT", "Timed out on client_handshake.");
 	lua_settop (L, 1);
 
 	int ret = SSL_connect (session);
@@ -598,7 +599,7 @@ static int rssl_session_connect (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_connect: %s", ERR_error_string (error, NULL));
+			return rerror_error (L, "ratchet.ssl.session.client_handshake()", NULL, "SSL_connect: %s", ERR_error_string (error, NULL));
 	}
 
 	return luaL_error (L, "unreachable");
@@ -613,7 +614,7 @@ static int rssl_session_accept (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return luaL_error (L, "Timed out on server_handshake.");
+		return rerror_error (L, "ratchet.ssl.session.server_handshake()", "TIMEOUT", "Timed out on server_handshake.");
 	lua_settop (L, 1);
 
 	int ret = SSL_accept (session);
@@ -640,7 +641,7 @@ static int rssl_session_accept (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return luaL_error (L, "SSL_accept: %s", ERR_error_string (error, NULL));
+			return rerror_error (L, "ratchet.ssl.session.server_handshake()", NULL, "SSL_accept: %s", ERR_error_string (error, NULL));
 	}
 
 	return luaL_error (L, "unreachable");
@@ -669,7 +670,7 @@ int rsock_encrypt (lua_State *L)
 
 	BIO *bio = BIO_new_socket (fd, BIO_NOCLOSE);
 	if (!bio)
-		return handle_error_str (L, "Could not create BIO object from: %d", fd);
+		return rerror_error (L, "ratchet.socket.encrypt()", NULL, "Could not create BIO object from: %d", fd);
 
 	lua_getfield (L, 2, "create_session");
 	lua_pushvalue (L, 2);

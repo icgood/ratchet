@@ -32,6 +32,7 @@
 #include <arpa/inet.h>
 
 #include "ratchet.h"
+#include "error.h"
 #include "misc.h"
 #include "dns.h"
 #include "libdns/dns.h"
@@ -93,7 +94,7 @@ static int myresconf_new (lua_State *L)
 	struct dns_resolv_conf **new = (struct dns_resolv_conf **) lua_newuserdata (L, sizeof (struct dns_resolv_conf *));
 	*new = load_resolv_conf (L, 1);
 	if (!*new)
-		return handle_error_top (L);
+		return rerror_error_top (L, "ratchet.dns.resolv_conf.new()", NULL);
 
 	luaL_getmetatable (L, "ratchet_dns_resolv_conf_meta");
 	lua_setmetatable (L, -2);

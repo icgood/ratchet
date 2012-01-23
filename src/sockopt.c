@@ -34,6 +34,7 @@
 #include <sys/time.h>
 
 #include "misc.h"
+#include "error.h"
 #include "sockopt.h"
 
 #define CHECK_OPT_GET(opt, type, ...) if (0 == strcmp (#opt, key)) return rsockopt_get_##type (L, fd, opt, ##__VA_ARGS__)
@@ -51,7 +52,7 @@ static int rsockopt_get_boolean (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 
@@ -67,7 +68,7 @@ static int rsockopt_get_int (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 
@@ -83,7 +84,7 @@ static int rsockopt_get_string (lua_State *L, int fd, int opt, int maxlen)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 
@@ -103,7 +104,7 @@ static int rsockopt_get_linger (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 
@@ -126,7 +127,7 @@ static int rsockopt_get_peercred (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 #endif
@@ -147,7 +148,7 @@ static int rsockopt_get_timeval (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 }
 /* }}} */
 
@@ -159,7 +160,7 @@ static int rsockopt_set_boolean (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 
@@ -171,7 +172,7 @@ static int rsockopt_set_int (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 
@@ -184,7 +185,7 @@ static int rsockopt_set_string (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 
@@ -204,7 +205,7 @@ static int rsockopt_set_linger (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 
@@ -229,7 +230,7 @@ static int rsockopt_set_peercred (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 #endif
@@ -250,7 +251,7 @@ static int rsockopt_set_timeval (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "setsockopt");
 }
 /* }}} */
 

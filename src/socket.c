@@ -38,6 +38,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "error.h"
 #include "sockopt.h"
 
 #ifndef UNIX_PATH_MAX
@@ -63,7 +64,7 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 		char buffer[INET_ADDRSTRLEN];
 		struct in_addr *in = &((struct sockaddr_in *) addr)->sin_addr;
 		if (!inet_ntop (AF_INET, in, buffer, INET_ADDRSTRLEN))
-			return handle_perror (L);
+			return rerror_perror (L, NULL, "inet_ntop");
 		lua_pushstring (L, buffer);
 	}
 
@@ -72,7 +73,7 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 		char buffer[INET6_ADDRSTRLEN];
 		struct in6_addr *in = &((struct sockaddr_in6 *) addr)->sin6_addr;
 		if (!inet_ntop (AF_INET6, in, buffer, INET6_ADDRSTRLEN))
-			return handle_perror (L);
+			return rerror_perror (L, NULL, "inet_ntop");
 		lua_pushstring (L, buffer);
 	}
 
@@ -111,7 +112,7 @@ static int throw_fd_errors (lua_State *L, int fd)
 	socklen_t errorlen = sizeof (int);
 
 	if (getsockopt (fd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
-		return throw_perror (L);
+		return rerror_perror (L, NULL, "getsockopt");
 
 	return 0;
 }
@@ -313,10 +314,10 @@ static int rsock_new (lua_State *L)
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
 	*fd = socket (family, socktype, protocol);
 	if (*fd < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.new()", "socket");
 
 	if (set_nonblocking (*fd) < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.new()", NULL);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -343,14 +344,14 @@ static int rsock_new_pair (lua_State *L)
 	int sv[2];
 	int ret = socketpair (family, socktype, protocol, sv);
 	if (ret < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.new_pair()", "socketpair");
 	*fd1 = sv[0];
 	*fd2 = sv[1];
 
 	if (set_nonblocking (*fd1) < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.new_pair()", NULL);
 	if (set_nonblocking (*fd2) < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.new_pair()", NULL);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -378,10 +379,10 @@ static int rsock_from_fd (lua_State *L)
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
 	*fd = luaL_checkint (L, 1);
 	if (*fd < 0)
-		return handle_perror (L);
+		return rerror_error (L, "ratchet.socket.from_fd()", "EBADF", "Invalid file descriptor.");
 
 	if (set_nonblocking (*fd) < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.from_fd()", NULL);
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -662,8 +663,7 @@ static int rsock_newindex (lua_State *L)
 		const char *key = lua_tostring (L, 2);
 		int fd = socket_fd (L, 1);
 		if (rsockopt_set (L, key, fd, 3) == -1)
-			return luaL_error (L, "cannot set arbitrary key on socket");
-		
+			return rerror_error (L, NULL, "EINVAL", "Key \"%s\" is not a valid socket option.", key);
 	}
 	return 0;
 }
@@ -726,11 +726,14 @@ static int rsock_check_errors (lua_State *L)
 		if (errno == EBADF)
 			error = errno;
 		else
-			return throw_perror (L);
+			return rerror_perror (L, "ratchet.socket.check_errors()", "getsockopt");
 	}
 
 	if (error)
-		return handle_perror (L);
+	{
+		errno = error;
+		return rerror_perror (L, "ratchet.socket.check_errors()", NULL);
+	}
 	else
 		lua_pushboolean (L, 1);
 
@@ -751,7 +754,7 @@ static int rsock_bind (lua_State *L)
 
 	int ret = bind (sockfd, addr, addrlen);
 	if (ret < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.bind()", "bind");
 
 	lua_pushvalue (L, 2);
 	call_tracer (L, 1, "bind", 1);
@@ -769,7 +772,7 @@ static int rsock_listen (lua_State *L)
 
 	int ret = listen (sockfd, backlog);
 	if (ret < 0)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.listen()", "listen");
 
 	call_tracer (L, 1, "listen", 0);
 
@@ -788,7 +791,7 @@ static int rsock_shutdown (lua_State *L)
 
 	int ret = shutdown (sockfd, how);
 	if (ret == -1)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.shutdown()", "shutdown");
 
 	lua_pushvalue (L, 2);
 	call_tracer (L, 1, "shutdown", 1);
@@ -807,7 +810,7 @@ static int rsock_close (lua_State *L)
 
 	int ret = close (*fd);
 	if (ret == -1)
-		return handle_perror (L);
+		return rerror_perror (L, "ratchet.socket.close()", "close");
 	*fd = -1;
 
 	call_tracer (L, 1, "close", 0);
@@ -842,7 +845,7 @@ static int rsock_connect (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return luaL_error (L, "Timed out on connect.");
+		return rerror_error (L, "ratchet.socket.connect()", "TIMEOUT", "Timed out on connect.");
 	lua_settop (L, 2);
 
 	int ret = connect (sockfd, addr, addrlen);
@@ -855,7 +858,7 @@ static int rsock_connect (lua_State *L)
 			return lua_yieldk (L, 2, 1, rsock_connect);
 		}
 		else
-			return throw_perror (L);
+			return rerror_perror (L, "ratchet.socket.connect()", "connect");
 	}
 
 	throw_fd_errors (L, sockfd);
@@ -875,7 +878,7 @@ static int rsock_accept (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return luaL_error (L, "Timed out on accept.");
+		return rerror_error (L, "ratchet.socket.accept()", "TIMEOUT", "Timed out on accept.");
 	lua_settop (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
@@ -892,7 +895,7 @@ static int rsock_accept (lua_State *L)
 		}
 
 		else
-			return throw_perror (L);
+			return rerror_perror (L, "ratchet.socket.accept()", "accept");
 	}
 
 	/* Create the new socket object from file descriptor. */
@@ -922,7 +925,7 @@ static int rsock_send (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return luaL_error (L, "Timed out on send.");
+		return rerror_error (L, "ratchet.socket.send()", "TIMEOUT", "Timed out on send.");
 	lua_settop (L, 2);
 
 	int flags = MSG_NOSIGNAL;
@@ -936,7 +939,7 @@ static int rsock_send (lua_State *L)
 			return lua_yieldk (L, 2, 1, rsock_send);
 		}
 		else
-			return throw_perror (L);
+			return rerror_perror (L, "ratchet.socket.send()", "send");
 	}
 
 	lua_pushvalue (L, 2);
@@ -956,7 +959,7 @@ static int rsock_recv (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return luaL_error (L, "Timed out on recv.");
+		return rerror_error (L, "ratchet.socket.recv()", "TIMEOUT", "Timed out on recv.");
 	lua_settop (L, 2);
 
 	luaL_buffinit (L, &buffer);
@@ -964,7 +967,7 @@ static int rsock_recv (lua_State *L)
 
 	size_t len = (size_t) luaL_optunsigned (L, 2, (lua_Unsigned) LUAL_BUFFERSIZE);
 	if (len > LUAL_BUFFERSIZE)
-		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
+		return rerror_error (L, "ratchet.socket.recv()", "EINVAL", "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
 
 	ret = recv (sockfd, prepped, len, 0);
 	if (ret == -1)
@@ -976,7 +979,7 @@ static int rsock_recv (lua_State *L)
 			return lua_yieldk (L, 2, 1, rsock_recv);
 		}
 		else
-			return throw_perror (L);
+			return rerror_perror (L, "ratchet.socket.recv()", "recv");
 	}
 
 	luaL_addsize (&buffer, (size_t) ret);
