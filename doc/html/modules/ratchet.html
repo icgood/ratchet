@@ -128,6 +128,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#get_num_threads">get_num_threads</a>&nbsp;(self)</td>
+	<td class="summary">Returns the number of active threads the ratchet object is managing.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#loop">loop</a>&nbsp;(self)</td>
 	<td class="summary">Processes thread events in a loop.</td>
 	</tr>
@@ -140,11 +145,6 @@
 	<tr>
 	<td class="name" nowrap><a href="#new">new</a>&nbsp;(entry)</td>
 	<td class="summary">Constructs and returns a new ratchet object.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#set_error_handler">set_error_handler</a>&nbsp;(self, func, ...)</td>
-	<td class="summary">Sets the new error handler for threads.</td>
 	</tr>
 
 </table>
@@ -185,6 +185,35 @@ Returns the polling method used behind-the-scenes by libevent.
 
 <h3>Return value:</h3>
 a string identifying the kernel event mechanism (kqueue, epoll, etc.).
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_num_threads"></a><strong>get_num_threads</strong>&nbsp;(self)</dt>
+<dd>
+Returns the number of active threads the ratchet object is managing. This includes threads that are currently running and threads that are paused, but not any that have completed or errored.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ratchet object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the number of active threads.
 
 
 
@@ -273,40 +302,6 @@ Constructs and returns a new ratchet object. This also creates a new libevent co
 
 <h3>Return value:</h3>
 a new ratchet object.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="set_error_handler"></a><strong>set_error_handler</strong>&nbsp;(self, func, ...)</dt>
-<dd>
-Sets the new error handler for threads. The scope of the error handler depends on where this method is called. Calling from the main thread will use this handler as the default. Error handlers set in threads apply only to that thead. Extra arguments to this function are given to the handler function. The last parameter in the call will be the error object.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  self: the ratchet object.
-	</li>
-	
-	<li>
-	  func: the function to call.
-	</li>
-	
-	<li>
-	  ...: extra parameters to the function, before error object.
-	</li>
-	
-</ul>
-
-
-
-
-
 
 
 
