@@ -34,8 +34,8 @@
 
 #define add_errno_code(e) { lua_pushstring (L, #e); lua_rawseti (L, -2, e); }
 
-/* {{{ push_errno_code_table() */
-static void push_errno_code_table (lua_State *L)
+/* {{{ build_errno_code_table() */
+static void build_errno_code_table (lua_State *L)
 {
 	lua_newtable (L);
 
@@ -312,6 +312,8 @@ int luaopen_ratchet_error (lua_State *L)
 	lua_setfield (L, -2, "__index");
 	luaL_setfuncs (L, metameths, 0);
 	lua_pop (L, 1);
+
+	build_errno_code_table (L);
 
 	return 1;
 }
