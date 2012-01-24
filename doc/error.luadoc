@@ -1,0 +1,29 @@
+
+--- A ratchet.error object is thrown in most cases when ratchet functions error.
+--  This object exposes certain information to present to the user or to make
+--  programmatic decisions based on. Converting these objects to a string
+--  presents human-readable information about the error.
+module("ratchet.error")
+
+--- This function allows manual creation of error objects. Usually it is created
+--  automatically by ratchet functions when an error occurs. The names of the
+--  parameters to this function are also the indices to access the information
+--  on a created ratchet.error object.
+--  @param descripion human-readable description of the error.
+--  @param code a string code that can identify the error message.
+--  @param func optional string identifying the function throwing the error.
+--  @param file optional C file where the error was thrown.
+--  @param line optional C file line number where the error was thrown.
+--  @param syscall optional string identifying system call causing the error.
+--  @param errno optional integer identifying the system error code.
+--  @return a new ratchet.error object.
+function new(description, code, func, file, line, syscall, errno)
+
+--- Checks is the code assigned to an error message matches the given code. This
+--  function is also exposed as a method of ratchet.error objects.
+--  @param error the ratchet.error object to check.
+--  @param code the code to compare against.
+--  @return true if the error matches the code, false otherwise.
+function is(error, code)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:

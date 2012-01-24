@@ -233,6 +233,8 @@ static int rerror_new (lua_State *L)
 }
 /* }}} */
 
+/* ---- ratchet Methods ----------------------------------------------------- */
+
 /* {{{ rerror_is() */
 static int rerror_is (lua_State *L)
 {
@@ -249,8 +251,6 @@ static int rerror_is (lua_State *L)
 	return 1;
 }
 /* }}} */
-
-/* ---- ratchet Methods ----------------------------------------------------- */
 
 /* {{{ rerror_tostring() */
 static int rerror_tostring (lua_State *L)
@@ -292,6 +292,7 @@ int luaopen_ratchet_error (lua_State *L)
 
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
+		{"is", rerror_is},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};

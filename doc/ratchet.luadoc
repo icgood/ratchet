@@ -36,4 +36,12 @@ function loop(self)
 --  @return false if all threads have completed execution, true otherwise.
 function loop_once(self, noblock)
 
+--- Gets the table (see ratchet.thread.space()) associated with the given thread.
+--  @param self the ratchet object.
+--  @param thread the thread to get the table for.
+--  @param default if given, this table (or any object) will be set and
+--                 returned if no other space has already been set for the
+--                 thread.
+function get_space(self, thread, default)
+
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

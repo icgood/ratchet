@@ -409,6 +409,42 @@ static int ratchet_loop (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_get_space() */
+static int ratchet_get_space (lua_State *L)
+{
+	(void) get_event_base (L, 1);
+
+	lua_settop (L, 3);
+
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "thread_space");
+	lua_pushvalue (L, 2);
+	lua_rawget (L, -2);
+
+	if (lua_isnil (L, -1))
+	{
+		lua_pop (L, 1);
+
+		if (lua_isnil (L, 3))
+		{
+			lua_newtable (L);
+			lua_pushvalue (L, 2);
+			lua_pushvalue (L, -2);
+			lua_rawset (L, -4);
+		}
+		else
+		{
+			lua_pushvalue (L, 2);
+			lua_pushvalue (L, 3);
+			lua_rawset (L, -3);
+			lua_pushvalue (L, 3);
+		}
+	}
+
+	return 1;
+}
+/* }}} */
+
 /* {{{ ratchet_start_threads_ready() */
 static int ratchet_start_threads_ready (lua_State *L)
 {
@@ -857,39 +893,12 @@ static int ratchet_thread_space (lua_State *L)
 	}
 
 	lua_insert (L, 1);
-	(void) get_event_base (L, 1);
-
 	lua_settop (L, 2);
 
 	if (lua_pushthread (L))
 		return luaL_error (L, "ratchet.thread.space() cannot be called from main thread.");
-
-	lua_getuservalue (L, 1);
-	lua_getfield (L, -1, "thread_space");
-	lua_pushvalue (L, 3);
-	lua_rawget (L, -2);
-
-	if (lua_isnil (L, -1))
-	{
-		lua_pop (L, 1);
-
-		if (lua_isnil (L, 2))
-		{
-			lua_newtable (L);
-			lua_pushvalue (L, 3);
-			lua_pushvalue (L, -2);
-			lua_rawset (L, -4);
-		}
-		else
-		{
-			lua_pushvalue (L, 3);
-			lua_pushvalue (L, 2);
-			lua_rawset (L, -3);
-			lua_pushvalue (L, 2);
-		}
-	}
-
-	return 1;
+	lua_insert (L, 2);
+	return ratchet_get_space (L);
 }
 /* }}} */
 
@@ -972,6 +981,7 @@ int luaopen_ratchet (lua_State *L)
 		{"get_num_threads", ratchet_get_num_threads},
 		{"loop", ratchet_loop},
 		{"loop_once", ratchet_loop_once},
+		{"get_space", ratchet_get_space},
 		/* Undocumented, helper methods. */
 		{"run_thread", ratchet_run_thread},
 		{"yield_thread", ratchet_yield_thread},
