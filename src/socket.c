@@ -663,7 +663,7 @@ static int rsock_newindex (lua_State *L)
 		const char *key = lua_tostring (L, 2);
 		int fd = socket_fd (L, 1);
 		if (rsockopt_set (L, key, fd, 3) == -1)
-			return rerror_error (L, NULL, "EINVAL", "Key \"%s\" is not a valid socket option.", key);
+			return luaL_error (L, "Key \"%s\" is not a valid socket option.", key);
 	}
 	return 0;
 }
@@ -845,7 +845,7 @@ static int rsock_connect (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return rerror_error (L, "ratchet.socket.connect()", "TIMEOUT", "Timed out on connect.");
+		return rerror_error (L, "ratchet.socket.connect()", "ETIMEDOUT", "Timed out on connect.");
 	lua_settop (L, 2);
 
 	int ret = connect (sockfd, addr, addrlen);
@@ -878,7 +878,7 @@ static int rsock_accept (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return rerror_error (L, "ratchet.socket.accept()", "TIMEOUT", "Timed out on accept.");
+		return rerror_error (L, "ratchet.socket.accept()", "ETIMEDOUT", "Timed out on accept.");
 	lua_settop (L, 1);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
@@ -925,7 +925,7 @@ static int rsock_send (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return rerror_error (L, "ratchet.socket.send()", "TIMEOUT", "Timed out on send.");
+		return rerror_error (L, "ratchet.socket.send()", "ETIMEDOUT", "Timed out on send.");
 	lua_settop (L, 2);
 
 	int flags = MSG_NOSIGNAL;
@@ -959,7 +959,7 @@ static int rsock_recv (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return rerror_error (L, "ratchet.socket.recv()", "TIMEOUT", "Timed out on recv.");
+		return rerror_error (L, "ratchet.socket.recv()", "ETIMEDOUT", "Timed out on recv.");
 	lua_settop (L, 2);
 
 	luaL_buffinit (L, &buffer);
@@ -967,7 +967,7 @@ static int rsock_recv (lua_State *L)
 
 	size_t len = (size_t) luaL_optunsigned (L, 2, (lua_Unsigned) LUAL_BUFFERSIZE);
 	if (len > LUAL_BUFFERSIZE)
-		return rerror_error (L, "ratchet.socket.recv()", "EINVAL", "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
+		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
 
 	ret = recv (sockfd, prepped, len, 0);
 	if (ret == -1)

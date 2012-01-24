@@ -53,6 +53,7 @@ struct socket_data
 /* {{{ raise_zmq_error_ln() */
 static int raise_zmq_error_ln (lua_State *L, const char *func, const char *file, int line)
 {
+	lua_settop (L, 0);
 	int e = zmq_errno ();
 
 	rerror_push_constructor (L);

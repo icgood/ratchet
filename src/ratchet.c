@@ -256,7 +256,7 @@ static int ratchet_new (lua_State *L)
 	struct event_base **new = (struct event_base **) lua_newuserdata (L, sizeof (struct event_base *));
 	*new = event_base_new ();
 	if (!*new)
-		return rerror_error (L, "ratchet.new()", NULL, "Failed to create event_base structure.");
+		return luaL_error (L, "Failed to create event_base structure.");
 
 	luaL_getmetatable (L, "ratchet_meta");
 	lua_setmetatable (L, -2);
@@ -381,7 +381,7 @@ static int ratchet_loop_once (lua_State *L)
 	/* Call event loop, break if we're out of events. */
 	int ret = event_base_loop (e_b, EVLOOP_ONCE | extra_flags);
 	if (ret < 0)
-		return rerror_error (L, "ratchet.loop_once()", NULL, "libevent internal error.");
+		return luaL_error (L, "libevent internal error.");
 	else if (ret > 0)
 		return rerror_error (L, "ratchet.loop_once()", "DEADLOCK", "Non-IO deadlock detected.");
 
@@ -951,7 +951,7 @@ static int ratchet_unpause (lua_State *L)
 
 	/* Make sure it's unpause-able. */
 	if (lua_status (L1) != LUA_YIELD)
-		return rerror_error (L, "ratchet.thread.unpause()", NULL, "Thread is not yielding, cannot unpause.");
+		return luaL_error (L, "Thread is not yielding, cannot unpause.");
 
 	/* Set up the extra arguments as return values from pause(). */
 	int nargs = lua_gettop (L) - 2;
