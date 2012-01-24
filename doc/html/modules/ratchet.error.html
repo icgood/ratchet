@@ -50,10 +50,8 @@
 		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
 	</li>
 
-	<li>
-		<a href="../modules/ratchet.error.html">ratchet.error</a>
-	</li>
-
+	<li><strong>ratchet.error</strong></li>
+	
 	<li>
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
@@ -94,8 +92,10 @@
 		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
 	</li>
 
-	<li><strong>ratchet.uri</strong></li>
-	
+	<li>
+		<a href="../modules/ratchet.uri.html">ratchet.uri</a>
+	</li>
+
 	<li>
 		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
 	</li>
@@ -115,9 +115,9 @@
 
 <div id="content">
 
-<h1>Module <code>ratchet.uri</code></h1>
+<h1>Module <code>ratchet.error</code></h1>
 
-<p>This module provides a parser for generic RFC 2396 URI strings. Some built-in schema parsers are included, such as "tcp", "udp", and "unix" which each return ratchet.socket objects. New URIs schemas may be registered.</p>
+<p>A ratchet.error object is thrown in most cases when ratchet functions error. This object exposes certain information to present to the user or to make programmatic decisions based on. Converting these objects to a string presents human-readable information about the error.</p>
 
 
 
@@ -127,13 +127,13 @@
 <table class="function_list">
 
 	<tr>
-	<td class="name" nowrap><a href="#parse">parse</a>&nbsp;(uri, ...)</td>
-	<td class="summary">Parses a URI string and calls its handler.</td>
+	<td class="name" nowrap><a href="#is">is</a>&nbsp;(error, code)</td>
+	<td class="summary">Checks is the code assigned to an error message matches the given code.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#register">register</a>&nbsp;(schema, handler)</td>
-	<td class="summary">This function registers a new schema to be handled by the given handler function.</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(description, code, func, file, line, syscall, errno, descripion)</td>
+	<td class="summary">This function allows manual creation of error objects.</td>
 	</tr>
 
 </table>
@@ -153,20 +153,20 @@
 
 
 
-<dt><a name="parse"></a><strong>parse</strong>&nbsp;(uri, ...)</dt>
+<dt><a name="is"></a><strong>is</strong>&nbsp;(error, code)</dt>
 <dd>
-Parses a URI string and calls its handler. The handler is passed the rest of the URI after the schema portion and the first ":" character, as well as any additional arguments sent to this function. Any values returned from the handler are passed on the caller of this function.
+Checks is the code assigned to an error message matches the given code. This function is also exposed as a method of ratchet.error objects.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  uri: the URI string.
+	  error: the ratchet.error object to check.
 	</li>
 	
 	<li>
-	  ...: additional parameters to send to the handler.
+	  code: the code to compare against.
 	</li>
 	
 </ul>
@@ -177,7 +177,7 @@ Parses a URI string and calls its handler. The handler is passed the rest of the
 
 
 <h3>Return value:</h3>
-any values returned by the handler are returned by this function.
+true if the error matches the code, false otherwise.
 
 
 
@@ -186,20 +186,44 @@ any values returned by the handler are returned by this function.
 
 
 
-<dt><a name="register"></a><strong>register</strong>&nbsp;(schema, handler)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(description, code, func, file, line, syscall, errno, descripion)</dt>
 <dd>
-This function registers a new schema to be handled by the given handler function. The schema name can only include alpha-numeric characters and hyphens and must begin with an alpha-numeric character.
+This function allows manual creation of error objects. Usually it is created automatically by ratchet functions when an error occurs. The names of the parameters to this function are also the indices to access the information on a created ratchet.error object.
 
 
 <h3>Parameters</h3>
 <ul>
 	
 	<li>
-	  schema: the schema name.
+	  description: 
 	</li>
 	
 	<li>
-	  handler: the function to call when parsing a URI of this schema.
+	  code: a string code that can identify the error message.
+	</li>
+	
+	<li>
+	  func: optional string identifying the function throwing the error.
+	</li>
+	
+	<li>
+	  file: optional C file where the error was thrown.
+	</li>
+	
+	<li>
+	  line: optional C file line number where the error was thrown.
+	</li>
+	
+	<li>
+	  syscall: optional string identifying system call causing the error.
+	</li>
+	
+	<li>
+	  errno: optional integer identifying the system error code.
+	</li>
+	
+	<li>
+	  descripion: human-readable description of the error.
 	</li>
 	
 </ul>
@@ -208,6 +232,9 @@ This function registers a new schema to be handled by the given handler function
 
 
 
+
+<h3>Return value:</h3>
+a new ratchet.error object.
 
 
 

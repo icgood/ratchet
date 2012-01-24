@@ -49,6 +49,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.error.html">ratchet.error</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
@@ -133,6 +137,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#get_space">get_space</a>&nbsp;(self, thread, default)</td>
+	<td class="summary">Gets the table (see ratchet.thread.space()) associated with the given thread.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#loop">loop</a>&nbsp;(self)</td>
 	<td class="summary">Processes thread events in a loop.</td>
 	</tr>
@@ -214,6 +223,40 @@ Returns the number of active threads the ratchet object is managing. This includ
 
 <h3>Return value:</h3>
 the number of active threads.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_space"></a><strong>get_space</strong>&nbsp;(self, thread, default)</dt>
+<dd>
+Gets the table (see ratchet.thread.space()) associated with the given thread.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ratchet object.
+	</li>
+	
+	<li>
+	  thread: the thread to get the table for.
+	</li>
+	
+	<li>
+	  default: if given, this table (or any object) will be set and returned if no other space has already been set for the thread.
+	</li>
+	
+</ul>
+
+
+
+
+
 
 
 
