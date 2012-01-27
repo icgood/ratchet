@@ -274,7 +274,6 @@ AC_FUNC_STRERROR_R
 #####################
 AC_CONFIG_FILES([Makefile
 	         src/Makefile
-		 src/uri/Makefile
 	         src/http/Makefile
 		 src/bus/Makefile
 	         src/smtp/Makefile

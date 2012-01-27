@@ -45,7 +45,7 @@ ratchet_la_LIBADD = libratchet.la
 ratchet_la_SOURCES =
 endif
 
-SUBDIRS = uri
+SUBDIRS =
 
 if HAVE_SOCKET
 SUBDIRS += socketpad
