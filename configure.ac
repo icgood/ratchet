@@ -178,13 +178,6 @@ if test -n "$BUFSIZ"; then
 fi
 
 #####################
-# Configure options: --enable-error-throwing
-AC_DEFINE([RATCHET_THROW_ERRORS], [0], [Throw Lua errors immediately instead of returning them to the caller.])
-AC_ARG_ENABLE([error-throwing], [AS_HELP_STRING([--enable-error-throwing],
-	                                        [throw Lua errors immediately instead of returning them to caller.])],
-	      [AC_DEFINE([RATCHET_THROW_ERRORS], [1])])
-
-#####################
 # Configure options: --disable-devel
 AC_ARG_ENABLE([devel], [AS_HELP_STRING([--disable-devel],
 	                               [do not install development headers and libraries.])],
