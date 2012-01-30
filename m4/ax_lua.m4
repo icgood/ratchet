@@ -80,7 +80,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 15
+#serial 16
 
 dnl Helper function to declare extra options
 AC_DEFUN([_AX_LUA_OPTS],
