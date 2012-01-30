@@ -1,6 +1,6 @@
 allsources = ratchet.h ratchet.c \
 	     misc.h misc.c \
-	     error.c error.h
+	     error.c
 
 if HAVE_SOCKET
 allsources += sockopt.h sockopt.c socket.c
@@ -29,7 +29,7 @@ endif
 if HAVE_DNS
 libratchet_la_LIBADD = dns/libdns.la
 endif
-libratchet_la_CFLAGS = -std=gnu99 -Wall -Wno-unused-function -Wno-unused-label
+libratchet_la_CFLAGS = -std=gnu99 -Wall -Wno-unused-function -Wno-unused-label -Idns
 libratchet_la_LDFLAGS = 
 if HAVE_OPENSSL
 libratchet_la_CFLAGS += $(OPENSSL_INCLUDES)

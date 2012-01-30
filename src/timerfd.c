@@ -34,7 +34,6 @@
 
 #include "ratchet.h"
 #include "misc.h"
-#include "error.h"
 
 #define timerfd_fd(L, i) (int *) luaL_checkudata (L, i, "ratchet_timerfd_meta")
 
@@ -50,10 +49,10 @@ static int rtfd_new (lua_State *L)
 	int *tfd = (int *) lua_newuserdata (L, sizeof (int));
 	*tfd = timerfd_create (how, 0);
 	if (*tfd < 0)
-		return rerror_perror (L, "ratchet.timerfd.new()", "timerfd_create");
+		return ratchet_error_errno (L, "ratchet.timerfd.new()", "timerfd_create");
 
 	if (set_nonblocking (*tfd) < 0)
-		return rerror_perror (L, "ratchet.timerfd.new()", NULL);
+		return ratchet_error_errno (L, "ratchet.timerfd.new()", NULL);
 
 	luaL_getmetatable (L, "ratchet_timerfd_meta");
 	lua_setmetatable (L, -2);
@@ -98,7 +97,7 @@ static int rtfd_settime (lua_State *L)
 
 	int ret = timerfd_settime (fd, how, &new_value, &old_value);
 	if (ret == -1)
-		return rerror_perror (L, "ratchet.timerfd.settime()", "timerfd_settime");
+		return ratchet_error_errno (L, "ratchet.timerfd.settime()", "timerfd_settime");
 
 	lua_pushnumber (L, (lua_Number) fromtimespec (&old_value.it_value));
 	lua_pushnumber (L, (lua_Number) fromtimespec (&old_value.it_interval));
@@ -115,7 +114,7 @@ static int rtfd_gettime (lua_State *L)
 
 	int ret = timerfd_gettime (fd, &curr_value);
 	if (ret == -1)
-		return rerror_perror (L, "ratchet.timerfd.gettime()", "timerfd_gettime");
+		return ratchet_error_errno (L, "ratchet.timerfd.gettime()", "timerfd_gettime");
 
 	lua_pushnumber (L, (lua_Number) fromtimespec (&curr_value.it_value));
 	lua_pushnumber (L, (lua_Number) fromtimespec (&curr_value.it_interval));
@@ -133,7 +132,7 @@ static int rtfd_close (lua_State *L)
 
 	int ret = close (*fd);
 	if (ret == -1)
-		return rerror_perror (L, "ratchet.timerfd.close()", "close");
+		return ratchet_error_errno (L, "ratchet.timerfd.close()", "close");
 	*fd = -1;
 
 	lua_pushboolean (L, 1);
@@ -170,7 +169,7 @@ static int rtfd_read (lua_State *L)
 		}
 
 		else
-			return rerror_perror (L, "ratchet.timerfd.read()", "read");
+			return ratchet_error_errno (L, "ratchet.timerfd.read()", "read");
 	}
 
 	lua_pushnumber (L, (lua_Number) fires);

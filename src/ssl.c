@@ -38,7 +38,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
-#include "error.h"
+#include "ratchet.h"
 #include "misc.h"
 
 #define raise_ssl_error(L, f, e) raise_ssl_error_ln (L, f, e, __FILE__, __LINE__)
@@ -48,7 +48,7 @@ static int raise_ssl_error_ln (lua_State *L, const char *func, unsigned long e, 
 {
 	lua_settop (L, 0);
 
-	rerror_push_constructor (L);
+	ratchet_error_push_constructor (L);
 	lua_pushstring (L, ERR_reason_error_string (e));
 	lua_pushnil (L);
 	lua_pushstring (L, func);
@@ -453,7 +453,7 @@ static int rssl_session_shutdown (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return rerror_error (L, "ratchet.ssl.session.shutdown()", "ETIMEDOUT", "Timed out on shutdown.");
+		return ratchet_error_str (L, "ratchet.ssl.session.shutdown()", "ETIMEDOUT", "Timed out on shutdown.");
 	lua_settop (L, 1);
 
 	int ret = SSL_shutdown (session);
@@ -495,7 +495,7 @@ static int rssl_session_read (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return rerror_error (L, "ratchet.ssl.session.read()", "ETIMEDOUT", "Timed out on read.");
+		return ratchet_error_str (L, "ratchet.ssl.session.read()", "ETIMEDOUT", "Timed out on read.");
 	lua_settop (L, 2);
 
 	luaL_Buffer buffer;
@@ -551,7 +551,7 @@ static int rssl_session_write (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return rerror_error (L, "ratchet.ssl.session.write()", "ETIMEDOUT", "Timed out on write.");
+		return ratchet_error_str (L, "ratchet.ssl.session.write()", "ETIMEDOUT", "Timed out on write.");
 	lua_settop (L, 2);
 
 	int ret = SSL_write (session, data, (int) size);
@@ -593,7 +593,7 @@ static int rssl_session_connect (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return rerror_error (L, "ratchet.ssl.session.client_handshake()", "ETIMEDOUT", "Timed out on client_handshake.");
+		return ratchet_error_str (L, "ratchet.ssl.session.client_handshake()", "ETIMEDOUT", "Timed out on client_handshake.");
 	lua_settop (L, 1);
 
 	int ret = SSL_connect (session);
@@ -635,7 +635,7 @@ static int rssl_session_accept (lua_State *L)
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 2))
-		return rerror_error (L, "ratchet.ssl.session.server_handshake()", "ETIMEDOUT", "Timed out on server_handshake.");
+		return ratchet_error_str (L, "ratchet.ssl.session.server_handshake()", "ETIMEDOUT", "Timed out on server_handshake.");
 	lua_settop (L, 1);
 
 	int ret = SSL_accept (session);

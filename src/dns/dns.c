@@ -32,9 +32,7 @@
 #include <arpa/inet.h>
 
 #include "ratchet.h"
-#include "error.h"
 #include "misc.h"
-#include "dns.h"
 #include "libdns/dns.h"
 
 #define DNS_GET_POLL_TIMEOUT(n) (pow (2.0, (double) n))
@@ -59,14 +57,14 @@ static int raise_dns_error_ln (lua_State *L, const char *subj, const char *call,
 {
 	lua_settop (L, 0);
 
-	rerror_push_constructor (L);
+	ratchet_error_push_constructor (L);
 
 	lua_pushstring (L, subj);
 	lua_pushliteral (L, ": ");
 	lua_pushstring (L, dns_strerror (e));
 	lua_concat (L, 3);
 
-	rerror_push_code (L, e);
+	ratchet_error_push_code (L, e);
 	lua_pushnil (L);
 	lua_pushstring (L, file);
 	lua_pushinteger (L, line);

@@ -33,7 +33,6 @@
 
 #include "ratchet.h"
 #include "misc.h"
-#include "error.h"
 
 #ifndef RATCHET_ZMQ_IO_THREADS
 #define RATCHET_ZMQ_IO_THREADS 10
@@ -56,9 +55,9 @@ static int raise_zmq_error_ln (lua_State *L, const char *func, const char *file,
 	lua_settop (L, 0);
 	int e = zmq_errno ();
 
-	rerror_push_constructor (L);
+	ratchet_error_push_constructor (L);
 	lua_pushstring (L, zmq_strerror (e));
-	rerror_push_code (L, e);
+	ratchet_error_push_code (L, e);
 	if (func)
 		lua_pushstring (L, func);
 	else

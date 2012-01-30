@@ -29,8 +29,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "ratchet.h"
 #include "misc.h"
-#include "error.h"
 
 #define add_errno_code(e) { lua_pushstring (L, #e); lua_rawseti (L, -2, e); }
 
@@ -112,8 +112,8 @@ static void push_errno_description (lua_State *L, int e)
 
 /* ---- C API Functions ----------------------------------------------------- */
 
-/* {{{ rerror_push_constructor() */
-void rerror_push_constructor (lua_State *L)
+/* {{{ ratchet_error_push_constructor() */
+void ratchet_error_push_constructor (lua_State *L)
 {
 	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_error_class");
 	lua_getfield (L, -1, "new");
@@ -121,8 +121,8 @@ void rerror_push_constructor (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rerror_push_code() */
-void rerror_push_code (lua_State *L, int e)
+/* {{{ ratchet_error_push_code() */
+void ratchet_error_push_code (lua_State *L, int e)
 {
 	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_error_errno_code_table");
 	lua_rawgeti (L, -1, e);
@@ -130,16 +130,16 @@ void rerror_push_code (lua_State *L, int e)
 }
 /* }}} */
 
-/* {{{ rerror_perror_ln() */
-int rerror_perror_ln (lua_State *L, const char *function, const char *syscall, const char *file, int line)
+/* {{{ ratchet_error_errno_ln() */
+int ratchet_error_errno_ln (lua_State *L, const char *function, const char *syscall, const char *file, int line)
 {
 	int e = errno;
 
 	lua_settop (L, 0);
 
-	rerror_push_constructor (L);
+	ratchet_error_push_constructor (L);
 	push_errno_description (L, e);
-	rerror_push_code (L, e);
+	ratchet_error_push_code (L, e);
 	lua_pushstring (L, function);
 	lua_pushstring (L, file);
 	lua_pushinteger (L, line);
@@ -151,10 +151,10 @@ int rerror_perror_ln (lua_State *L, const char *function, const char *syscall, c
 }
 /* }}} */
 
-/* {{{ rerror_error_top_ln() */
-int rerror_error_top_ln (lua_State *L, const char *function, const char *code, const char *file, int line)
+/* {{{ ratchet_error_top_ln() */
+int ratchet_error_top_ln (lua_State *L, const char *function, const char *code, const char *file, int line)
 {
-	rerror_push_constructor (L);
+	ratchet_error_push_constructor (L);
 	lua_pushvalue (L, -2);
 	lua_pushstring (L, code);
 	lua_pushstring (L, function);
@@ -168,8 +168,8 @@ int rerror_error_top_ln (lua_State *L, const char *function, const char *code, c
 }
 /* }}} */
 
-/* {{{ rerror_error_ln() */
-int rerror_error_ln (lua_State *L, const char *function, const char *code, const char *file, int line, const char *description, ...)
+/* {{{ ratchet_error_str_ln() */
+int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, const char *file, int line, const char *description, ...)
 {
 	lua_settop (L, 0);
 
@@ -178,14 +178,14 @@ int rerror_error_ln (lua_State *L, const char *function, const char *code, const
 	lua_pushvfstring (L, description, args);
 	va_end (args);
 
-	return rerror_error_top_ln (L, function, code, file, line);
+	return ratchet_error_top_ln (L, function, code, file, line);
 }
 /* }}} */
 
 /* ---- ratchet Functions --------------------------------------------------- */
 
-/* {{{ rerror_new() */
-static int rerror_new (lua_State *L)
+/* {{{ ratchet_error_new() */
+static int ratchet_error_new (lua_State *L)
 {
 	lua_settop (L, 7);
 
@@ -235,8 +235,8 @@ static int rerror_new (lua_State *L)
 
 /* ---- ratchet Methods ----------------------------------------------------- */
 
-/* {{{ rerror_is() */
-static int rerror_is (lua_State *L)
+/* {{{ ratchet_error_is() */
+static int ratchet_error_is (lua_State *L)
 {
 	lua_settop (L, 2);
 	if (lua_isstring (L, 1))
@@ -252,8 +252,8 @@ static int rerror_is (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rerror_tostring() */
-static int rerror_tostring (lua_State *L)
+/* {{{ ratchet_error_tostring() */
+static int ratchet_error_tostring (lua_State *L)
 {
 	lua_settop (L, 1);
 
@@ -285,20 +285,20 @@ static int rerror_tostring (lua_State *L)
 int luaopen_ratchet_error (lua_State *L)
 {
 	static const luaL_Reg funcs[] = {
-		{"new", rerror_new},
-		{"is", rerror_is},
+		{"new", ratchet_error_new},
+		{"is", ratchet_error_is},
 		{NULL}
 	};
 
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
-		{"is", rerror_is},
+		{"is", ratchet_error_is},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
 
 	static const luaL_Reg metameths[] = {
-		{"__tostring", rerror_tostring},
+		{"__tostring", ratchet_error_tostring},
 		{NULL}
 	};
 

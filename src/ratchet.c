@@ -31,7 +31,6 @@
 #include <string.h>
 
 #include "ratchet.h"
-#include "error.h"
 #include "misc.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
@@ -383,7 +382,7 @@ static int ratchet_loop_once (lua_State *L)
 	if (ret < 0)
 		return luaL_error (L, "libevent internal error.");
 	else if (ret > 0)
-		return rerror_error (L, "ratchet.loop_once()", "DEADLOCK", "Non-IO deadlock detected.");
+		return ratchet_error_str (L, "ratchet.loop_once()", "DEADLOCK", "Non-IO deadlock detected.");
 
 	lua_pushboolean (L, 1);
 	return 1;
@@ -629,7 +628,7 @@ static int ratchet_wait_for_write (lua_State *L)
 	double timeout = get_timeout_from_object (L, 3);
 
 	if (fd < 0)
-		return rerror_error (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
+		return ratchet_error_str (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
 
 	/* Build timeout data. */
 	struct timeval tv;
@@ -659,7 +658,7 @@ static int ratchet_wait_for_read (lua_State *L)
 	double timeout = get_timeout_from_object (L, 3);
 
 	if (fd < 0)
-		return rerror_error (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
+		return ratchet_error_str (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
 
 	/* Build timeout data. */
 	struct timeval tv;

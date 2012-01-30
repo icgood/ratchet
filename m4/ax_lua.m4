@@ -161,7 +161,7 @@ AC_DEFUN([AX_LUA_LIBS],
   AC_CHECK_LIB([m], [exp], [lua_extra_libs="$lua_extra_libs -lm"], [])
   AC_CHECK_LIB([dl], [dlopen], [lua_extra_libs="$lua_extra_libs -ldl"], [])
   AC_CHECK_LIB([lua$with_lua_suffix],
-    [lua_call],
+    [lua_load],
     [LUA_LIB="$LUA_LIB -llua$with_lua_suffix $lua_extra_libs"],
     [],
     [$LUA_LIB $lua_extra_libs])])dnl
