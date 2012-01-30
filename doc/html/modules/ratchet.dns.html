@@ -113,7 +113,7 @@
 
 <h1>Module <code>ratchet.dns</code></h1>
 
-<p>Provides a system for querying DNS for information such as A/AAAA, PTR, MX, and TXT records. While there is a class-based system internally, that API is currently hidden by namespace functions that call everything necessary.</p>
+<p>Provides a system for querying DNS for information such as A, AAAA, PTR, MX, and TXT records. While there is a class-based system internally, that API is currently hidden by namespace functions that call everything necessary.</p>
 
 
 
@@ -162,7 +162,7 @@ Queries for results for one type of query for the given data. Until the results 
 	</li>
 	
 	<li>
-	  type: The type of query, e.g. "ipv4" or "mx".
+	  type: The type of query, e.g. "a" or "mx".
 	</li>
 	
 </ul>
@@ -195,7 +195,7 @@ Queries for results for many types of query for the given data. Until all result
 	</li>
 	
 	<li>
-	  types: Table with types of queries, e.g. "ipv4" or "mx".
+	  types: Table with types of queries, e.g. "a" or "mx".
 	</li>
 	
 </ul>

@@ -213,23 +213,18 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_tcp">prepare_tcp</a>&nbsp;(host, port)</td>
+	<td class="name" nowrap><a href="#prepare_tcp">prepare_tcp</a>&nbsp;(host, port, family)</td>
 	<td class="summary">Prepares TCP socket information.</td>
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(host, port)</td>
+	<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(host, port, family)</td>
 	<td class="summary">Prepares UDP socket information.</td>
 	</tr>
 
 	<tr>
 	<td class="name" nowrap><a href="#prepare_unix">prepare_unix</a>&nbsp;(path)</td>
 	<td class="summary">Prepares UNIX socket information.</td>
-	</tr>
-
-	<tr>
-	<td class="name" nowrap><a href="#prepare_uri">prepare_uri</a>&nbsp;(uri)</td>
-	<td class="summary">URI parser for socket connection strings.</td>
 	</tr>
 
 	<tr>
@@ -806,7 +801,7 @@ the resulting number after conversion. Any extra arguments passed are also retur
 
 
 
-<dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port)</dt>
+<dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port, family)</dt>
 <dd>
 Prepares TCP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
 
@@ -820,6 +815,10 @@ Prepares TCP socket information. On success, the returned object contains all ne
 	
 	<li>
 	  port: destination port number for new TCP connection.
+	</li>
+	
+	<li>
+	  family: string indicating socket family, default "AF_UNSPEC".
 	</li>
 	
 </ul>
@@ -839,7 +838,7 @@ Table of information useful in creating a new socket, or nil on failure followed
 
 
 
-<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(host, port)</dt>
+<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(host, port, family)</dt>
 <dd>
 Prepares UDP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
 
@@ -853,6 +852,10 @@ Prepares UDP socket information. On success, the returned object contains all ne
 	
 	<li>
 	  port: destination port number for new UDP connection.
+	</li>
+	
+	<li>
+	  family: string indicating socket family, default "AF_UNSPEC".
 	</li>
 	
 </ul>
@@ -882,35 +885,6 @@ Prepares UNIX socket information. On success, the returned object contains all n
 	
 	<li>
 	  path: file-path to connect/create UNIX socket.
-	</li>
-	
-</ul>
-
-
-
-
-
-
-<h3>Return value:</h3>
-Table of information useful in creating a new socket, or nil on failure followed by an error. See the manual for details.
-
-
-
-</dd>
-
-
-
-
-<dt><a name="prepare_uri"></a><strong>prepare_uri</strong>&nbsp;(uri)</dt>
-<dd>
-URI parser for socket connection strings. On success, the returned object contains all necessary data to create and bind/connect a new socket object. The parser is capable of creating TCP, UDP, and Unix sockets. See the manual page for complete details. Depending on the URI schema, this call *may* block until data is ready, such as for DNS lookups.
-
-
-<h3>Parameters</h3>
-<ul>
-	
-	<li>
-	  uri: the URI connection string.
 	</li>
 	
 </ul>
