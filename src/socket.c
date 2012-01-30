@@ -165,7 +165,7 @@ static int build_tcp_info (lua_State *L)
 	lua_setfield (L, 4, "host");
 
 	/* Check first for IPv6. */
-	lua_getfield (L, 1, "ipv6");
+	lua_getfield (L, 1, "aaaa");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET6);
@@ -193,7 +193,7 @@ static int build_tcp_info (lua_State *L)
 	lua_pop (L, 1);
 
 	/* Check second for IPv4. */
-	lua_getfield (L, 1, "ipv4");
+	lua_getfield (L, 1, "a");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET);
@@ -244,7 +244,7 @@ static int build_udp_info (lua_State *L)
 	lua_setfield (L, 4, "host");
 
 	/* Check first for IPv6. */
-	lua_getfield (L, 1, "ipv6");
+	lua_getfield (L, 1, "aaaa");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET6);
@@ -271,7 +271,7 @@ static int build_udp_info (lua_State *L)
 	lua_pop (L, 1);
 
 	/* Check second for IPv4. */
-	lua_getfield (L, 1, "ipv4");
+	lua_getfield (L, 1, "a");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushinteger (L, AF_INET);

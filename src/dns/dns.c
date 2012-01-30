@@ -37,15 +37,7 @@
 
 #define DNS_GET_POLL_TIMEOUT(n) (pow (2.0, (double) n))
 
-#ifndef DNS_QUERY_DEFAULT
-#ifndef DNS_QUERY_IPV6_DEFAULT
-#define DNS_QUERY_DEFAULT "ipv4"
-#else
-#define DNS_QUERY_DEFAULT "ipv6"
-#endif
-#endif
-
-#define DNS_TXT_SIZE_REGISTER "ratchet_dns_txt_size"
+#define DNS_TXT_SIZE_REGISTRY_KEY "ratchet_dns_txt_size"
 
 #define raise_dns_error(L, s, c, e) raise_dns_error_ln (L, s, c, e, __FILE__, __LINE__)
 #define get_dns_res(L, i) (*(struct dns_resolver **) luaL_checkudata (L, i, "ratchet_dns_meta"))
@@ -93,8 +85,8 @@ static void *arg_or_registry (lua_State *L, int index, const char *reg_default, 
 static enum dns_type get_query_type (lua_State *L, int index)
 {
 	static const char *lst[] = {
-		"ipv4",
-		"ipv6",
+		"a",
+		"aaaa",
 		"mx",
 		"ns",
 		"cname",
@@ -128,7 +120,7 @@ static enum dns_type get_query_type (lua_State *L, int index)
 		if (lst[i] == NULL)
 			break;
 
-		if (!strcmp (lst[i], typestr))
+		if (!strcasecmp (lst[i], typestr))
 			return types[i];
 	}
 
@@ -364,7 +356,7 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 /* {{{ parse_rr_txt() */
 static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
 {
-	lua_getfield (L, LUA_REGISTRYINDEX, DNS_TXT_SIZE_REGISTER);
+	lua_getfield (L, LUA_REGISTRYINDEX, DNS_TXT_SIZE_REGISTRY_KEY);
 	size_t size = (size_t) lua_tonumber (L, -1);
 	if (size == 0)
 		size = DNS_TXT_MINDATA;
@@ -570,8 +562,8 @@ static int submit_dns_queries (lua_State *L, size_t num, int res_idx, int data_i
 static int mydns_new (lua_State *L)
 {
 	lua_settop (L, 3);
-	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, RATCHET_DNS_RESOLV_CONF_DEFAULT, "ratchet_dns_resolv_conf_meta");
-	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, RATCHET_DNS_HOSTS_DEFAULT, "ratchet_dns_hosts_meta");
+	struct dns_resolv_conf *resconf = *(struct dns_resolv_conf **) arg_or_registry (L, 1, "ratchet_dns_resolv_conf_default", "ratchet_dns_resolv_conf_meta");
+	struct dns_hosts *hosts = *(struct dns_hosts **) arg_or_registry (L, 2, "ratchet_dns_hosts_default", "ratchet_dns_hosts_meta");
 	lua_Number expire_timeout = luaL_optnumber (L, 3, (lua_Number) 10.0);
 
 	struct dns_resolver **new = (struct dns_resolver **) lua_newuserdata (L, sizeof (struct dns_resolver *));
@@ -800,7 +792,11 @@ static int mydns_query_all (lua_State *L)
 
 	if (lua_type (L, 2) != LUA_TTABLE)
 	{
-		lua_getfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
+		lua_createtable (L, 2, 0);
+		lua_pushliteral (L, "aaaa");
+		lua_rawseti (L, -2, 1);
+		lua_pushliteral (L, "a");
+		lua_rawseti (L, -2, 2);
 		lua_replace (L, 2);
 	}
 	lua_settop (L, 5);
@@ -972,14 +968,6 @@ int luaopen_ratchet_dns (lua_State *L)
 	luaL_newlib (L, funcs);
 	lua_pushvalue (L, -1);
 	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
-
-	/* Set up {'ipv6', 'ipv4'} as the default query types. */
-	lua_createtable (L, 2, 0);
-	lua_pushliteral (L, "ipv6");
-	lua_rawseti (L, -2, 1);
-	lua_pushliteral (L, "ipv4");
-	lua_rawseti (L, -2, 2);
-	lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_QUERY_TYPES_DEFAULT);
 
 	/* Load the resolv_conf and hosts sub-modules. */
 	luaL_requiref (L, "ratchet.dns.resolv_conf", luaopen_ratchet_dns_resolv_conf, 0);

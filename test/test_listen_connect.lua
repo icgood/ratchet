@@ -1,7 +1,7 @@
 require "ratchet"
 
 function ctx1(host, port)
-    local rec = ratchet.socket.prepare_tcp(host, port, {"ipv4"})
+    local rec = ratchet.socket.prepare_tcp(host, port, {"a"})
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     socket.SO_REUSEADDR = true
     socket:bind(rec.addr)

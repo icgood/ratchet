@@ -17,11 +17,6 @@ int luaopen_ratchet_dns (lua_State *L);
 int luaopen_ratchet_dns_hosts (lua_State *L);
 int luaopen_ratchet_dns_resolv_conf (lua_State *L);
 
-/* ratchet.dns defaults (registry keys). */
-#define RATCHET_DNS_QUERY_TYPES_DEFAULT "ratchet_dns_query_types_default"
-#define RATCHET_DNS_HOSTS_DEFAULT "ratchet_dns_hosts_default"
-#define RATCHET_DNS_RESOLV_CONF_DEFAULT "ratchet_dns_resolv_conf_default"
-
 /* Error handling convenience functions. */
 #define ratchet_error_errno(L, f, s) ratchet_error_errno_ln (L, f, s, __FILE__, __LINE__)
 #define ratchet_error_top(L, f, c) ratchet_error_top_ln (L, f, c, __FILE__, __LINE__)

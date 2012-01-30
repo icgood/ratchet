@@ -141,7 +141,7 @@ int luaopen_ratchet_dns_hosts (lua_State *L)
 	luaL_newlib (L, funcs);
 	lua_getfield (L, -1, "new");
 	lua_call (L, 0, 1);
-	lua_setfield (L, LUA_REGISTRYINDEX, RATCHET_DNS_HOSTS_DEFAULT);
+	lua_setfield (L, LUA_REGISTRYINDEX, "ratchet_dns_hosts_default");
 
 	return 1;
 }

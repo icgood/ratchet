@@ -1,5 +1,5 @@
 
---- Provides a system for querying DNS for information such as A/AAAA, PTR, MX,
+--- Provides a system for querying DNS for information such as A, AAAA, PTR, MX,
 --  and TXT records. While there is a class-based system internally, that API is
 --  currently hidden by namespace functions that call everything necessary.
 module "ratchet.dns"
@@ -9,7 +9,7 @@ module "ratchet.dns"
 --  value is a table whose contents are defined by the type of query. See manual
 --  for complete details.
 --  @param data The hostname, IP, or special-case to query against.
---  @param type The type of query, e.g. "ipv4" or "mx".
+--  @param type The type of query, e.g. "a" or "mx".
 --  @return Table with results, or nil followed by an error message.
 function query(data, type)
 
@@ -21,7 +21,7 @@ function query(data, type)
 --  be a table of results or an error message, respectively. See manual for
 --  complete details.
 --  @param data The hostname, IP, or special-case to query against.
---  @param types Table with types of queries, e.g. "ipv4" or "mx".
+--  @param types Table with types of queries, e.g. "a" or "mx".
 --  @return Table with results, or nil followed by an error message.
 function query_all(data, types)
 
