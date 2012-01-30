@@ -1,15 +1,15 @@
 
 require "ratchet"
 require "ratchet.socketpad"
-require "ratchet.bus.client_transaction"
+local client_transaction = require "ratchet.bus.client_transaction"
 
-ratchet.bus.client = {}
-ratchet.bus.client.__index = ratchet.bus.client
+local client = {}
+client.__index = client
 
--- {{{ ratchet.bus.client.new()
-function ratchet.bus.client.new(socket, request_to_bus, response_from_bus, socket_from)
+-- {{{ client.new()
+function client.new(socket, request_to_bus, response_from_bus, socket_from)
     local self = {}
-    setmetatable(self, ratchet.bus.client)
+    setmetatable(self, client)
 
     self.socket_buffer = ratchet.socketpad.new(socket, socket_from)
     self.request_to_bus = request_to_bus or tostring
@@ -28,8 +28,8 @@ local function send_part(pad, part)
 end
 -- }}}
 
--- {{{ ratchet.bus.client:send_request()
-function ratchet.bus.client:send_request(request)
+-- {{{ client:send_request()
+function client:send_request(request)
     local part_1, attachments = self.request_to_bus(request)
 
     local num_parts = 1 + (attachments and #attachments or 0)
@@ -42,10 +42,10 @@ function ratchet.bus.client:send_request(request)
         end
     end
 
-    return ratchet.bus.client_transaction.new(request, self.response_from_bus, self.socket_buffer)
+    return client_transaction.new(request, self.response_from_bus, self.socket_buffer)
 end
 -- }}}
 
-return ratchet.bus.client
+return client
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

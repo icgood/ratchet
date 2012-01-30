@@ -3,25 +3,25 @@ require "ratchet"
 
 ratchet.bus = {}
 
-require "ratchet.bus.samestate"
-require "ratchet.bus.server"
-require "ratchet.bus.client"
+local samestate = require "ratchet.bus.samestate"
+local server = require "ratchet.bus.server"
+local client = require "ratchet.bus.client"
 
 -- {{{ ratchet.bus.new_local()
 function ratchet.bus.new_local(...)
-    return ratchet.bus.samestate.new(...)
+    return samestate.new(...)
 end
 -- }}}
 
 -- {{{ ratchet.bus.new_server()
 function ratchet.bus.new_server(...)
-    return ratchet.bus.server.new(...)
+    return server.new(...)
 end
 -- }}}
 
 -- {{{ ratchet.bus.new_client()
 function ratchet.bus.new_client(...)
-    return ratchet.bus.client.new(...)
+    return client.new(...)
 end
 -- }}}
 

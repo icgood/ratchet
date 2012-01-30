@@ -1,14 +1,14 @@
 
 require "ratchet"
-require "ratchet.bus.samestate_transaction"
+local samestate_transaction = require "ratchet.bus.samestate_transaction"
 
-ratchet.bus.samestate = {}
-ratchet.bus.samestate.__index = ratchet.bus.samestate
+local samestate = {}
+samestate.__index = samestate
 
--- {{{ ratchet.bus.samestate.new()
-function ratchet.bus.samestate.new()
+-- {{{ samestate.new()
+function samestate.new()
     local self = {}
-    setmetatable(self, ratchet.bus.samestate)
+    setmetatable(self, samestate)
 
     self.queue = {}
 
@@ -29,8 +29,8 @@ local function wait_for_transaction(self)
 end
 -- }}}
 
--- {{{ ratchet.bus.samestate:recv_request()
-function ratchet.bus.samestate:recv_request()
+-- {{{ samestate:recv_request()
+function samestate:recv_request()
     local transaction = wait_for_transaction(self)
     return transaction, transaction and transaction.request
 end
@@ -46,13 +46,15 @@ local function send_or_queue_transaction(self, data)
 end
 -- }}}
 
--- {{{ ratchet.bus.samestate:send_request()
-function ratchet.bus.samestate:send_request(req)
-    local transaction = ratchet.bus.samestate_transaction.new(req)
+-- {{{ samestate:send_request()
+function samestate:send_request(req)
+    local transaction = samestate_transaction.new(req)
 
     send_or_queue_transaction(self, transaction)
     return transaction
 end
 -- }}}
+
+return samestate
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

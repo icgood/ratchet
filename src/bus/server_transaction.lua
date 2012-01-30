@@ -1,13 +1,13 @@
 
 require "ratchet"
 
-ratchet.bus.server_transaction = {}
-ratchet.bus.server_transaction.__index = ratchet.bus.server_transaction
+local server_transaction = {}
+server_transaction.__index = server_transaction
 
--- {{{ ratchet.bus.server_transaction.new()
-function ratchet.bus.server_transaction.new(request, response_to_bus, socket_buffer, from)
+-- {{{ server_transaction.new()
+function server_transaction.new(request, response_to_bus, socket_buffer, from)
     local self = {}
-    setmetatable(self, ratchet.bus.server_transaction)
+    setmetatable(self, server_transaction)
 
     self.request = request
     self.socket_buffer = socket_buffer
@@ -27,8 +27,8 @@ local function send_part(pad, part)
 end
 -- }}}
 
--- {{{ ratchet.bus.server_transaction:send_response()
-function ratchet.bus.server_transaction:send_response(response)
+-- {{{ server_transaction:send_response()
+function server_transaction:send_response(response)
     local part_1, attachments = self.response_to_bus(response)
 
     local num_parts = 1 + (attachments and #attachments or 0)
@@ -45,6 +45,6 @@ function ratchet.bus.server_transaction:send_response(response)
 end
 -- }}}
 
-return ratchet.bus.server_transaction
+return server_transaction
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
