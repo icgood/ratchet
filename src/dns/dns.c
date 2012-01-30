@@ -789,16 +789,7 @@ static int mydns_query_all_collect_results (lua_State *L)
 static int mydns_query_all (lua_State *L)
 {
 	luaL_checkstring (L, 1);	/* Query data. */
-
-	if (lua_type (L, 2) != LUA_TTABLE)
-	{
-		lua_createtable (L, 2, 0);
-		lua_pushliteral (L, "aaaa");
-		lua_rawseti (L, -2, 1);
-		lua_pushliteral (L, "a");
-		lua_rawseti (L, -2, 2);
-		lua_replace (L, 2);
-	}
+	luaL_checktype (L, 2, LUA_TTABLE);
 	lua_settop (L, 5);
 
 	size_t num_types = lua_rawlen (L, 2);

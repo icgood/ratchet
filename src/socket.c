@@ -431,6 +431,15 @@ static int rsock_prepare_tcp (lua_State *L)
 	if (ctx == 0)
 	{
 		lua_settop (L, 3);
+		if (lua_isnil (L, 3))
+		{
+			lua_createtable (L, 2, 0);
+			lua_pushliteral (L, "aaaa");
+			lua_rawseti (L, -2, 1);
+			lua_pushliteral (L, "a");
+			lua_rawseti (L, -2, 2);
+			lua_replace (L, 3);
+		}
 
 		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
 		lua_getfield (L, -1, "query_all");
@@ -466,6 +475,15 @@ static int rsock_prepare_udp (lua_State *L)
 	if (ctx == 0)
 	{
 		lua_settop (L, 3);
+		if (lua_isnil (L, 3))
+		{
+			lua_createtable (L, 2, 0);
+			lua_pushliteral (L, "aaaa");
+			lua_rawseti (L, -2, 1);
+			lua_pushliteral (L, "a");
+			lua_rawseti (L, -2, 2);
+			lua_replace (L, 3);
+		}
 
 		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
 		lua_getfield (L, -1, "query_all");
