@@ -26,25 +26,16 @@ function new_pair()
 --  @return a new socket object.
 function from_fd(fd)
 
---- URI parser for socket connection strings. On success, the returned object
---  contains all necessary data to create and bind/connect a new socket object.
---  The parser is capable of creating TCP, UDP, and Unix sockets. See the manual
---  page for complete details. Depending on the URI schema, this call *may*
---  block until data is ready, such as for DNS lookups.
---  @param uri the URI connection string.
---  @return Table of information useful in creating a new socket, or nil on
---          failure followed by an error. See the manual for details.
-function prepare_uri(uri)
-
 --- Prepares TCP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
 --  See the manual page for complete details. If host is not an IP address, this
 --  call will pause the current thread to wait for a DNS lookup.
 --  @param host queried by DNS for new TCP connection.
 --  @param port destination port number for new TCP connection.
+--  @param family string indicating socket family, default "AF_UNSPEC".
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_tcp(host, port)
+function prepare_tcp(host, port, family)
 
 --- Prepares UDP socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.
@@ -52,9 +43,10 @@ function prepare_tcp(host, port)
 --  call will pause the current thread to wait for a DNS lookup.
 --  @param host queried by DNS for new UDP connection.
 --  @param port destination port number for new UDP connection.
+--  @param family string indicating socket family, default "AF_UNSPEC".
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
-function prepare_udp(host, port)
+function prepare_udp(host, port, family)
 
 --- Prepares UNIX socket information. On success, the returned object
 --  contains all necessary data to create and bind/connect a new socket object.

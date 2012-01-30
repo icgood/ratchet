@@ -117,31 +117,41 @@ static int throw_fd_errors (lua_State *L, int fd)
 }
 /* }}} */
 
-/* {{{ push_type_and_info_from_uri() */
-static int push_type_and_info_from_uri (lua_State *L, int index)
+/* {{{ push_query_types_table() */
+static void push_query_types_table (lua_State *L, int index)
 {
-	/* Check for form: schema://[127.0.0.1]:25
-	 * or: schema://[01:02:03:04:05:06:07:08]:25 */
-	if (strmatch (L, index, "^([tu][cd]p)%:%/+%[(.-)%]%:(%d+)$"))
-		return 1;
+	if (lua_isnoneornil (L, index))
+		goto other;
 
-	/* Check for form: schema://127.0.0.1:25 */
-	else if (strmatch (L, index, "^([tu][cd]p)%:%/+([^%:]*)%:(%d+)$"))
-		return 1;
+	else if (strequal (L, index, "AF_UNSPEC"))
+		goto other;
 
-	/* Check for form: tcp://127.0.0.1
-	 * or: tcp://01:02:03:04:05:06:07:08
-	 * Always uses default port. */
-	else if (strmatch (L, index, "^([tu][cd]p)%:%/+(.*)$"))
+	else if (strequal (L, index, "AF_INET"))
 	{
-		lua_pushinteger (L, DEFAULT_TCPUDP_PORT);
-		return 1;
+		lua_createtable (L, 1, 0);
+		lua_pushliteral (L, "a");
+		lua_rawseti (L, -2, 1);
 	}
 
-	else if (strmatch (L, index, "^(unix)%:(.*)$"))
-		return 1;
+	else if (strequal (L, index, "AF_INET6"))
+	{
+		lua_createtable (L, 1, 0);
+		lua_pushliteral (L, "aaaa");
+		lua_rawseti (L, -2, 1);
+	}
 
-	return 0;
+	else
+		luaL_argerror (L, index, "Unknown socket address family.");
+
+	return;
+
+other:
+	/* nil or "AF_UNSPEC", etc. */
+	lua_createtable (L, 2, 0);
+	lua_pushliteral (L, "aaaa");
+	lua_rawseti (L, -2, 1);
+	lua_pushliteral (L, "a");
+	lua_rawseti (L, -2, 2);
 }
 /* }}} */
 
@@ -431,15 +441,8 @@ static int rsock_prepare_tcp (lua_State *L)
 	if (ctx == 0)
 	{
 		lua_settop (L, 3);
-		if (lua_isnil (L, 3))
-		{
-			lua_createtable (L, 2, 0);
-			lua_pushliteral (L, "aaaa");
-			lua_rawseti (L, -2, 1);
-			lua_pushliteral (L, "a");
-			lua_rawseti (L, -2, 2);
-			lua_replace (L, 3);
-		}
+		push_query_types_table (L, 3);
+		lua_replace (L, 3);
 
 		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
 		lua_getfield (L, -1, "query_all");
@@ -475,15 +478,8 @@ static int rsock_prepare_udp (lua_State *L)
 	if (ctx == 0)
 	{
 		lua_settop (L, 3);
-		if (lua_isnil (L, 3))
-		{
-			lua_createtable (L, 2, 0);
-			lua_pushliteral (L, "aaaa");
-			lua_rawseti (L, -2, 1);
-			lua_pushliteral (L, "a");
-			lua_rawseti (L, -2, 2);
-			lua_replace (L, 3);
-		}
+		push_query_types_table (L, 3);
+		lua_replace (L, 3);
 
 		lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_dns_class");
 		lua_getfield (L, -1, "query_all");

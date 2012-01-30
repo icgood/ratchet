@@ -95,7 +95,7 @@ end
 
 -- {{{ server_ctx()
 function server_ctx(host, port)
-    local rec = ratchet.socket.prepare_tcp(host, port, {"a"})
+    local rec = ratchet.socket.prepare_tcp(host, port, "AF_INET")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     if debugging then socket:set_tracer(debug_print) end
     socket.SO_REUSEADDR = true
@@ -114,7 +114,7 @@ end
 
 -- {{{ client_ctx()
 function client_ctx(host, port)
-    local rec = ratchet.socket.prepare_tcp(host, port, {"a"})
+    local rec = ratchet.socket.prepare_tcp(host, port, "AF_INET")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     if debugging then socket:set_tracer(debug_print) end
     socket:connect(rec.addr)
