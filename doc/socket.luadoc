@@ -32,7 +32,8 @@ function from_fd(fd)
 --  call will pause the current thread to wait for a DNS lookup.
 --  @param host queried by DNS for new TCP connection.
 --  @param port destination port number for new TCP connection.
---  @param family string indicating socket family, default "AF_UNSPEC".
+--  @param family optional string indicating socket family. Valid values are
+--                "AF_INET", "AF_INET6", or the default "AF_UNSPEC".
 --  @return Table of information useful in creating a new socket, or nil on
 --          failure followed by an error. See the manual for details.
 function prepare_tcp(host, port, family)
