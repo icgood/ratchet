@@ -138,6 +138,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#kill">kill</a>&nbsp;(thread)</td>
+	<td class="summary">Kills a given thread.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#pause">pause</a>&nbsp;()</td>
 	<td class="summary">Pauses the current thread indefinitely.</td>
 	</tr>
@@ -279,6 +284,32 @@ Blocks on multiple items, with a single timeout. This function will block until 
 
 <h3>Return value:</h3>
 The item from the read or write table that triggered an event.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="kill"></a><strong>kill</strong>&nbsp;(thread)</dt>
+<dd>
+Kills a given thread. If the thread is yielding on any events, those events are cleaned up and the thread is dropped.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  thread: The thread to kill.
+	</li>
+	
+</ul>
+
+
+
+
+
 
 
 
