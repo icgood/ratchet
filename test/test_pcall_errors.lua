@@ -17,7 +17,7 @@ end)
 local worked, err = pcall(kernel.loop, kernel)
 
 assert(not worked)
-assert(err:match('uh oh'))
+assert(err:match('uh oh'), "error did not match as expected.")
 assert(not set_after_error)
 assert(1 == kernel:get_num_threads())
 

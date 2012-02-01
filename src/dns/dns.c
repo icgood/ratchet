@@ -33,6 +33,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "yield-types.h"
 #include "libdns/dns.h"
 
 #define DNS_GET_POLL_TIMEOUT(n) (pow (2.0, (double) n))
@@ -684,7 +685,7 @@ static int mydns_query_collect_results (lua_State *L)
 	{
 		lua_pop (L, 1);
 
-		lua_pushliteral (L, "read");
+		lua_pushlightuserdata (L, YIELD_READ);
 		lua_pushvalue (L, 1);
 		return lua_yieldk (L, 2, 0, mydns_query_collect_results);
 	}
@@ -725,7 +726,7 @@ static int mydns_query_all_collect_results (lua_State *L)
 	if (lua_getctx (L, &tries) == LUA_YIELD)
 		lua_pop (L, 1);
 
-	lua_pushliteral (L, "multi");
+	lua_pushlightuserdata (L, YIELD_MULTIRW);
 	lua_newtable (L);
 
 	for (i=1; i<=num; i++)

@@ -40,6 +40,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "yield-types.h"
 
 #define raise_ssl_error(L, f, e) raise_ssl_error_ln (L, f, e, __FILE__, __LINE__)
 
@@ -465,14 +466,14 @@ static int rssl_session_shutdown (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushliteral (L, "read");
+			lua_pushlightuserdata (L, YIELD_READ);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushliteral (L, "write");
+			lua_pushlightuserdata (L, YIELD_WRITE);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
@@ -519,14 +520,14 @@ static int rssl_session_read (lua_State *L)
 			return rssl_session_shutdown (L);
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushliteral (L, "read");
+			lua_pushlightuserdata (L, YIELD_READ);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_read);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushliteral (L, "write");
+			lua_pushlightuserdata (L, YIELD_WRITE);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
@@ -563,14 +564,14 @@ static int rssl_session_write (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushliteral (L, "read");
+			lua_pushlightuserdata (L, YIELD_READ);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_write);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushliteral (L, "write");
+			lua_pushlightuserdata (L, YIELD_WRITE);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
@@ -605,14 +606,14 @@ static int rssl_session_connect (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushliteral (L, "read");
+			lua_pushlightuserdata (L, YIELD_READ);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_connect);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushliteral (L, "write");
+			lua_pushlightuserdata (L, YIELD_WRITE);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
@@ -647,14 +648,14 @@ static int rssl_session_accept (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_WANT_READ:
-			lua_pushliteral (L, "read");
+			lua_pushlightuserdata (L, YIELD_READ);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_accept);
 
 		case SSL_ERROR_WANT_WRITE:
-			lua_pushliteral (L, "write");
+			lua_pushlightuserdata (L, YIELD_WRITE);
 			lua_getuservalue (L, 1);
 			lua_getfield (L, -1, "engine");
 			lua_remove (L, -2);

@@ -10,6 +10,7 @@ TESTS = test_listen_connect.lua \
 	test_send_recv.lua \
 	test_pcall_errors.lua \
 	test_wait_all.lua \
+	test_thread_kill.lua \
 	test_thread_space.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \

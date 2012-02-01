@@ -32,6 +32,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "yield-types.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
 #define get_thread(L, index, s) luaL_checktype (L, index, LUA_TTHREAD); lua_State *s = lua_tothread (L, index)
@@ -117,6 +118,9 @@ static void end_thread_persist (lua_State *L, int index)
 {
 	lua_getuservalue (L, 1);
 
+	lua_State *L1 = lua_tothread (L, index);
+	lua_settop (L1, 0);
+
 	lua_getfield (L, -1, "threads");
 	lua_pushvalue (L, index);
 	lua_pushnil (L);
@@ -131,6 +135,39 @@ static void end_thread_persist (lua_State *L, int index)
 		lua_rawset (L, -3);
 	}
 	lua_pop (L, 2);
+}
+/* }}} */
+
+/* {{{ end_all_waiting_thread_events() */
+static void end_all_waiting_thread_events (lua_State *L)
+{
+	lua_getfield (L, 2, "event");
+	if (lua_isuserdata (L, -1))
+	{
+		struct event *ev = lua_touserdata (L, -1);
+		event_del (ev);
+	}
+	lua_pop (L, 1);
+
+	lua_getfield (L, 2, "event_list");
+	if (lua_istable (L, -1))
+	{
+		int i;
+		lua_pushnil (L);
+		for (i=1; ; i++)
+		{
+			lua_pop (L, 1);
+			lua_rawgeti (L, -1, i);
+			if (lua_isuserdata (L, -1))
+			{
+				struct event *ev = lua_touserdata (L, -1);
+				event_del (ev);
+			}
+			else
+				break;
+		}
+		lua_pop (L, 1);
+	}
 }
 /* }}} */
 
@@ -229,10 +266,12 @@ static void multi_event_triggered (int fd, short event, void *arg)
 	lua_State *L1 = (lua_State *) arg;
 	lua_State *L = lua_tothread (L1, 1);
 
-	multi_event_del_all (L1, 3);
+	lua_getfield (L1, 2, "event_list");
+	multi_event_del_all (L1, -1);
+	lua_pop (L1, 1);
 
 	/* Figure out which object was triggered based on fd. */
-	lua_rawgeti (L1, 2, fd);
+	lua_rawgeti (L1, 3, fd);
 	lua_replace (L1, 1);
 	lua_settop (L1, 1);
 
@@ -536,15 +575,12 @@ restart_thread:
 	ret = lua_resume (L1, NULL, nargs);
 
 	if (ret == 0)
-	{
 		end_thread_persist (L, 2);	/* Remove the entry from the persistance tables. */
-		lua_settop (L1, 0);
-	}
 
 	else if (ret == LUA_YIELD)
 	{
 		/* Check for a "get" call. */
-		if (lua_isstring (L1, 1) && 0 == strcmp ("get", lua_tostring (L1, 1)))
+		if (lua_islightuserdata (L1, 1) && YIELD_GET == lua_touserdata (L1, 1))
 		{
 			lua_pushvalue (L, 1);
 			lua_xmove (L, L1, 1);
@@ -564,10 +600,9 @@ restart_thread:
 	/* Handle the error from the thread. */
 	else
 	{
-		/* Remove the entry from the persistance table. */
+		lua_xmove (L1, L, 1);
 		end_thread_persist (L, 2);
 
-		lua_xmove (L1, L, 1);
 		lua_error (L);
 	}
 
@@ -583,30 +618,39 @@ static int ratchet_yield_thread (lua_State *L)
 
 	int nrets = lua_gettop (L1);
 
-	if (lua_isstring (L1, 1))
-	{
-		/* Get a wait_for_xxxxx method corresponding to first yield arg. */
-		const char *yieldtype = lua_tostring (L1, 1);
-		if (0 == strcmp (yieldtype, "write"))
-			lua_getfield (L, 1, "wait_for_write");
-		else if (0 == strcmp (yieldtype, "read"))
-			lua_getfield (L, 1, "wait_for_read");
-		else if (0 == strcmp (yieldtype, "timeout"))
-			lua_getfield (L, 1, "wait_for_timeout");
-		else if (0 == strcmp (yieldtype, "multi"))
-			lua_getfield (L, 1, "wait_for_multi");
-		else
-			lua_pushnil (L);
+	if (!lua_islightuserdata (L1, 1))
+		return luaL_error (L, "Illegal yield of a ratchet thread.");
 
-		if (lua_isfunction (L, -1))
-		{
-			/* Call wait_for_xxxxx method with self, thread, arg1, arg2... */
-			lua_pushvalue (L, 1);
-			lua_pushvalue (L, 2);
-			lua_xmove (L1, L, nrets-1);
-			lua_settop (L1, 0);
-			lua_call (L, nrets+1, 0);
-		}
+	/* Get a wait_for_xxxxx method corresponding to first yield arg. */
+	void *yield_type = lua_touserdata (L1, 1);
+
+	if (YIELD_WRITE == yield_type)
+		lua_getfield (L, 1, "wait_for_write");
+
+	else if (YIELD_READ == yield_type)
+		lua_getfield (L, 1, "wait_for_read");
+
+	else if (YIELD_TIMEOUT == yield_type)
+		lua_getfield (L, 1, "wait_for_timeout");
+
+	else if (YIELD_MULTIRW == yield_type)
+		lua_getfield (L, 1, "wait_for_multi");
+
+	else
+	{
+		lua_pushnil (L);
+		lua_settop (L1, 0);
+		lua_newtable (L1);
+	}
+
+	if (lua_isfunction (L, -1))
+	{
+		/* Call wait_for_xxxxx method with self, thread, arg1, arg2... */
+		lua_pushvalue (L, 1);
+		lua_pushvalue (L, 2);
+		lua_xmove (L1, L, nrets-1);
+		lua_settop (L1, 0);
+		lua_call (L, nrets+1, 0);
 	}
 
 	/* Leave the main thread at index 1 of the child thread. */
@@ -627,6 +671,9 @@ static int ratchet_wait_for_write (lua_State *L)
 	int fd = get_fd_from_object (L, 3);
 	double timeout = get_timeout_from_object (L, 3);
 
+	/* Cleanup table for kill()ing the thread. */
+	lua_createtable (L1, 0, 1);
+
 	if (fd < 0)
 		return ratchet_error_str (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
 
@@ -644,6 +691,8 @@ static int ratchet_wait_for_write (lua_State *L)
 	event_base_set (e_b, ev);
 	event_add (ev, (use_tv ? &tv : NULL));
 
+	lua_setfield (L1, -2, "event");
+
 	return 0;
 }
 /* }}} */
@@ -656,6 +705,9 @@ static int ratchet_wait_for_read (lua_State *L)
 	get_thread (L, 2, L1);
 	int fd = get_fd_from_object (L, 3);
 	double timeout = get_timeout_from_object (L, 3);
+
+	/* Cleanup table for kill()ing the thread. */
+	lua_createtable (L1, 0, 1);
 
 	if (fd < 0)
 		return ratchet_error_str (L, NULL, "EBADF", "Invalid file descriptor: %d", fd);
@@ -674,6 +726,8 @@ static int ratchet_wait_for_read (lua_State *L)
 	event_base_set (e_b, ev);
 	event_add (ev, (use_tv ? &tv : NULL));
 
+	lua_setfield (L1, -2, "event");
+
 	return 0;
 }
 /* }}} */
@@ -687,11 +741,16 @@ static int ratchet_wait_for_timeout (lua_State *L)
 	struct timeval tv;
 	gettimeval_arg (L, 3, &tv);
 
+	/* Cleanup table for kill()ing the thread. */
+	lua_createtable (L1, 0, 1);
+
 	/* Build event and queue it up. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
 	timeout_set (ev, timeout_triggered, L1);
 	event_base_set (e_b, ev);
 	event_add (ev, &tv);
+
+	lua_setfield (L1, -2, "event");
 
 	return 0;
 }
@@ -717,6 +776,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 	int i, nread = lua_rawlen (L, 3), nwrite = lua_rawlen (L, 4);
 
+	lua_createtable (L1, 0, 1);
 	lua_newtable (L1);
 	lua_createtable (L1, 1+nread+nwrite, 0);
 
@@ -774,6 +834,8 @@ static int ratchet_wait_for_multi (lua_State *L)
 		event_add (ev, NULL);
 	}
 
+	lua_setfield (L1, -3, "event_list");
+
 	return 0;
 }
 /* }}} */
@@ -786,7 +848,7 @@ static int ratchet_attach (lua_State *L)
 	int ctx = 0;
 	if (LUA_OK == lua_getctx (L, &ctx))
 	{
-		lua_pushliteral (L, "get");
+		lua_pushlightuserdata (L, YIELD_GET);
 		return lua_yieldk (L, 1, ctx, ratchet_attach);
 	}
 
@@ -812,7 +874,7 @@ static int ratchet_attach (lua_State *L)
 /* {{{ ratchet_block_on() */
 static int ratchet_block_on (lua_State *L)
 {
-	lua_pushliteral (L, "multi");
+	lua_pushlightuserdata (L, YIELD_MULTIRW);
 	lua_insert (L, 1);
 
 	int nargs = lua_gettop (L);
@@ -826,7 +888,7 @@ static int ratchet_wait_all (lua_State *L)
 	int ctx = 0;
 	if (LUA_OK == lua_getctx (L, &ctx))
 	{
-		lua_pushliteral (L, "get");
+		lua_pushlightuserdata (L, YIELD_GET);
 		return lua_yieldk (L, 1, ctx, ratchet_wait_all);
 	}
 
@@ -877,7 +939,8 @@ static int ratchet_wait_all (lua_State *L)
 	lua_settable (L, 4);
 	lua_settop (L, 2);
 
-	return lua_yield (L, 0);
+	lua_pushlightuserdata (L, YIELD_WAITALL);
+	return lua_yield (L, 1);
 }
 /* }}} */
 
@@ -887,7 +950,7 @@ static int ratchet_thread_space (lua_State *L)
 	int ctx = 0;
 	if (LUA_OK == lua_getctx (L, &ctx))
 	{
-		lua_pushliteral (L, "get");
+		lua_pushlightuserdata (L, YIELD_GET);
 		return lua_yieldk (L, 1, ctx, ratchet_thread_space);
 	}
 
@@ -918,7 +981,7 @@ static int ratchet_timer (lua_State *L)
 	lua_pop (L, 1);
 
 	int nargs = lua_gettop (L);
-	lua_pushliteral (L, "timeout");
+	lua_pushlightuserdata (L, YIELD_TIMEOUT);
 	lua_insert (L, 1);
 
 	return lua_yield (L, nargs+1);
@@ -932,7 +995,8 @@ static int ratchet_pause (lua_State *L)
 		return luaL_error (L, "ratchet.thread.pause() cannot be called from main thread.");
 	lua_pop (L, 1);
 
-	return lua_yield (L, 0);
+	lua_pushlightuserdata (L, YIELD_PAUSE);
+	return lua_yield (L, 1);
 }
 /* }}} */
 
@@ -946,7 +1010,7 @@ static int ratchet_unpause (lua_State *L)
 	lua_pushvalue (L2, 1);
 	lua_xmove (L2, L, 1);
 	lua_insert (L, 1);
-	lua_remove (L1, 1);
+	lua_settop (L1, 0);
 
 	/* Make sure it's unpause-able. */
 	if (lua_status (L1) != LUA_YIELD)
@@ -958,6 +1022,29 @@ static int ratchet_unpause (lua_State *L)
 
 	/* Add the thread to the ready table so it gets resumed. */
 	set_thread_ready (L, 2 /* index of thread */);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_kill() */
+static int ratchet_kill (lua_State *L)
+{
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushlightuserdata (L, YIELD_GET);
+		return lua_yieldk (L, 1, ctx, ratchet_kill);
+	}
+
+	lua_insert (L, 1);
+	(void) get_event_base (L, 1);
+
+	lua_State *L1 = lua_tothread (L, 2);
+	if (LUA_YIELD == lua_status (L1))
+		end_all_waiting_thread_events (L1);
+
+	end_thread_persist (L, 2);
 
 	return 0;
 }
@@ -995,6 +1082,7 @@ int luaopen_ratchet (lua_State *L)
 
 	static const luaL_Reg thread_funcs[] = {
 		{"attach", ratchet_attach},
+		{"kill", ratchet_kill},
 		{"pause", ratchet_pause},
 		{"unpause", ratchet_unpause},
 		{"self", ratchet_running_thread},

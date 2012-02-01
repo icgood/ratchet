@@ -67,4 +67,9 @@ function unpause(thread, ...)
 --  @return The item from the read or write table that triggered an event.
 function block_on(reads, writes, timeout)
 
+--- Kills a given thread. If the thread is yielding on any events, those events
+--  are cleaned up and the thread is dropped.
+--  @param thread The thread to kill.
+function kill(thread)
+
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

@@ -33,6 +33,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "yield-types.h"
 
 #ifndef RATCHET_ZMQ_IO_THREADS
 #define RATCHET_ZMQ_IO_THREADS 10
@@ -369,7 +370,7 @@ static int rzmq_send (lua_State *L)
 		return lua_gettop (L);
 	}
 
-	lua_pushliteral (L, "write");
+	lua_pushlightuserdata (L, YIELD_WRITE);
 	lua_pushvalue (L, 1);
 	return lua_yieldk (L, 2, nargs, rzmq_send);
 }
@@ -401,7 +402,7 @@ static int rzmq_recv (lua_State *L)
 		return lua_gettop (L);
 	}
 
-	lua_pushliteral (L, "read");
+	lua_pushlightuserdata (L, YIELD_READ);
 	lua_pushvalue (L, 1);
 	return lua_yieldk (L, 2, nargs, rzmq_recv);
 }

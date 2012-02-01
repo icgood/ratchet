@@ -34,6 +34,7 @@
 
 #include "ratchet.h"
 #include "misc.h"
+#include "yield-types.h"
 
 #define timerfd_fd(L, i) (int *) luaL_checkudata (L, i, "ratchet_timerfd_meta")
 
@@ -146,7 +147,7 @@ static int rtfd_read (lua_State *L)
 	int ctx = 0;
 	if (LUA_OK == lua_getctx (L, &ctx))
 	{
-		lua_pushliteral (L, "read");
+		lua_pushlightuserdata (L, YIELD_READ);
 		lua_pushvalue (L, 1);
 
 		return lua_yieldk (L, 2, 0, rtfd_read);
