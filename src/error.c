@@ -189,7 +189,7 @@ static int ratchet_error_new (lua_State *L)
 {
 	lua_settop (L, 7);
 
-	lua_createtable (L, 0, 8);
+	lua_newtable (L);
 
 	luaL_getmetatable (L, "ratchet_error_meta");
 	lua_setmetatable (L, -2);
@@ -199,6 +199,10 @@ static int ratchet_error_new (lua_State *L)
 		lua_setfield (L, -2, "thread");
 	else
 		lua_pop (L, 1);
+
+	/* Set the type field to indicate a ratchet error. */
+	lua_pushliteral (L, "ratchet_error");
+	lua_setfield (L, -2, "type");
 
 	/* Set other fields from arguments. */
 	luaL_checkstring (L, 1);
@@ -244,6 +248,15 @@ static int ratchet_error_is (lua_State *L)
 		lua_pushboolean (L, lua_compare (L, 1, 2, LUA_OPEQ));
 		return 1;
 	}
+
+	lua_getfield (L, 1, "type");
+	if (!strequal (L, -1, "ratchet_error"))
+	{
+		lua_pop (L, 1);
+		lua_pushboolean (L, 0);
+		return 1;
+	}
+	lua_pop (L, 1);
 
 	lua_getfield (L, 1, "code");
 	lua_pushboolean (L, lua_compare (L, -1, 2, LUA_OPEQ));
