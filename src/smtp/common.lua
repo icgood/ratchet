@@ -317,9 +317,7 @@ function common.smtp_io:buffered_recv()
     local received = self.socket:recv()
     local done
 
-    if not received then
-        done = "timed out"
-    elseif received == "" then
+    if received == "" then
         done = "connection closed"
     else
         self.recv_buffer = self.recv_buffer .. received
