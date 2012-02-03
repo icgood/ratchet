@@ -163,6 +163,8 @@ function ratchet.http.server:handle()
 end
 -- }}}
 
+ratchet.http.server.__call = ratchet.http.server.handle
+
 return ratchet.http.server
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

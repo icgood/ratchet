@@ -497,6 +497,8 @@ function ratchet.smtp.server:handle()
 end
 -- }}}
 
+ratchet.smtp.server.__call = ratchet.smtp.server.handle
+
 return ratchet.smtp.server
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

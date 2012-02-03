@@ -34,4 +34,9 @@ function new(socket, handlers, send_size)
 --  @param self the smtp.server object.
 function handle(self)
 
+--- An alias to the handle() method, allowing the smtp.server object to be
+--  callable as if it were a function.
+--  @param self the smtp.server object.
+function __call(self)
+
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:
