@@ -1,21 +1,26 @@
 
 require "package"
 
-module("ratchet.http.common", package.seeall)
+local common = {}
 
 -- {{{ headers_metatable
 local headers_metatable = {
 
     -- For any non-existent header, return an empty table.
-    __index = function (key)
-        return {}
+    __index = function (headers, key)
+        local check_lower = rawget(headers, key:lower())
+        if check_lower then
+            return check_lower
+        else
+            return {}
+        end
     end,
 
 }
 -- }}}
 
--- {{{ build_header_string()
-function build_header_string(headers)
+-- {{{ common.build_header_string()
+function common.build_header_string(headers)
     local ret = ""
     for name, value in pairs(headers) do
         for i, each in ipairs(value) do
@@ -26,8 +31,8 @@ function build_header_string(headers)
 end
 -- }}}
 
--- {{{ parse_header_string()
-function parse_header_string(data, start)
+-- {{{ common.parse_header_string()
+function common.parse_header_string(data, start)
     local headers = {}
     repeat
         local name, value
@@ -46,5 +51,7 @@ function parse_header_string(data, start)
     return headers, start
 end
 -- }}}
+
+return common
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:

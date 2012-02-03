@@ -1,17 +1,17 @@
 
 require "package"
 
-module("ratchet.smtp.common", package.seeall)
+local common = {}
 
--- {{{ data_reader
+-- {{{ common.data_reader
 
-data_reader = {}
-data_reader.__index = data_reader
+common.data_reader = {}
+common.data_reader.__index = common.data_reader
 
--- {{{ data_reader.new()
-function data_reader.new(io, max_size)
+-- {{{ common.data_reader.new()
+function common.data_reader.new(io, max_size)
     local self = {}
-    setmetatable(self, data_reader)
+    setmetatable(self, common.data_reader)
 
     self.io = io
     self.size = 0
@@ -24,15 +24,15 @@ function data_reader.new(io, max_size)
 end
 -- }}}
 
--- {{{ data_reader:from_recv_buffer()
-function data_reader:from_recv_buffer()
+-- {{{ common.data_reader:from_recv_buffer()
+function common.data_reader:from_recv_buffer()
     self:add_lines(self.io.recv_buffer)
     self.io.recv_buffer = ""
 end
 -- }}}
 
--- {{{ data_reader:strip_EOD_endline()
-function data_reader:strip_EOD_endline()
+-- {{{ common.data_reader:strip_EOD_endline()
+function common.data_reader:strip_EOD_endline()
     if self.EOD > 1 then
         local last_line = self.lines[self.EOD-1]
         self.lines[self.EOD-1] = last_line:match("(.-)%\r?%\n") or last_line
@@ -40,8 +40,8 @@ function data_reader:strip_EOD_endline()
 end
 -- }}}
 
--- {{{ data_reader:handle_finished_line()
-function data_reader:handle_finished_line()
+-- {{{ common.data_reader:handle_finished_line()
+function common.data_reader:handle_finished_line()
     local i = self.i
     local line = self.lines[i]
 
@@ -77,8 +77,8 @@ function data_reader:handle_finished_line()
 end
 -- }}}
 
--- {{{ data_reader:add_lines()
-function data_reader:add_lines(piece)
+-- {{{ common.data_reader:add_lines()
+function common.data_reader:add_lines(piece)
     for line in piece:gmatch("(.-%\n)") do
         self.lines[self.i] = self.lines[self.i] .. line
         self:handle_finished_line()        
@@ -87,8 +87,8 @@ function data_reader:add_lines(piece)
 end
 -- }}}
 
--- {{{ data_reader:recv_piece()
-function data_reader:recv_piece()
+-- {{{ common.data_reader:recv_piece()
+function common.data_reader:recv_piece()
     local piece = self.io.socket:recv()
     if piece == "" then
         self.connection_closed = true
@@ -100,8 +100,8 @@ function data_reader:recv_piece()
 end
 -- }}}
 
--- {{{ data_reader:return_all()
-function data_reader:return_all()
+-- {{{ common.data_reader:return_all()
+function common.data_reader:return_all()
     if self.connection_closed then
         return nil, "connection closed"
     end
@@ -118,8 +118,8 @@ function data_reader:return_all()
 end
 -- }}}
 
--- {{{ data_reader:recv()
-function data_reader:recv()
+-- {{{ common.data_reader:recv()
+function common.data_reader:recv()
     self:from_recv_buffer()
 
     while not self.EOD do
@@ -132,15 +132,15 @@ end
 
 -- }}}
 
--- {{{ data_sender
+-- {{{ common.data_sender
 
-data_sender = {}
-data_sender.__index = data_sender
+common.data_sender = {}
+common.data_sender.__index = common.data_sender
 
--- {{{ data_sender.new()
-function data_sender.new(data, iter_size)
+-- {{{ common.data_sender.new()
+function common.data_sender.new(data, iter_size)
     local self = {}
-    setmetatable(self, data_sender)
+    setmetatable(self, common.data_sender)
 
     self.data = data
     self.iter_size = iter_size or 1024
@@ -186,8 +186,8 @@ local function iterator_func(invariant, i)
 end
 -- }}}
 
--- {{{ data_sender:iter()
-function data_sender:iter()
+-- {{{ common.data_sender:iter()
+function common.data_sender:iter()
     local invariant = {send_size = self.iter_size,
                        last_part = "",
                        done = false,
@@ -197,8 +197,8 @@ function data_sender:iter()
 end
 -- }}}
 
--- {{{ data_sender:send()
-function data_sender:send(io)
+-- {{{ common.data_sender:send()
+function common.data_sender:send(io)
     for i, piece in self:iter() do
         io:buffered_send(piece)
     end
@@ -207,15 +207,15 @@ end
 
 -- }}}
 
--- {{{ smtp_extensions
+-- {{{ common.smtp_extensions
 
-smtp_extensions = {}
-smtp_extensions.__index = smtp_extensions
+common.smtp_extensions = {}
+common.smtp_extensions.__index = common.smtp_extensions
 
--- {{{ smtp_extensions.new()
-function smtp_extensions.new()
+-- {{{ common.smtp_extensions.new()
+function common.smtp_extensions.new()
     local self = {}
-    setmetatable(self, smtp_extensions)
+    setmetatable(self, common.smtp_extensions)
 
     self.extensions = {}
 
@@ -223,20 +223,20 @@ function smtp_extensions.new()
 end
 -- }}}
 
--- {{{ smtp_extensions:reset()
-function smtp_extensions:reset()
+-- {{{ common.smtp_extensions:reset()
+function common.smtp_extensions:reset()
     self.extensions = {}
 end
 -- }}}
 
--- {{{ smtp_extensions:has()
-function smtp_extensions:has(ext)
+-- {{{ common.smtp_extensions:has()
+function common.smtp_extensions:has(ext)
     return self.extensions[ext:upper()]
 end
 -- }}}
 
--- {{{ smtp_extensions:add()
-function smtp_extensions:add(ext, param)
+-- {{{ common.smtp_extensions:add()
+function common.smtp_extensions:add(ext, param)
     if param and #param > 0 then
         self.extensions[ext:upper()] = param
     else
@@ -245,14 +245,14 @@ function smtp_extensions:add(ext, param)
 end
 -- }}}
 
--- {{{ smtp_extensions:drop()
-function smtp_extensions:drop(ext)
+-- {{{ common.smtp_extensions:drop()
+function common.smtp_extensions:drop(ext)
     self.extensions[ext:upper()] = nil
 end
 -- }}}
 
--- {{{ smtp_extensions:parse_string()
-function smtp_extensions:parse_string(str)
+-- {{{ common.smtp_extensions:parse_string()
+function common.smtp_extensions:parse_string(str)
     local pattern = "^%s*(%w[%w%-]*)%s*(.-)%s*$"
     local header
     str = str .. "\r\n" -- incoming strings will not have a final endline.
@@ -268,8 +268,8 @@ function smtp_extensions:parse_string(str)
 end
 -- }}}
 
--- {{{ smtp_extensions:build_string()
-function smtp_extensions:build_string(header)
+-- {{{ common.smtp_extensions:build_string()
+function common.smtp_extensions:build_string(header)
     local lines = {header}
     for k, v in pairs(self.extensions) do
         if v == true then
@@ -284,15 +284,15 @@ end
 
 -- }}}
 
--- {{{ smtp_io
+-- {{{ common.smtp_io
 
-smtp_io = {}
-smtp_io.__index = smtp_io
+common.smtp_io = {}
+common.smtp_io.__index = common.smtp_io
 
--- {{{ smtp_io.new()
-function smtp_io.new(socket, send_size)
+-- {{{ common.smtp_io.new()
+function common.smtp_io.new(socket, send_size)
     local self = {}
-    setmetatable(self, smtp_io)
+    setmetatable(self, common.smtp_io)
 
     self.socket = socket
 
@@ -306,14 +306,14 @@ function smtp_io.new(socket, send_size)
 end
 -- }}}
 
--- {{{ smtp_io:close()
-function smtp_io:close()
+-- {{{ common.smtp_io:close()
+function common.smtp_io:close()
     return self.socket:close()
 end
 -- }}}
 
--- {{{ smtp_io:buffered_recv()
-function smtp_io:buffered_recv()
+-- {{{ common.smtp_io:buffered_recv()
+function common.smtp_io:buffered_recv()
     local received = self.socket:recv()
     local done
 
@@ -329,14 +329,14 @@ function smtp_io:buffered_recv()
 end
 -- }}}
 
--- {{{ smtp_io:buffered_send()
-function smtp_io:buffered_send(data)
+-- {{{ common.smtp_io:buffered_send()
+function common.smtp_io:buffered_send(data)
     table.insert(self.send_buffer, data)
 end
 -- }}}
 
--- {{{ smtp_io:flush_send()
-function smtp_io:flush_send()
+-- {{{ common.smtp_io:flush_send()
+function common.smtp_io:flush_send()
     local send_buffer = table.concat(self.send_buffer)
     self.send_buffer = {}
 
@@ -352,8 +352,8 @@ function smtp_io:flush_send()
 end
 -- }}}
 
--- {{{ smtp_io:recv_reply()
-function smtp_io:recv_reply()
+-- {{{ common.smtp_io:recv_reply()
+function common.smtp_io:recv_reply()
     local pattern
     local code, message_lines = nil, {}
     local bad_line_pattern = "^(.-)%\r?%\n()"
@@ -417,8 +417,8 @@ function smtp_io:recv_reply()
 end
 -- }}}
 
--- {{{ smtp_io:recv_command()
-function smtp_io:recv_command()
+-- {{{ common.smtp_io:recv_command()
+function common.smtp_io:recv_command()
     local input, done = self.recv_buffer
 
     while true do
@@ -444,8 +444,8 @@ function smtp_io:recv_command()
 end
 -- }}}
 
--- {{{ smtp_io:send_reply()
-function smtp_io:send_reply(code, message)
+-- {{{ common.smtp_io:send_reply()
+function common.smtp_io:send_reply(code, message)
     local lines = {}
     message = message .. "\r\n"
     for line in message:gmatch("(.-)%\r?%\n") do
@@ -467,23 +467,23 @@ function smtp_io:send_reply(code, message)
 end
 -- }}}
 
--- {{{ smtp_io:send_command()
-function smtp_io:send_command(command)
+-- {{{ common.smtp_io:send_command()
+function common.smtp_io:send_command(command)
     return self:buffered_send(command.."\r\n")
 end
 -- }}}
 
 -- }}}
 
--- {{{ smtp_reply
+-- {{{ common.smtp_reply
 
-smtp_reply = {}
-smtp_reply.__index = smtp_reply
+common.smtp_reply = {}
+common.smtp_reply.__index = common.smtp_reply
 
--- {{{ smtp_reply.new()
-function smtp_reply.new(command)
+-- {{{ common.smtp_reply.new()
+function common.smtp_reply.new(command)
     local self = {}
-    setmetatable(self, smtp_reply)
+    setmetatable(self, common.smtp_reply)
 
     self.command = command or ""
 
@@ -491,14 +491,14 @@ function smtp_reply.new(command)
 end
 -- }}}
 
--- {{{ smtp_reply:recv()
-function smtp_reply:recv(io)
+-- {{{ common.smtp_reply:recv()
+function common.smtp_reply:recv(io)
     self.code, self.message = io:recv_reply()
 end
 -- }}}
 
--- {{{ smtp_reply:error()
-function smtp_reply:error(description)
+-- {{{ common.smtp_reply:error()
+function common.smtp_reply:error(description)
     return {
         command = self.command,
         code = tostring(self.code),
@@ -509,5 +509,7 @@ end
 -- }}}
 
 -- }}}
+
+return common
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
