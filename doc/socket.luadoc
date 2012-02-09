@@ -104,6 +104,10 @@ function ntoh16(in)
 --          network. Any extra arguments passed are also returned in order.
 function hton16(in)
 
+--- Gets the currently configured hostname of the machine using the
+--  gethostname(2) system call.
+function gethostname()
+
 --- Gets the current timeout for all socket methods that pause the thread.
 --  @param self the socket object.
 --  @return the current timeout in seconds.

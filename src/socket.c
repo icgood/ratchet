@@ -587,6 +587,21 @@ static int rsock_hton16 (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rsock_gethostname() */
+static int rsock_gethostname (lua_State *L)
+{
+	char buffer[256];
+	int ret;
+
+	ret = gethostname (buffer, 256);
+	if (ret == -1)
+		return ratchet_error_errno (L, "ratchet.socket.gethostname()", "gethostname");
+
+	lua_pushstring (L, buffer);
+	return 1;
+}
+/* }}} */
+
 /* {{{ rsock_multi_recv() */
 static int rsock_multi_recv (lua_State *L)
 {
@@ -1083,6 +1098,7 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"hton", rsock_hton},
 		{"ntoh16", rsock_ntoh16},
 		{"hton16", rsock_hton16},
+		{"gethostname", rsock_gethostname},
 		{"multi_recv", rsock_multi_recv},
 		{"prepare_unix", rsock_prepare_unix},
 		{"prepare_tcp", rsock_prepare_tcp},
