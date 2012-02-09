@@ -72,4 +72,9 @@ function block_on(reads, writes, timeout)
 --  @param thread The thread to kill.
 function kill(thread)
 
+--- Kills all threads in the table sequence. Essentially this function is the
+--  same as kill() but run in a loop over a table.
+--  @param threads table array of threads to kill.
+function kill_all(threads)
+
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

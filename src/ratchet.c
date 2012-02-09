@@ -1050,6 +1050,41 @@ static int ratchet_kill (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_kill_all() */
+static int ratchet_kill_all (lua_State *L)
+{
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushlightuserdata (L, YIELD_GET);
+		return lua_yieldk (L, 1, ctx, ratchet_kill_all);
+	}
+
+	lua_insert (L, 1);
+	(void) get_event_base (L, 1);
+
+	lua_settop (L, 2);
+
+	int i;
+	lua_State *L1;
+	for (i=1; ; i++)
+	{
+		lua_rawgeti (L, 2, i);
+		if (lua_isnil (L, 3))
+			break;
+
+		L1 = lua_tothread (L, 3);
+		if (LUA_YIELD == lua_status (L1))
+			end_all_waiting_thread_events (L1);
+
+		end_thread_persist (L, 3);
+		lua_settop (L, 2);
+	}
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet() */
@@ -1083,6 +1118,7 @@ int luaopen_ratchet (lua_State *L)
 	static const luaL_Reg thread_funcs[] = {
 		{"attach", ratchet_attach},
 		{"kill", ratchet_kill},
+		{"kill_all", ratchet_kill_all},
 		{"pause", ratchet_pause},
 		{"unpause", ratchet_unpause},
 		{"self", ratchet_running_thread},

@@ -7,14 +7,26 @@ function ctx1(host, port)
     socket:bind(rec.addr)
     socket:listen()
 
+    local paused = {
+        ratchet.thread.attach(ctx3),
+        ratchet.thread.attach(ctx3),
+        ratchet.thread.attach(ctx3),
+        ratchet.thread.attach(ctx3),
+        ratchet.thread.attach(ctx3),
+    }
     local self = ratchet.thread.self()
-    ratchet.thread.attach(ctx2, self)
+    ratchet.thread.attach(ctx2, self, paused)
 
     local client = socket:accept()
 end
 
-function ctx2(thread)
+function ctx2(thread, paused)
     ratchet.thread.kill(thread)
+    ratchet.thread.kill_all(paused)
+end
+
+function ctx3()
+    ratchet.thread.pause()
 end
 
 kernel = ratchet.new(function ()
