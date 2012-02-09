@@ -182,7 +182,11 @@ static void printf_index (lua_State *L, int i)
 			break;
 		}
 		case LUA_TTABLE: {
-			printf ("<{");
+			int n = 0;
+			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
+				n++;
+			
+			printf ("<%d:{", n);
 			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
 			{
 				int top = lua_gettop (L);
