@@ -209,10 +209,21 @@ static void printf_index (lua_State *L, int i)
 			break;
 		}
 		case LUA_TTHREAD:
-		case LUA_TLIGHTUSERDATA:
-		case LUA_TUSERDATA: {
+		case LUA_TLIGHTUSERDATA: {
 			printf ("<%s", lua_typename (L, t));
 			printf (":%p>", lua_topointer (L, i));
+			break;
+		}
+		case LUA_TUSERDATA: {
+			printf ("<userdata:");
+			lua_getuservalue (L, i);
+			if (!lua_isnil (L, -1))
+			{
+				printf_index (L, lua_gettop (L));
+				printf (":");
+			}
+			lua_pop (L, 1);
+			printf ("%p>", lua_topointer (L, i));
 			break;
 		}
 		default: {
