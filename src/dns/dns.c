@@ -597,8 +597,10 @@ static int mydns_mx_get_i (lua_State *L)
 	lua_getfield (L, 1, "n");
 	int max_n = lua_tonumber (L, -1);
 	lua_pop (L, 1);
-	if (n <= 0 || n > max_n)
+	if (n <= 0)
 		return 0;
+	if (n > max_n)
+		n = n % max_n;
 
 	int i, j, k=1;
 	lua_getfield (L, 1, "priorities");
