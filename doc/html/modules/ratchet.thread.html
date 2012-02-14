@@ -143,6 +143,11 @@
 	</tr>
 
 	<tr>
+	<td class="name" nowrap><a href="#kill_all">kill_all</a>&nbsp;(threads)</td>
+	<td class="summary">Kills all threads in the table sequence.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#pause">pause</a>&nbsp;()</td>
 	<td class="summary">Pauses the current thread indefinitely.</td>
 	</tr>
@@ -302,6 +307,32 @@ Kills a given thread. If the thread is yielding on any events, those events are 
 	
 	<li>
 	  thread: The thread to kill.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="kill_all"></a><strong>kill_all</strong>&nbsp;(threads)</dt>
+<dd>
+Kills all threads in the table sequence. Essentially this function is the same as kill() but run in a loop over a table.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  threads: table array of threads to kill.
 	</li>
 	
 </ul>
