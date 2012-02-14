@@ -630,11 +630,15 @@ static int mydns_mx_get_i (lua_State *L)
 }
 /* }}} */
 
-/* {{{ mydns_gc() */
-static int mydns_gc (lua_State *L)
+/* {{{ mydns_close() */
+static int mydns_close (lua_State *L)
 {
-	struct dns_resolver *res = get_dns_res (L, 1);
-	dns_res_close (res);
+	struct dns_resolver **res = (struct dns_resolver **) luaL_checkudata (L, 1, "ratchet_dns_meta");
+	if (*res)
+	{
+		dns_res_close (*res);
+		*res = NULL;
+	}
 
 	return 0;
 }
@@ -681,6 +685,11 @@ static int mydns_query_collect_results (lua_State *L)
 		lua_pushvalue (L, 2);
 		lua_pushvalue (L, 3);
 		lua_call (L, 3, 2);
+
+		lua_getfield (L, 1, "close");
+		lua_pushvalue (L, 1);
+		lua_call (L, 1, 0);
+
 		return 2;
 	}
 	else
@@ -766,7 +775,13 @@ static int mydns_query_all_collect_results (lua_State *L)
 			lua_pushvalue (L, -3);
 			lua_rawset (L, 4);
 
-			lua_pop (L, 3);
+			lua_pop (L, 2);
+			
+			/* Close the dns query session. */
+			lua_getfield (L, -1, "close");
+			lua_pushvalue (L, -2);
+			lua_call (L, 1, 0);
+			lua_pop (L, 1);
 			
 			lua_pushboolean (L, 0);
 			lua_rawseti (L, 1, i);
@@ -934,7 +949,7 @@ int luaopen_ratchet_dns (lua_State *L)
 
 	/* Meta-methods for ratchet.dns object metatables. */
 	const luaL_Reg metameths[] = {
-		{"__gc", mydns_gc},
+		{"__gc", mydns_close},
 		{NULL}
 	};
 
@@ -942,6 +957,7 @@ int luaopen_ratchet_dns (lua_State *L)
 	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		/* Undocumented, helper methods. */
+		{"close", mydns_close},
 		{"get_fd", mydns_get_fd},
 		{"get_timeout", mydns_get_timeout},
 		{"submit_query", mydns_submit_query},
