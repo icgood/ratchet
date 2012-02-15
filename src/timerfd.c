@@ -143,15 +143,6 @@ static int rtfd_close (lua_State *L)
 /* {{{ rtfd_read() */
 static int rtfd_read (lua_State *L)
 {
-	int ctx = 0;
-	if (LUA_OK == lua_getctx (L, &ctx))
-	{
-		lua_pushlightuserdata (L, RATCHET_YIELD_READ);
-		lua_pushvalue (L, 1);
-
-		return lua_yieldk (L, 2, 0, rtfd_read);
-	}
-
 	lua_settop (L, 1);
 	int tfd = *timerfd_fd (L, 1);
 	uint64_t fires;
@@ -162,10 +153,9 @@ static int rtfd_read (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_getfield (L, 1, "read");
+			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
 			lua_pushvalue (L, 1);
-			lua_call (L, 1, 2);
-			return 2;
+			return lua_yieldk (L, 2, 1, rtfd_read);
 		}
 
 		else
