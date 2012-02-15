@@ -28,5 +28,13 @@ int ratchet_error_errno_ln (lua_State *L, const char *function, const char *sysc
 int ratchet_error_top_ln (lua_State *L, const char *function, const char *code, const char *file, int line);
 int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, const char *file, int line, const char *description, ...);
 
+#define RATCHET_YIELD_GET ((void *) 1)
+#define RATCHET_YIELD_WRITE ((void *) 2)
+#define RATCHET_YIELD_READ ((void *) 3)
+#define RATCHET_YIELD_TIMEOUT ((void *) 4)
+#define RATCHET_YIELD_WAITALL ((void *) 5)
+#define RATCHET_YIELD_MULTIRW ((void *) 6)
+#define RATCHET_YIELD_PAUSE ((void *) 7)
+
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:

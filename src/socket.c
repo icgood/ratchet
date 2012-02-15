@@ -39,7 +39,6 @@
 #include "ratchet.h"
 #include "misc.h"
 #include "sockopt.h"
-#include "yield-types.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
@@ -612,7 +611,7 @@ static int rsock_multi_recv (lua_State *L)
 	{
 		lua_settop (L, 3);
 
-		lua_pushlightuserdata (L, YIELD_MULTIRW);
+		lua_pushlightuserdata (L, RATCHET_YIELD_MULTIRW);
 		lua_pushvalue (L, 1);
 		lua_pushnil (L);
 		lua_pushvalue (L, 2);
@@ -882,7 +881,7 @@ static int rsock_connect (lua_State *L)
 	{
 		if (errno == EALREADY || errno == EINPROGRESS)
 		{
-			lua_pushlightuserdata (L, YIELD_WRITE);
+			lua_pushlightuserdata (L, RATCHET_YIELD_WRITE);
 			lua_pushvalue (L, 1);
 			return lua_yieldk (L, 2, 1, rsock_connect);
 		}
@@ -918,7 +917,7 @@ static int rsock_accept (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_pushlightuserdata (L, YIELD_READ);
+			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
 			lua_pushvalue (L, 1);
 			return lua_yieldk (L, 2, 1, rsock_accept);
 		}
@@ -963,7 +962,7 @@ static int rsock_send (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_pushlightuserdata (L, YIELD_WRITE);
+			lua_pushlightuserdata (L, RATCHET_YIELD_WRITE);
 			lua_pushvalue (L, 1);
 			return lua_yieldk (L, 2, 1, rsock_send);
 		}
@@ -1003,7 +1002,7 @@ static int rsock_recv (lua_State *L)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
-			lua_pushlightuserdata (L, YIELD_READ);
+			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
 			lua_pushvalue (L, 1);
 			return lua_yieldk (L, 2, 1, rsock_recv);
 		}

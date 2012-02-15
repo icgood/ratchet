@@ -1,5 +1,4 @@
 allsources = ratchet.h ratchet.c \
-	     yield-types.h \
 	     misc.h misc.c \
 	     error.c
 
