@@ -227,7 +227,7 @@ function commands.HELO(self, ehlo_as)
         self.handlers:EHLO(reply, ehlo_as)
     end
 
-    self.io:send_reply(reply.code, reply.greeting)
+    self.io:send_reply(reply.code, reply.message)
     self.io:flush_send()
 
     if reply.code == "250" then
