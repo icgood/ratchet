@@ -493,10 +493,13 @@ function ratchet.smtp.server:handle()
             commands[command](self, arg)
         elseif self.handlers[command] then
             custom_command(self, command, arg)
-        else
+        elseif command then
             self:unknown_command(command, arg)
+        else
+            break
         end
     until command == "QUIT"
+    self:close()
 end
 -- }}}
 
