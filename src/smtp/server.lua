@@ -103,6 +103,9 @@ local function get_message_data(self)
 
     send_ESC_reply(self, reply)
     self.io:flush_send()
+
+    self.have_mailfrom = nil
+    self.have_rcptto = nil
 end
 -- }}}
 
