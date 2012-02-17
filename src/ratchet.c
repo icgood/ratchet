@@ -56,6 +56,10 @@ static int setup_persistance_tables (lua_State *L)
 	lua_newtable (L);
 	lua_setfield (L, -2, "threads");
 
+	/* Error handler from constructor. */
+	lua_pushvalue (L, 2);
+	lua_setfield (L, -2, "error_handler");
+
 	/* Set up a weak-ref table to track what threads are not yet started. */
 	lua_newtable (L);
 	lua_newtable (L);
@@ -283,12 +287,31 @@ static void multi_event_triggered (int fd, short event, void *arg)
 }
 /* }}} */
 
+/* {{{ handle_thread_error() */
+static void handle_thread_error (lua_State *L)
+{
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "error_handler");
+	if (!lua_isnil (L, -1))
+	{
+		lua_pushvalue (L, -3);
+		lua_call (L, 1, 0);
+		lua_pop (L, 1);
+	}
+	else
+	{
+		lua_pop (L, 2);
+		lua_error (L);
+	}
+}
+/* }}} */
+
 /* ---- ratchet Functions --------------------------------------------------- */
 
 /* {{{ ratchet_new() */
 static int ratchet_new (lua_State *L)
 {
-	lua_settop (L, 1);
+	lua_settop (L, 2);
 
 	struct event_base **new = (struct event_base **) lua_newuserdata (L, sizeof (struct event_base *));
 	*new = event_base_new ();
@@ -602,7 +625,7 @@ restart_thread:
 		lua_xmove (L1, L, 1);
 		end_thread_persist (L, 2);
 
-		lua_error (L);
+		handle_thread_error (L);
 	}
 
 	return 0;
