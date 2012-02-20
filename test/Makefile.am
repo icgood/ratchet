@@ -29,6 +29,7 @@ TESTS = test_listen_connect.lua \
 	test_callable_object.lua \
 	test_http_get.lua \
 	test_smtp.lua \
+	test_smtp_bigmessage.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
 EXTRA_DIST = $(TESTS)
@@ -91,7 +92,8 @@ XFAIL_TESTS += test_message_bus_sockets.lua \
 endif
 
 if !ENABLE_SMTP
-XFAIL_TESTS += test_smtp.lua
+XFAIL_TESTS += test_smtp.lua \
+	       test_smtp_bigmessage.lua
 endif
 
 endif

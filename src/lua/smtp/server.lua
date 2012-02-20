@@ -97,7 +97,7 @@ local function get_message_data(self)
     local reply = {
         code = "250",
         message = "Message Accepted for Delivery",
-        enhanced_status_code = "2.6.0"
+        enhanced_status_code = "2.6.0",
     }
 
     if self.handlers.HAVE_DATA then
@@ -508,10 +508,8 @@ local function handle_propagate_errors(self)
             commands[command](self, arg)
         elseif self.handlers[command] then
             custom_command(self, command, arg)
-        elseif command then
-            self:unknown_command(command, arg)
         else
-            break
+            self:unknown_command(command, arg)
         end
     until command == "QUIT"
 end

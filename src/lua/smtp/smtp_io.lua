@@ -28,15 +28,15 @@ end
 -- {{{ smtp_io:buffered_recv()
 function smtp_io:buffered_recv()
     local received = self.socket:recv()
-    local done
 
     if received == "" then
-        done = "connection closed"
-    else
-        self.recv_buffer = self.recv_buffer .. received
+        local err = ratchet.error.new("Connection closed.", "ECONNCLOSED", "ratchet.smtp.io.recv()")
+        error(err)
     end
 
-    return self.recv_buffer, done
+    self.recv_buffer = self.recv_buffer .. received
+
+    return self.recv_buffer
 end
 -- }}}
 
@@ -69,7 +69,7 @@ function smtp_io:recv_reply()
     local code, message_lines = nil, {}
     local bad_line_pattern = "^(.-)%\r?%\n()"
     local incomplete = true
-    local input, done = self.recv_buffer
+    local input = self.recv_buffer
 
     while incomplete do
         -- Build the full reply pattern once we know the code.
@@ -113,14 +113,9 @@ function smtp_io:recv_reply()
             until not start_i
         end
 
-        -- Handle timeouts and premature closure.
-        if done then
-            return nil, done
-        end
-
         -- Check if we need to receive more data.
         if incomplete then
-            input, done = self:buffered_recv()
+            input = self:buffered_recv()
         end
     end
 
@@ -130,7 +125,7 @@ end
 
 -- {{{ smtp_io:recv_command()
 function smtp_io:recv_command()
-    local input, done = self.recv_buffer
+    local input = self.recv_buffer
 
     while true do
         local line, end_i = input:match("^(.-)%\r?%\n()")
@@ -145,12 +140,7 @@ function smtp_io:recv_command()
             end
         end
 
-        -- Handle timeouts and premature closure.
-        if done then
-            return nil, done
-        end
-
-        input, done = self:buffered_recv()
+        input = self:buffered_recv()
     end
 end
 -- }}}

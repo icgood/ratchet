@@ -56,17 +56,6 @@ function data_reader:handle_finished_line()
             line = line:sub(2)
             self.lines[i] = line
         end
-
-        -- Add line length to total message size.
-        self.size = self.size + #line
-        
-        -- If over message size, reset to effectively stop reading and prevent
-        -- memory hemorrhaging by malicious/broken clients.
-        if self.max_size and self.size > self.max_size then
-            self.lines = {""}
-            self.i = 1
-            return
-        end
     end
 end
 -- }}}
@@ -83,25 +72,32 @@ end
 
 -- {{{ data_reader:recv_piece()
 function data_reader:recv_piece()
+    if self.EOD then
+        return false
+    end
+
     local piece = self.io.socket:recv()
     if piece == "" then
-        self.connection_closed = true
-        self.EOD = true
-        return
+        local err = ratchet.error.new("Connection closed.", "ECONNCLOSED", "ratchet.smtp.data.recv()")
+        error(err)
+    end
+
+    self.size = self.size + #piece
+    if self.max_size and self.size > self.max_size then
+        self.error = ratchet.error.new("Message breached size limit.", "MSGTOOBIG", "ratchet.smtp.data.recv()")
+        self.EOD = self.i
+        return false
     end
 
     self:add_lines(piece)
+    return not self.EOD
 end
 -- }}}
 
 -- {{{ data_reader:return_all()
 function data_reader:return_all()
-    if self.connection_closed then
-        return nil, "connection closed"
-    end
-
-    if self.max_size and self.size > self.max_size then
-        return nil, "message breached size limit"
+    if self.error then
+        return nil, self.error
     end
 
     -- Save extra lines back on the recv_buffer.
@@ -116,9 +112,7 @@ end
 function data_reader:recv()
     self:from_recv_buffer()
 
-    while not self.EOD do
-        self:recv_piece()
-    end
+    while self:recv_piece() do end
 
     return self:return_all()
 end
