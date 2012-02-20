@@ -461,8 +461,7 @@ static int rssl_session_shutdown (lua_State *L)
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
-			lua_pushboolean (L, 1);
-			return 1;
+			return 0;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
@@ -559,8 +558,7 @@ static int rssl_session_write (lua_State *L)
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
-			lua_pushboolean (L, 1);
-			return 1;
+			return 0;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
@@ -601,8 +599,7 @@ static int rssl_session_connect (lua_State *L)
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
-			lua_pushboolean (L, 1);
-			return 1;
+			return 0;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
@@ -643,8 +640,7 @@ static int rssl_session_accept (lua_State *L)
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
-			lua_pushboolean (L, 1);
-			return 1;
+			return 0;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
