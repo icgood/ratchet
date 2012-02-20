@@ -21,6 +21,7 @@ function samestate_transaction:send_response(res)
 
     if self.waiting_thread then
         ratchet.thread.unpause(self.waiting_thread, res)
+        self.waiting_thread = nil
     end
 end
 -- }}}
@@ -31,9 +32,7 @@ function samestate_transaction:recv_response()
         return self.response
     else
         self.waiting_thread = ratchet.thread.self()
-        local ret = ratchet.thread.pause()
-        self.waiting_thread = nil
-        return ret
+        return ratchet.thread.pause()
     end
 end
 -- }}}
