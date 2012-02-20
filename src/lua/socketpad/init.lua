@@ -13,8 +13,8 @@ function ratchet.socketpad.new(socket, from)
     self.from = from
     self.data = {}
 
-    self.recv_buffer = ''
-    self.send_buffer = ''
+    self.recv_buffer = ""
+    self.send_buffer = ""
 
     return self
 end
@@ -22,10 +22,7 @@ end
 
 -- {{{ recv_once()
 local function recv_once(self)
-    local data, err = self.socket:recv()
-    if not data then
-        return data, err
-    end
+    local data = self.socket:recv()
 
     self.recv_buffer = self.recv_buffer .. data
     return data
@@ -36,10 +33,8 @@ end
 local function recv_until_bytes(self, bytes)
     local incomplete = nil
     while #self.recv_buffer < bytes do
-        local data, err = recv_once(self)
-        if not data then
-            return nil, err
-        elseif data == '' then
+        local data = recv_once(self)
+        if data == '' then
             incomplete = true
             break
         end
@@ -53,28 +48,24 @@ end
 
 -- {{{ recv_until_string()
 local function recv_until_string(self, str)
-    local escaped_str = str:gsub('([%^%$%(%)%%%.%[%]%*%+%-%?])', '%1')
-    local pattern = escaped_str .. '()'
-
-    local end_i, incomplete = nil
+    local start_i, end_i, incomplete
     while true do
-        end_i = self.recv_buffer:match(pattern)
+        start_i, end_i = self.recv_buffer:find(str, 1, true)
         if end_i then
+            end_i = end_i
             break
         end
 
-        local data, err = recv_once(self)
-        if not data then
-            return nil, err
-        elseif data == '' then
+        local data = recv_once(self)
+        if data == "" then
             incomplete = true
             end_i = #self.recv_buffer
             break
         end
     end
 
-    local ret = self.recv_buffer:sub(1, end_i-1)
-    self.recv_buffer = self.recv_buffer:sub(end_i)
+    local ret = self.recv_buffer:sub(1, end_i)
+    self.recv_buffer = self.recv_buffer:sub(end_i+1)
     return ret, incomplete
 end
 -- }}}

@@ -38,6 +38,11 @@ function ctx2(socket)
     assert('line 1\r\n' == data1)
     assert('line 2\r\n' == data2)
     socket:send('break')
+
+    local data, incomplete = pad:recv('\r\n')
+    assert(data == 'half')
+    assert(incomplete)
+    pad:close()
 end
 
 function ctx3(host, port)
@@ -58,6 +63,9 @@ function ctx3(host, port)
 
     pad:send('line 1\r\nline 2\r\n')
     assert('break' == socket:recv())
+
+    pad:send('half')
+    pad:close()
 end
 
 kernel = ratchet.new(function ()
