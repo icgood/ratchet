@@ -946,7 +946,7 @@ static int rsock_accept (lua_State *L)
 static int rsock_send (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
-	size_t data_len;
+	size_t data_len, remaining;
 	const char *data = luaL_checklstring (L, 2, &data_len);
 	ssize_t ret;
 
@@ -970,10 +970,22 @@ static int rsock_send (lua_State *L)
 			return ratchet_error_errno (L, "ratchet.socket.send()", "send");
 	}
 
-	lua_pushvalue (L, 2);
-	call_tracer (L, 1, "send", 1);
+	if ((size_t) ret < data_len)
+	{
+		lua_pushlstring (L, data, ret);
+		call_tracer (L, 1, "send", 1);
 
-	return 0;
+		remaining = data_len - (size_t) ret;
+		lua_pushlstring (L, data+ret, remaining);
+		return 1;
+	}
+	else
+	{
+		lua_pushvalue (L, 2);
+		call_tracer (L, 1, "send", 1);
+
+		return 0;
+	}
 }
 /* }}} */
 

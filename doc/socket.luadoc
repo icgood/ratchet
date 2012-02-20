@@ -76,33 +76,33 @@ function get_fd(self)
 --  necessary only for binary socket protocols. Takes a 4-byte string from
 --  the socket and returns the regular number after conversion. See manpage
 --  byteorder(3).
---  @param in the binary input string from the socket to convert to a number.
+--  @param inp the binary input string from the socket to convert to a number.
 --  @return the resulting number after conversion. Any extra arguments passed
 --          are also returned in order.
-function ntoh(in)
+function ntoh(inp)
 
 --- Converts a number into a byte-string ready to be sent over the network. This
 --  is necessary only for binary socket protocols. See manpage byteorder(3).
---  @param in the number to be converted.
+--  @param inp the number to be converted.
 --  @return a byte-string in network byte-order ready to be sent over the
 --          network. Any extra arguments passed are also returned in order.
-function hton(in)
+function hton(inp)
 
 --- Converts a byte-string from network byte-order to host byte-order. This is
 --  necessary only for binary socket protocols. Takes a 2-byte string from
 --  the socket and returns the regular number after conversion. See manpage
 --  byteorder(3). This is the 16-bit version of ntoh().
---  @param in the binary input string from the socket to convert to a number.
+--  @param inp the binary input string from the socket to convert to a number.
 --  @return the resulting number after conversion. Any extra arguments passed
 --          are also returned in order.
-function ntoh16(in)
+function ntoh16(inp)
 
 --- Converts a number into a byte-string ready to be sent over the network. This
 --  is necessary only for binary socket protocols. See manpage byteorder(3).
---  @param in the number to be converted. This is the 16-bit version of hton().
+--  @param inp the number to be converted. This is the 16-bit version of hton().
 --  @return a byte-string in network byte-order ready to be sent over the
 --          network. Any extra arguments passed are also returned in order.
-function hton16(in)
+function hton16(inp)
 
 --- Gets the currently configured hostname of the machine using the
 --  gethostname(2) system call.
@@ -162,9 +162,12 @@ function encrypt(self, context)
 function get_encryption(self)
 
 --- Attempts to send the given data across the socket, pausing the thread until
---  it is able to do so.
+--  it is able to do so. If the entire string of data cannot be sent at once,
+--  the portion that was not sent is returned.
 --  @param self the socket object.
 --  @param data a string of data to send.
+--  @return a string of remaining data to still be sent, or nil if the entire
+--          string of data was sent.
 function send(self, data)
 
 --- Attempts to receive data from across the socket, pausing the thread until
