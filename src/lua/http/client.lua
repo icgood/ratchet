@@ -7,14 +7,11 @@ ratchet.http.client = {}
 ratchet.http.client.__index = ratchet.http.client
 
 -- {{{ ratchet.http.client.new()
-function ratchet.http.client.new(socket, send_size)
+function ratchet.http.client.new(socket)
     local self = {}
     setmetatable(self, ratchet.http.client)
 
     self.socket = socket
-
-    -- socket(7) option SO_SNDBUF returns double the desired value.
-    self.send_size = send_size or (socket.SO_SNDBUF / 2)
 
     return self
 end
@@ -31,34 +28,13 @@ local function build_request_and_headers(command, uri, headers)
 end
 -- }}}
 
--- {{{ slow_send()
-local function slow_send(socket, send_size, request, data)
-    -- The purpose of this function is to avoid concatenating with data.
-
-    while #request > send_size do
-        local to_send = request:sub(1, send_size)
-        socket:send(to_send)
-        request = request:sub(send_size+1)
-    end
-    if not data then
-        socket:send(request)
-    else
-        local to_send = request .. data:sub(1, send_size - #request)
-        socket:send(to_send)
-        data = data:sub(send_size - #request + 1)
-        repeat
-            to_send = data:sub(1, send_size)
-            socket:send(to_send)
-            data = data:sub(send_size+1)
-        until data == ""
-    end
-end
--- }}}
-
 -- {{{ send_request()
 local function send_request(self, command, uri, headers, data)
     local request = build_request_and_headers(command, uri, headers, data)
-    slow_send(self.socket, self.send_size, request, data)
+    local remaining = request .. data
+    repeat
+        remaining = self.socket:send(remaining)
+    until not remaining
     self.socket:shutdown("write")
 end
 -- }}}

@@ -3,14 +3,11 @@ local smtp_io = {}
 smtp_io.__index = smtp_io
 
 -- {{{ smtp_io.new()
-function smtp_io.new(socket, send_size)
+function smtp_io.new(socket)
     local self = {}
     setmetatable(self, smtp_io)
 
     self.socket = socket
-
-    -- socket(7) option SO_SNDBUF returns double the desired value.
-    self.send_size = send_size or (socket.SO_SNDBUF / 2)
 
     self.send_buffer = {}
     self.recv_buffer = ""
@@ -51,15 +48,9 @@ function smtp_io:flush_send()
     local send_buffer = table.concat(self.send_buffer)
     self.send_buffer = {}
 
-    while #send_buffer > self.send_size do
-        local to_send = send_buffer:sub(1, self.send_size)
-        self.socket:send(to_send)
-        send_buffer = send_buffer:sub(self.send_size+1)
-    end
-
-    if #send_buffer > 0 then
-        self.socket:send(send_buffer)
-    end
+    repeat
+        send_buffer = self.socket:send(send_buffer)
+    until not send_buffer
 end
 -- }}}
 

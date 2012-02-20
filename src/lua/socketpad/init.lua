@@ -162,7 +162,9 @@ function ratchet.socketpad:flush()
     local to_send = self.send_buffer
     self.send_buffer = ''
 
-    return self.socket:send(to_send)
+    repeat
+        to_send = self.socket:send(to_send)
+    until not to_send
 end
 -- }}}
 
