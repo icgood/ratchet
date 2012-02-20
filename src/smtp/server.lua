@@ -23,7 +23,10 @@ end
 -- }}}
 
 require "ratchet"
-local common = require "ratchet.smtp.common"
+
+local data_reader = require "ratchet.smtp.data_reader"
+local smtp_io = require "ratchet.smtp.smtp_io"
+local smtp_extensions = require "ratchet.smtp.smtp_extensions"
 
 ratchet.smtp = ratchet.smtp or {}
 ratchet.smtp.server = {}
@@ -37,9 +40,9 @@ function ratchet.smtp.server.new(socket, handlers, send_size)
     setmetatable(self, ratchet.smtp.server)
 
     self.handlers = handlers
-    self.io = common.smtp_io.new(socket, send_size)
+    self.io = smtp_io.new(socket, send_size)
 
-    self.extensions = common.smtp_extensions.new()
+    self.extensions = smtp_extensions.new()
     self.extensions:add("8BITMIME")
     self.extensions:add("PIPELINING")
     self.extensions:add("ENHANCEDSTATUSCODES")
@@ -87,7 +90,7 @@ end
 -- {{{ get_message_data()
 local function get_message_data(self)
     local max_size = tonumber(self.extensions:has("SIZE"))
-    local reader = common.data_reader.new(self.io, max_size)
+    local reader = data_reader.new(self.io, max_size)
 
     local data, err = reader:recv()
 
