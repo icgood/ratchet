@@ -168,6 +168,18 @@ function ratchet.smtp.server:bad_arguments(command, arg, message)
 end
 -- }}}
 
+-- {{{ ratchet.smtp.server:timed_out()
+function ratchet.smtp.server:timed_out(command, arg, message)
+    local reply = {
+        code = "421",
+        message = message or "Connection timed out.",
+        enhanced_status_code = "4.4.2",
+    }
+    send_ESC_reply(self, reply)
+    self.io:flush_send()
+end
+-- }}}
+
 -- }}}
 
 -- {{{ Built-in Commands
@@ -483,8 +495,8 @@ local function custom_command(self, command, arg)
 end
 -- }}}
 
--- {{{ ratchet.smtp.server:handle()
-function ratchet.smtp.server:handle()
+-- {{{ handle_propagate_errors()
+local function handle_propagate_errors(self)
     commands.BANNER(self)
 
     repeat
@@ -499,7 +511,19 @@ function ratchet.smtp.server:handle()
             break
         end
     until command == "QUIT"
+end
+-- }}}
+
+-- {{{ ratchet.smtp.server:handle()
+function ratchet.smtp.server:handle()
+    local successful, ret = pcall(handle_propagate_errors, self)
+
+    if not successful and ratchet.error.is(ret, "ETIMEDOUT") then
+        self:timed_out()
+    end
     self:close()
+
+    return successful, ret
 end
 -- }}}
 

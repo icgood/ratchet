@@ -212,6 +212,12 @@ function ratchet.smtp.client:quit()
 end
 -- }}}
 
+-- {{{ratchet.smtp.client:close()
+function ratchet.smtp.client:close()
+    self.io:close()
+end
+-- }}}
+
 return ratchet.smtp.client
 
 -- vim:foldmethod=marker:sw=4:ts=4:sts=4:et:
