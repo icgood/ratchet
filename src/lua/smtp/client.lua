@@ -3,6 +3,7 @@ require "ratchet"
 
 local data_sender = require "ratchet.smtp.data_sender"
 local smtp_io = require "ratchet.smtp.smtp_io"
+local smtp_extensions = require "ratchet.smtp.smtp_extensions"
 local smtp_reply = require "ratchet.smtp.smtp_reply"
 
 ratchet.smtp = ratchet.smtp or {}

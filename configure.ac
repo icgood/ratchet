@@ -7,7 +7,7 @@ AM_INIT_AUTOMAKE([color-tests silent-rules])
 LT_PREREQ([2.2])
 LT_INIT([dlopen])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CONFIG_SRCDIR([src/ratchet.c])
+AC_CONFIG_SRCDIR([src/c/ratchet.c])
 AC_CONFIG_HEADERS([config.h])
 
 #####################
@@ -202,52 +202,36 @@ AC_SUBST([MODULE_PATH], ["$enable_module"])
 
 #####################
 # Configure options: --disable-http
-AC_ARG_ENABLE([http], [AS_HELP_STRING([--enable-http@<:@=PATH@:>@],
-	                              [install Lua HTTP modules to Lua module installation path, or PATH if given.])],
+AC_ARG_ENABLE([http], [AS_HELP_STRING([--disable-http],
+	                              [Disable installation of ratchet.http modules.])],
 	      [enable_http="${enableval%/}"], [enable_http=yes])
-if test "x${enable_http}" != "xno"; then
-	if test "x${enable_http}" == "xyes"; then
-		enable_http="$with_lua_lpath/ratchet/http"
-	fi
-	if test "x${enable_http}" == "x"; then
-		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
+AM_CONDITIONAL([ENABLE_HTTP], [test "x${enable_http}" != "xno"])
+
+#####################
+# Configure options: --disable-socketpad
+AC_ARG_ENABLE([socketpad], [AS_HELP_STRING([--disable-socketpad],
+	                                   [Disable installation of ratchet.socketpad modules.])],
+	      [enable_socketpad="${enableval%/}"], [enable_socketpad=yes])
+if test "x${enable_socketpad}" != "xno"; then
+	if test "x${have_socket}" = "xno"; then
+		enable_socketpad=no
 	fi
 fi
-AM_CONDITIONAL([ENABLE_HTTP], [test "x${enable_http}" != "xno"])
-AC_SUBST([HTTP_PATH], ["$enable_http"])
+AM_CONDITIONAL([ENABLE_SOCKETPAD], [test "x${enable_socketpad}" != "xno"])
 
 #####################
 # Configure options: --disable-bus
-AC_ARG_ENABLE([bus], [AS_HELP_STRING([--enable-bus@<:@=PATH@:>@],
-	                             [install Lua bus modules to Lua module installation path, or PATH if givne.])],
+AC_ARG_ENABLE([bus], [AS_HELP_STRING([--disable-bus],
+	                             [Disable installation of ratchet.bus modules.])],
 	      [enable_bus="${enableval%/}"], [enable_bus=yes])
-if test "x${enable_bus}" != "xno"; then
-	if test "x${enable_bus}" == "xyes"; then
-		enable_bus="$with_lua_lpath/ratchet/bus"
-	fi
-	if test "x${enable_http}" == "x"; then
-		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
-	fi
-fi
 AM_CONDITIONAL([ENABLE_BUS], [test "x${enable_bus}" != "xno"])
-AC_SUBST([BUS_PATH], ["$enable_bus"])
-
 
 #####################
 # Configure options: --disable-smtp
-AC_ARG_ENABLE([smtp], [AS_HELP_STRING([--enable-smtp@<:@=PATH@:>@],
-	                              [install Lua SMTP modules to Lua module installation path, or PATH if given.])],
+AC_ARG_ENABLE([smtp], [AS_HELP_STRING([--disable-smtp],
+	                              [Disable installation of ratchet.smtp modules.])],
 	      [enable_smtp="${enableval%/}"], [enable_smtp=yes])
-if test "x${enable_smtp}" != "xno"; then
-	if test "x${enable_smtp}" == "xyes"; then
-		enable_smtp="$with_lua_lpath/ratchet/smtp"
-	fi
-	if test "x${enable_smtp}" == "x"; then
-		AC_MSG_ERROR([Please provide PATH or --with-lua-lpath=LPATH.])
-	fi
-fi
 AM_CONDITIONAL([ENABLE_SMTP], [test "x${enable_smtp}" != "xno"])
-AC_SUBST([SMTP_PATH], ["$enable_smtp"])
 
 #####################
 # Checks for header files.
@@ -273,12 +257,9 @@ AC_FUNC_STRERROR_R
 
 #####################
 AC_CONFIG_FILES([Makefile
-	         src/Makefile
-	         src/http/Makefile
-		 src/bus/Makefile
-	         src/smtp/Makefile
-		 src/socketpad/Makefile
-	         src/dns/Makefile
-	         src/dns/libdns/Makefile
+	         src/c/Makefile
+	         src/c/dns/Makefile
+	         src/c/dns/libdns/Makefile
+		 src/lua/Makefile
 	         test/Makefile])
 AC_OUTPUT
