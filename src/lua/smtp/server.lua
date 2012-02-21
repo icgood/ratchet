@@ -174,7 +174,7 @@ end
 -- {{{ ratchet.smtp.server:timed_out()
 function ratchet.smtp.server:timed_out(command, arg, message)
     local reply = {
-        code = "451",
+        code = "421",
         message = message or "Connection timed out.",
         enhanced_status_code = "4.4.2",
     }
