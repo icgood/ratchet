@@ -49,6 +49,10 @@ local function parse_response(socket)
         end
     until data == ""
 
+    local enc = socket:get_encryption()
+    if enc then
+        enc:shutdown()
+    end
     socket:close()
 
     local code, reason, lineend = full_reply:match("^HTTP%/%d%.%d (%d%d%d) (.-)\r\n()")
