@@ -41,27 +41,6 @@
 #include "ratchet.h"
 #include "misc.h"
 
-#define raise_ssl_error(L, f, e) raise_ssl_error_ln (L, f, e, __FILE__, __LINE__)
-
-/* {{{ raise_ssl_error_ln() */
-static int raise_ssl_error_ln (lua_State *L, const char *func, unsigned long e, const char *file, int line)
-{
-	lua_settop (L, 0);
-
-	ratchet_error_push_constructor (L);
-	lua_pushstring (L, ERR_reason_error_string (e));
-	lua_pushnil (L);
-	lua_pushstring (L, func);
-	lua_pushstring (L, file);
-	lua_pushinteger (L, line);
-	lua_pushstring (L, ERR_func_error_string (e));
-	lua_pushnumber (L, (lua_Number) e);
-	lua_call (L, 7, 1);
-
-	return lua_error (L);
-}
-/* }}} */
-
 /* {{{ password_cb() */
 static int password_cb (char *buf, int size, int rwflag, void *userdata)
 {
@@ -457,11 +436,14 @@ static int rssl_session_shutdown (lua_State *L)
 	lua_settop (L, 1);
 
 	int ret = SSL_shutdown (session);
+	if (ret == 0)
+		ret = SSL_shutdown (session);
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
 	{
 		case SSL_ERROR_NONE:
-			return 0;
+			lua_pushboolean (L, 1);
+			return 1;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
@@ -477,9 +459,13 @@ static int rssl_session_shutdown (lua_State *L)
 			lua_remove (L, -2);
 			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
+		case SSL_ERROR_SYSCALL:
+			lua_pushboolean (L, 0);
+			return 1;
+
 		default:
 			error = ERR_get_error ();
-			return raise_ssl_error (L, "ratchet.ssl.session.shutdown()", error);
+			return ratchet_error_str (L, "ratchet.ssl.session.shutdown()", "SSLERROR", "SSL error: %d", (int) error);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -515,7 +501,8 @@ static int rssl_session_read (lua_State *L)
 			return 1;
 
 		case SSL_ERROR_ZERO_RETURN:
-			return rssl_session_shutdown (L);
+			lua_pushliteral (L, "");
+			return 1;
 
 		case SSL_ERROR_WANT_READ:
 			lua_pushlightuserdata (L, RATCHET_YIELD_READ);
@@ -533,7 +520,7 @@ static int rssl_session_read (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return raise_ssl_error (L, "ratchet.ssl.session.read()", error);
+			return ratchet_error_str (L, "ratchet.ssl.session.read()", "SSLERROR", "SSL error: %d", (int) error);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -576,7 +563,7 @@ static int rssl_session_write (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return raise_ssl_error (L, "ratchet.ssl.session.write()", error);
+			return ratchet_error_str (L, "ratchet.ssl.session.write()", "SSLERROR", "SSL error: %d", (int) error);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -617,7 +604,7 @@ static int rssl_session_connect (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return raise_ssl_error (L, "ratchet.ssl.session.client_handshake()", error);
+			return ratchet_error_str (L, "ratchet.ssl.session.client_handshake()", "SSLERROR", "SSL error: %d", (int) error);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -658,7 +645,7 @@ static int rssl_session_accept (lua_State *L)
 
 		default:
 			error = ERR_get_error ();
-			return raise_ssl_error (L, "ratchet.ssl.session.server_handshake()", error);
+			return ratchet_error_str (L, "ratchet.ssl.session.server_handshake()", "SSLERROR", "SSL error: %d", (int) error);
 	}
 
 	return luaL_error (L, "unreachable");
