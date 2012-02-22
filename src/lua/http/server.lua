@@ -33,7 +33,10 @@ end
 -- {{{ send_response()
 local function send_response(self, response)
     local response_str = build_response_and_headers(response)
-    local remaining = response_str .. response.data
+    local remaining = response_str
+    if response.data then
+        remaining = remaining .. response.data
+    end
     repeat
         remaining = self.socket:send(remaining)
     until not remaining

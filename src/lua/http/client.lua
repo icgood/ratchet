@@ -31,7 +31,10 @@ end
 -- {{{ send_request()
 local function send_request(self, command, uri, headers, data)
     local request = build_request_and_headers(command, uri, headers, data)
-    local remaining = request .. data
+    local remaining = request
+    if data then
+        remaining = remaining .. data
+    end
     repeat
         remaining = self.socket:send(remaining)
     until not remaining
