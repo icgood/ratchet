@@ -5,7 +5,7 @@ counter = 0
 function ctx1(host, port)
     local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
-    socket.SO_REUSEADDR = true
+    socket:setsockopt("SO_REUSEADDR", true)
     socket:bind(rec.addr)
     socket:listen()
 
@@ -31,6 +31,9 @@ function ctx1(host, port)
     local data = client:recv()
     assert(data == "foo")
     client:send("bar")
+
+    enc:shutdown()
+    client:close()
 
     counter = counter + 1
 end
@@ -62,6 +65,9 @@ function ctx2(host, port)
     socket:send("foo")
     local data = socket:recv()
     assert(data == "bar")
+
+    enc:shutdown()
+    socket:close()
 
     counter = counter + 2
 end

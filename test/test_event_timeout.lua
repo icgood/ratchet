@@ -3,7 +3,7 @@ require "ratchet"
 function ctx1(host, port)
     local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
-    socket.SO_REUSEADDR = true
+    socket:setsockopt("SO_REUSEADDR", true)
     socket:bind(rec.addr)
     socket:listen()
 

@@ -56,7 +56,7 @@ function server_ctx(host, port)
     local rec = ratchet.socket.prepare_tcp(host, port, "AF_INET")
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
     if debugging then socket:set_tracer(debug_print) end
-    socket.SO_REUSEADDR = true
+    socket:setsockopt("SO_REUSEADDR", true)
     socket:bind(rec.addr)
     socket:listen()
 

@@ -28,7 +28,7 @@ end
 function ctx1(host, port)
     local s_rec = ratchet.socket.prepare_tcp(host, port)
     local s_socket = ratchet.socket.new(s_rec.family, s_rec.socktype, s_rec.protocol)
-    s_socket.SO_REUSEADDR = true
+    s_socket:setsockopt("SO_REUSEADDR", true)
     s_socket:bind(s_rec.addr)
     s_socket:listen()
 

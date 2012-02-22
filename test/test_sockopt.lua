@@ -3,27 +3,27 @@ require "ratchet"
 function ctx1(host, port)
     local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
-    socket.SO_REUSEADDR = true
+    socket:setsockopt("SO_REUSEADDR", true)
     socket:bind(rec.addr)
     socket:listen()
 
-    assert(socket.SO_ACCEPTCONN == true, "SO_ACCEPTCONN != true")
+    assert(socket:getsockopt("SO_ACCEPTCONN") == true, "SO_ACCEPTCONN != true")
 
-    assert(socket.SO_REUSEADDR == true, "SO_REUSEADDR != true")
-    socket.SO_REUSEADDR = false
-    assert(socket.SO_REUSEADDR == false, "SO_REUSEADDR != false")
-    socket.SO_REUSEADDR = true
+    assert(socket:getsockopt("SO_REUSEADDR") == true, "SO_REUSEADDR != true")
+    socket:setsockopt("SO_REUSEADDR", false)
+    assert(socket:getsockopt("SO_REUSEADDR") == false, "SO_REUSEADDR != false")
+    socket:setsockopt("SO_REUSEADDR", true)
 end
 
 function ctx2(host, port)
     local rec = ratchet.socket.prepare_tcp(host, port)
     local socket = ratchet.socket.new(rec.family, rec.socktype, rec.protocol)
 
-    assert(socket.SO_ACCEPTCONN == false, "SO_ACCEPTCONN != false")
+    assert(socket:getsockopt("SO_ACCEPTCONN") == false, "SO_ACCEPTCONN != false")
 
     -- Linux kernel doubles whatever value you set to SO_SND/RCVBUF.
-    socket.SO_SNDBUF = 1024
-    assert(socket.SO_SNDBUF == 2048, "SO_SNDBUF (" .. socket.SO_SNDBUF .. ") != 2048")
+    socket:setsockopt("SO_SNDBUF", 1024)
+    assert(socket:getsockopt("SO_SNDBUF") == 2048, "SO_SNDBUF (" .. socket:getsockopt("SO_SNDBUF") .. ") != 2048")
 end
 
 kernel = ratchet.new(function ()
