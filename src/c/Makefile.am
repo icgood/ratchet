@@ -1,6 +1,6 @@
 allsources = ratchet.h ratchet.c \
 	     misc.h misc.c \
-	     error.c
+	     error.c exec.c
 
 if HAVE_SOCKET
 allsources += sockopt.c socket.c

@@ -7,7 +7,8 @@ TESTS_ENVIRONMENT = LUA_PATH="./?.lua;./?/init.lua;;" @LUA@ -e \
 		    'package.preload["ratchet"] = package.loadlib("../src/c/.libs/libratchet.so", "luaopen_ratchet")'
 endif
 
-TESTS = test_listen_connect.lua \
+TESTS = test_exec.lua \
+	test_listen_connect.lua \
 	test_send_recv.lua \
 	test_pcall_errors.lua \
 	test_wait_all.lua \

@@ -652,6 +652,9 @@ static int ratchet_yield_thread (lua_State *L)
 	else if (RATCHET_YIELD_READ == yield_type)
 		lua_getfield (L, 1, "wait_for_read");
 
+	else if (RATCHET_YIELD_SIGNAL == yield_type)
+		lua_getfield (L, 1, "wait_for_signal");
+
 	else if (RATCHET_YIELD_TIMEOUT == yield_type)
 		lua_getfield (L, 1, "wait_for_timeout");
 
@@ -747,6 +750,33 @@ static int ratchet_wait_for_read (lua_State *L)
 	event_set (ev, fd, EV_READ, event_triggered, L1);
 	event_base_set (e_b, ev);
 	event_add (ev, (use_tv ? &tv : NULL));
+
+	lua_setfield (L1, -2, "event");
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_wait_for_signal() */
+static int ratchet_wait_for_signal (lua_State *L)
+{
+	/* Gather args into usable data. */
+	struct event_base *e_b = get_event_base (L, 1);
+	get_thread (L, 2, L1);
+	int sig = (int) lua_tointeger (L, 3);
+
+	/* Cleanup table for kill()ing the thread. */
+	lua_createtable (L1, 0, 1);
+
+	/* Build event. */
+	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	lua_setmetatable (L1, -2);
+
+	/* Queue up the event. */
+	event_set (ev, sig, EV_SIGNAL, event_triggered, L1);
+	event_base_set (e_b, ev);
+	event_add (ev, NULL);
 
 	lua_setfield (L1, -2, "event");
 
@@ -1130,6 +1160,7 @@ int luaopen_ratchet (lua_State *L)
 		{"yield_thread", ratchet_yield_thread},
 		{"wait_for_write", ratchet_wait_for_write},
 		{"wait_for_read", ratchet_wait_for_read},
+		{"wait_for_signal", ratchet_wait_for_signal},
 		{"wait_for_timeout", ratchet_wait_for_timeout},
 		{"wait_for_multi", ratchet_wait_for_multi},
 		{"start_threads_ready", ratchet_start_threads_ready},
@@ -1181,6 +1212,9 @@ int luaopen_ratchet (lua_State *L)
 
 	luaL_requiref (L, "ratchet.error", luaopen_ratchet_error, 0);
 	lua_setfield (L, -2, "error");
+
+	luaL_requiref (L, "ratchet.exec", luaopen_ratchet_exec, 0);
+	lua_setfield (L, -2, "exec");
 
 #if HAVE_SOCKET
 	luaL_requiref (L, "ratchet.socket", luaopen_ratchet_socket, 0);

@@ -16,6 +16,7 @@ int luaopen_ratchet_zmqsocket (lua_State *L);
 int luaopen_ratchet_dns (lua_State *L);
 int luaopen_ratchet_dns_hosts (lua_State *L);
 int luaopen_ratchet_dns_resolv_conf (lua_State *L);
+int luaopen_ratchet_exec (lua_State *L);
 
 /* Error handling convenience functions. */
 #define ratchet_error_errno(L, f, s) ratchet_error_errno_ln (L, f, s, __FILE__, __LINE__)
@@ -35,6 +36,7 @@ int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, 
 #define RATCHET_YIELD_WAITALL ((void *) 5)
 #define RATCHET_YIELD_MULTIRW ((void *) 6)
 #define RATCHET_YIELD_PAUSE ((void *) 7)
+#define RATCHET_YIELD_SIGNAL ((void *) 8)
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:

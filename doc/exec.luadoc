@@ -1,0 +1,56 @@
+
+--- The exec library provides relatively powerful command execution in an
+--  event-based manner. Commands run with these functions will be run in a
+--  separate OS process using a fork-exec.
+module "ratchet.exec"
+
+--- Creates a new execution object, running the command stored in table
+--  argv. The object returned by this command is not running until you
+--  call its start() method.
+--  @param argv Table array of command arguments, starting with the command
+--              itself.
+--  @return a new exec object.
+function new(argv)
+
+--- Returns the table array of arguments that the exec object was created with.
+--  @param self the exec object.
+--  @return an argv table array.
+function get_argv(self)
+
+--- Starts the command process. No other methods may be called before this one.
+--  @param self the exec object.
+function start(self)
+
+--- Returns the standard input file, which has its own methods close() and
+--  write(). Data written with write() will show up in the command process's
+--  standard input.
+--  @param self the exec object.
+--  @return the process's standard input file object.
+function stdin(self)
+
+--- Returns the standard output file, which has its own methods close() and
+--  read(). Data written to the command process's standard output will be
+--  returned by this object's read() method.
+--  @param self the exec object.
+--  @return the process's standard output file object.
+function stdout(self)
+
+--- Returns the standard error file, which has its own methods close() and
+--  read(). Data written to the command process's standard error will be
+--  returned by this object's read() method.
+--  @param self the exec object.
+--  @return the process's standard error file object.
+function stderr(self)
+
+--- Waits for the command process to terminate.
+--  @param self the exec object.
+--  @return The exit status integer.
+function wait(self)
+
+--- Sends a signal to the command process.
+--  @param self the exec object.
+--  @param signal The signal number of name (see signal(7)), defaulting to
+--                "SIGTERM".
+function kill(self, signal)
+
+-- vim:filetype=lua:sw=4:ts=4:sts=4:et:
