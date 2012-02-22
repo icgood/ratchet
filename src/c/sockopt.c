@@ -35,10 +35,12 @@
 
 #include "ratchet.h"
 #include "misc.h"
-#include "sockopt.h"
 
 #define CHECK_OPT_GET(opt, type, ...) if (0 == strcmp (#opt, key)) return rsockopt_get_##type (L, fd, opt, ##__VA_ARGS__)
-#define CHECK_OPT_SET(opt, type, vali) if (0 == strcmp (#opt, key)) return rsockopt_set_##type (L, fd, opt, vali)
+#define CHECK_OPT_SET(opt, type) if (0 == strcmp (#opt, key)) return rsockopt_set_##type (L, fd, opt, 3)
+
+int rsockopt_get (lua_State *L);
+int rsockopt_set (lua_State *L);
 
 /* {{{ rsockopt_get_boolean() */
 static int rsockopt_get_boolean (lua_State *L, int fd, int opt)
@@ -258,8 +260,11 @@ static int rsockopt_set_timeval (lua_State *L, int fd, int opt, int valindex)
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ rsockopt_get() */
-int rsockopt_get (lua_State *L, const char *key, int fd)
+int rsockopt_get (lua_State *L)
 {
+	int fd = (*((int *) luaL_checkudata (L, 1, "ratchet_socket_meta")));
+	const char *key = luaL_checkstring (L, 2);
+
 	CHECK_OPT_GET (SO_ACCEPTCONN, boolean);
 #ifdef IFNAMSIZ
 	CHECK_OPT_GET (SO_BINDTODEVICE, string, IFNAMSIZ);
@@ -305,46 +310,49 @@ int rsockopt_get (lua_State *L, const char *key, int fd)
 /* }}} */
 
 /* {{{ rsockopt_set() */
-int rsockopt_set (lua_State *L, const char *key, int fd, int valindex)
+int rsockopt_set (lua_State *L)
 {
-	CHECK_OPT_SET (SO_ACCEPTCONN, boolean, valindex);
+	int fd = (*((int *) luaL_checkudata (L, 1, "ratchet_socket_meta")));
+	const char *key = luaL_checkstring (L, 2);
+
+	CHECK_OPT_SET (SO_ACCEPTCONN, boolean);
 #ifdef IFNAMSIZ
-	CHECK_OPT_SET (SO_BINDTODEVICE, string, valindex);
+	CHECK_OPT_SET (SO_BINDTODEVICE, string);
 #endif
-	CHECK_OPT_SET (SO_BROADCAST, int, valindex);
-	CHECK_OPT_SET (SO_BSDCOMPAT, boolean, valindex);
-	CHECK_OPT_SET (SO_DEBUG, boolean, valindex);
+	CHECK_OPT_SET (SO_BROADCAST, int);
+	CHECK_OPT_SET (SO_BSDCOMPAT, boolean);
+	CHECK_OPT_SET (SO_DEBUG, boolean);
 #ifdef SO_DOMAIN
-	CHECK_OPT_SET (SO_DOMAIN, int, valindex);
+	CHECK_OPT_SET (SO_DOMAIN, int);
 #endif
-	CHECK_OPT_SET (SO_ERROR, int, valindex);
-	CHECK_OPT_SET (SO_DONTROUTE, boolean, valindex);
-	CHECK_OPT_SET (SO_KEEPALIVE, boolean, valindex);
-	CHECK_OPT_SET (SO_LINGER, linger, valindex);
-	CHECK_OPT_SET (SO_OOBINLINE, boolean, valindex);
-	CHECK_OPT_SET (SO_PASSCRED, boolean, valindex);
+	CHECK_OPT_SET (SO_ERROR, int);
+	CHECK_OPT_SET (SO_DONTROUTE, boolean);
+	CHECK_OPT_SET (SO_KEEPALIVE, boolean);
+	CHECK_OPT_SET (SO_LINGER, linger);
+	CHECK_OPT_SET (SO_OOBINLINE, boolean);
+	CHECK_OPT_SET (SO_PASSCRED, boolean);
 #ifdef _GNU_SOURCE
-	CHECK_OPT_SET (SO_PEERCRED, peercred, valindex);
+	CHECK_OPT_SET (SO_PEERCRED, peercred);
 #endif
-	CHECK_OPT_SET (SO_PRIORITY, int, valindex);
+	CHECK_OPT_SET (SO_PRIORITY, int);
 #ifdef SO_PROTOCOL
-	CHECK_OPT_SET (SO_PROTOCOL, int, valindex);
+	CHECK_OPT_SET (SO_PROTOCOL, int);
 #endif
-	CHECK_OPT_SET (SO_RCVBUF, int, valindex);
+	CHECK_OPT_SET (SO_RCVBUF, int);
 #ifdef SO_RCVBUFFORCE
-	CHECK_OPT_SET (SO_RCVBUFFORCE, int, valindex);
+	CHECK_OPT_SET (SO_RCVBUFFORCE, int);
 #endif
-	CHECK_OPT_SET (SO_RCVLOWAT, int, valindex);
-	CHECK_OPT_SET (SO_SNDLOWAT, int, valindex);
-	CHECK_OPT_SET (SO_RCVTIMEO, timeval, valindex);
-	CHECK_OPT_SET (SO_SNDTIMEO, timeval, valindex);
-	CHECK_OPT_SET (SO_REUSEADDR, boolean, valindex);
-	CHECK_OPT_SET (SO_SNDBUF, int, valindex);
+	CHECK_OPT_SET (SO_RCVLOWAT, int);
+	CHECK_OPT_SET (SO_SNDLOWAT, int);
+	CHECK_OPT_SET (SO_RCVTIMEO, timeval);
+	CHECK_OPT_SET (SO_SNDTIMEO, timeval);
+	CHECK_OPT_SET (SO_REUSEADDR, boolean);
+	CHECK_OPT_SET (SO_SNDBUF, int);
 #ifdef SO_SNDBUFFORCE
-	CHECK_OPT_SET (SO_SNDBUFFORCE, int, valindex);
+	CHECK_OPT_SET (SO_SNDBUFFORCE, int);
 #endif
-	CHECK_OPT_SET (SO_TIMESTAMP, boolean, valindex);
-	CHECK_OPT_SET (SO_TYPE, int, valindex);
+	CHECK_OPT_SET (SO_TIMESTAMP, boolean);
+	CHECK_OPT_SET (SO_TYPE, int);
 
 	return -1;
 }

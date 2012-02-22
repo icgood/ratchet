@@ -3,7 +3,7 @@ allsources = ratchet.h ratchet.c \
 	     error.c
 
 if HAVE_SOCKET
-allsources += sockopt.h sockopt.c socket.c
+allsources += sockopt.c socket.c
 endif
 
 if HAVE_ZMQ

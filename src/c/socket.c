@@ -38,7 +38,6 @@
 
 #include "ratchet.h"
 #include "misc.h"
-#include "sockopt.h"
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX 108
@@ -54,6 +53,9 @@
 int rsock_get_encryption (lua_State *L);
 int rsock_encrypt (lua_State *L);
 #endif
+
+int rsockopt_get (lua_State *L);
+int rsockopt_set (lua_State *L);
 
 /* {{{ push_inet_ntop() */
 static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
@@ -657,46 +659,6 @@ static int rsock_gc (lua_State *L)
 }
 /* }}} */
 
-/* {{{ rsock_index() */
-static int rsock_index (lua_State *L)
-{
-	lua_getmetatable (L, 1);
-	lua_getfield (L, -1, "methods");
-	lua_pushvalue (L, 2);
-	lua_gettable (L, -2);
-	if (!lua_isnil (L, -1))
-		return 1;
-	else
-		lua_pop (L, 3);
-
-	if (lua_isstring (L, 2))
-	{
-		const char *key = lua_tostring (L, 2);
-		int fd = socket_fd (L, 1);
-		return rsockopt_get (L, key, fd);
-	}
-	else
-	{
-		lua_pushnil (L);
-		return 1;
-	}
-}
-/* }}} */
-
-/* {{{ rsock_newindex() */
-static int rsock_newindex (lua_State *L)
-{
-	if (lua_isstring (L, 2))
-	{
-		const char *key = lua_tostring (L, 2);
-		int fd = socket_fd (L, 1);
-		if (rsockopt_set (L, key, fd, 3) == -1)
-			return luaL_error (L, "Key \"%s\" is not a valid socket option.", key);
-	}
-	return 0;
-}
-/* }}} */
-
 /* {{{ rsock_eq() */
 static int rsock_eq (lua_State *L)
 {
@@ -1121,8 +1083,6 @@ int luaopen_ratchet_socket (lua_State *L)
 	/* Meta-methods for ratchet.socket object metatables. */
 	static const luaL_Reg metameths[] = {
 		{"__gc", rsock_gc},
-		{"__index", rsock_index},
-		{"__newindex", rsock_newindex},
 		{"__eq", rsock_eq},
 		{NULL}
 	};
@@ -1150,6 +1110,8 @@ int luaopen_ratchet_socket (lua_State *L)
 		{"shutdown", rsock_shutdown},
 		{"close", rsock_close},
 		{"set_tracer", rsock_set_tracer},
+		{"getsockopt", rsockopt_get},
+		{"setsockopt", rsockopt_set},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
@@ -1161,9 +1123,9 @@ int luaopen_ratchet_socket (lua_State *L)
 
 	/* Set up the ratchet.socket class and metatables. */
 	luaL_newmetatable (L, "ratchet_socket_meta");
-	luaL_newlib (L, meths);
-	lua_setfield (L, -2, "methods");
 	luaL_setfuncs (L, metameths, 0);
+	luaL_newlib (L, meths);
+	lua_setfield (L, -2, "__index");
 	lua_pop (L, 1);
 
 	return 1;
