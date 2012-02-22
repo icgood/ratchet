@@ -15,9 +15,6 @@ function ratchet.http.server.new(socket, from, handlers, send_size)
     self.from = from
     self.handlers = handlers
 
-    -- socket(7) option SO_SNDBUF returns double the desired value.
-    self.send_size = send_size or (socket.SO_SNDBUF / 2)
-
     return self
 end
 -- }}}
@@ -33,34 +30,13 @@ local function build_response_and_headers(response)
 end
 -- }}}
 
--- {{{ slow_send()
-local function slow_send(socket, send_size, request, data)
-    -- The purpose of this function is to avoid concatenating with data.
-
-    while #request > send_size do
-        local to_send = request:sub(1, send_size)
-        socket:send(to_send)
-        request = request:sub(send_size+1)
-    end
-    if not data then
-        socket:send(request)
-    else
-        local to_send = request .. data:sub(1, send_size - #request)
-        socket:send(to_send)
-        data = data:sub(send_size - #request + 1)
-        while data ~= "" do
-            to_send = data:sub(1, send_size)
-            socket:send(to_send)
-            data = data:sub(send_size+1)
-        end
-    end
-end
--- }}}
-
 -- {{{ send_response()
 local function send_response(self, response)
     local response_str = build_response_and_headers(response)
-    slow_send(self.socket, self.send_size, response_str, response.data)
+    local remaining = response_str .. response.data
+    repeat
+        remaining = self.socket:send(remaining)
+    until not remaining
     self.socket:shutdown("both")
     self.socket:close()
 end
