@@ -110,14 +110,67 @@ static void push_errno_description (lua_State *L, int e)
 }
 /* }}} */
 
+/* ---- ratchet Functions --------------------------------------------------- */
+
+/* {{{ ratchet_error_new() */
+static int ratchet_error_new (lua_State *L)
+{
+	lua_settop (L, 7);
+
+	lua_newtable (L);
+
+	luaL_getmetatable (L, "ratchet_error_meta");
+	lua_setmetatable (L, -2);
+
+	/* Set the "thread" field to the current thread. */
+	if (!lua_pushthread (L))
+		lua_setfield (L, -2, "thread");
+	else
+		lua_pop (L, 1);
+
+	/* Set the type field to indicate a ratchet error. */
+	lua_pushliteral (L, "ratchet_error");
+	lua_setfield (L, -2, "type");
+
+	/* Set other fields from arguments. */
+	luaL_checkstring (L, 1);
+	lua_pushvalue (L, 1);
+	lua_setfield (L, -2, "description");
+
+	luaL_optstring (L, 2, NULL);
+	lua_pushvalue (L, 2);
+	lua_setfield (L, -2, "code");
+
+	luaL_checkstring (L, 3);
+	lua_pushvalue (L, 3);
+	lua_setfield (L, -2, "function");
+
+	luaL_optstring (L, 4, NULL);
+	lua_pushvalue (L, 4);
+	lua_setfield (L, -2, "file");
+
+	(void) luaL_optint (L, 5, -1);
+	lua_pushvalue (L, 5);
+	lua_setfield (L, -2, "line");
+
+	luaL_optstring (L, 6, NULL);
+	lua_pushvalue (L, 6);
+	lua_setfield (L, -2, "syscall");
+
+	(void) luaL_optint (L, 7, -1);
+	lua_pushvalue (L, 7);
+	lua_setfield (L, -2, "errno");
+
+	return 1;
+}
+/* }}} */
+
 /* ---- C API Functions ----------------------------------------------------- */
 
 /* {{{ ratchet_error_push_constructor() */
 void ratchet_error_push_constructor (lua_State *L)
 {
-	lua_getfield (L, LUA_REGISTRYINDEX, "ratchet_error_class");
-	lua_getfield (L, -1, "new");
-	lua_remove (L, -2);
+	lua_pushcfunction (L, ratchet_error_new);
 }
 /* }}} */
 
@@ -179,61 +232,6 @@ int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, 
 	va_end (args);
 
 	return ratchet_error_top_ln (L, function, code, file, line);
-}
-/* }}} */
-
-/* ---- ratchet Functions --------------------------------------------------- */
-
-/* {{{ ratchet_error_new() */
-static int ratchet_error_new (lua_State *L)
-{
-	lua_settop (L, 7);
-
-	lua_newtable (L);
-
-	luaL_getmetatable (L, "ratchet_error_meta");
-	lua_setmetatable (L, -2);
-
-	/* Set the "thread" field to the current thread. */
-	if (!lua_pushthread (L))
-		lua_setfield (L, -2, "thread");
-	else
-		lua_pop (L, 1);
-
-	/* Set the type field to indicate a ratchet error. */
-	lua_pushliteral (L, "ratchet_error");
-	lua_setfield (L, -2, "type");
-
-	/* Set other fields from arguments. */
-	luaL_checkstring (L, 1);
-	lua_pushvalue (L, 1);
-	lua_setfield (L, -2, "description");
-
-	luaL_checkstring (L, 2);
-	lua_pushvalue (L, 2);
-	lua_setfield (L, -2, "code");
-
-	luaL_checkstring (L, 3);
-	lua_pushvalue (L, 3);
-	lua_setfield (L, -2, "function");
-
-	luaL_optstring (L, 4, NULL);
-	lua_pushvalue (L, 4);
-	lua_setfield (L, -2, "file");
-
-	(void) luaL_optint (L, 5, -1);
-	lua_pushvalue (L, 5);
-	lua_setfield (L, -2, "line");
-
-	luaL_optstring (L, 6, NULL);
-	lua_pushvalue (L, 6);
-	lua_setfield (L, -2, "syscall");
-
-	(void) luaL_optint (L, 7, -1);
-	lua_pushvalue (L, 7);
-	lua_setfield (L, -2, "errno");
-
-	return 1;
 }
 /* }}} */
 
