@@ -288,14 +288,15 @@ static void multi_event_triggered (int fd, short event, void *arg)
 /* }}} */
 
 /* {{{ handle_thread_error() */
-static void handle_thread_error (lua_State *L)
+static void handle_thread_error (lua_State *L, int thread_i)
 {
 	lua_getuservalue (L, 1);
 	lua_getfield (L, -1, "error_handler");
 	if (!lua_isnil (L, -1))
 	{
 		lua_pushvalue (L, -3);
-		lua_call (L, 1, 0);
+		lua_pushvalue (L, thread_i);
+		lua_call (L, 2, 0);
 		lua_pop (L, 1);
 	}
 	else
@@ -625,7 +626,7 @@ restart_thread:
 		lua_xmove (L1, L, 1);
 		end_thread_persist (L, 2);
 
-		handle_thread_error (L);
+		handle_thread_error (L, 2);
 	}
 
 	return 0;
