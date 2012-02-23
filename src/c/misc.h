@@ -19,6 +19,7 @@ double fromtimespec (struct timespec *tv);
 int gettimespec (double secs, struct timespec *tv);
 int gettimespec_arg (lua_State *L, int index, struct timespec *tv);
 int gettimespec_opt (lua_State *L, int index, struct timespec *tv);
+int get_signal (lua_State *L, int index, int def);
 int set_nonblocking (int fd);
 void stackdump_ln (lua_State *L, const char *file, int line);
 

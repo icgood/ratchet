@@ -934,6 +934,18 @@ static int ratchet_block_on (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_sigwait() */
+static int ratchet_sigwait (lua_State *L)
+{
+	lua_pushlightuserdata (L, RATCHET_YIELD_SIGNAL);
+	int sig = get_signal (L, 1, -1);
+	if (-1 == sig)
+		return luaL_argerror (L, 1, "Invalid signal.");
+	lua_pushinteger (L, sig);
+	return lua_yield (L, 2);
+}
+/* }}} */
+
 /* {{{ ratchet_wait_all() */
 static int ratchet_wait_all (lua_State *L)
 {
@@ -1176,6 +1188,7 @@ int luaopen_ratchet (lua_State *L)
 		{"unpause", ratchet_unpause},
 		{"self", ratchet_running_thread},
 		{"block_on", ratchet_block_on},
+		{"sigwait", ratchet_sigwait},
 		{"wait_all", ratchet_wait_all},
 		{"space", ratchet_thread_space},
 		{"timer", ratchet_timer},

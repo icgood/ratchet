@@ -31,11 +31,14 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <signal.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
 
 #include "misc.h"
+
+#define RETURN_SIGNAL_BY_NAME(s) if (0 == strcmp (#s, lua_tostring (L, index))) return s
 
 /* {{{ strmatch() */
 int strmatch (lua_State *L, int index, const char *match)
@@ -143,6 +146,43 @@ int gettimespec_opt (lua_State *L, int index, struct timespec *tv)
 {
 	double secs = (double) luaL_optnumber (L, index, -1.0);
 	return gettimespec (secs, tv);
+}
+/* }}} */
+
+/* {{{ get_signal() */
+int get_signal (lua_State *L, int index, int def)
+{
+	if (lua_isnumber (L, index))
+		return (int) lua_tointeger (L, index);
+
+	else if (lua_isstring (L, index))
+	{
+		RETURN_SIGNAL_BY_NAME (SIGHUP);
+		RETURN_SIGNAL_BY_NAME (SIGINT);
+		RETURN_SIGNAL_BY_NAME (SIGQUIT);
+		RETURN_SIGNAL_BY_NAME (SIGILL);
+		RETURN_SIGNAL_BY_NAME (SIGABRT);
+		RETURN_SIGNAL_BY_NAME (SIGFPE);
+		RETURN_SIGNAL_BY_NAME (SIGKILL);
+		RETURN_SIGNAL_BY_NAME (SIGSEGV);
+		RETURN_SIGNAL_BY_NAME (SIGPIPE);
+		RETURN_SIGNAL_BY_NAME (SIGALRM);
+		RETURN_SIGNAL_BY_NAME (SIGTERM);
+		RETURN_SIGNAL_BY_NAME (SIGUSR1);
+		RETURN_SIGNAL_BY_NAME (SIGUSR2);
+		RETURN_SIGNAL_BY_NAME (SIGCHLD);
+		RETURN_SIGNAL_BY_NAME (SIGCONT);
+		RETURN_SIGNAL_BY_NAME (SIGSTOP);
+		RETURN_SIGNAL_BY_NAME (SIGTSTP);
+		RETURN_SIGNAL_BY_NAME (SIGTTIN);
+		RETURN_SIGNAL_BY_NAME (SIGTTOU);
+		return -1;
+	}
+	else if (lua_isnoneornil (L, index))
+		return def;
+
+	else
+		return -1;
 }
 /* }}} */
 

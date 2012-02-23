@@ -48,7 +48,6 @@ struct rexec_state
 	int infds[2];
 	int outfds[2];
 	int errfds[2];
-	int waitfds[2];
 };
 /* }}} */
 
@@ -62,8 +61,6 @@ static void clear_state (struct rexec_state *state)
 	state->outfds[1] = -1;
 	state->errfds[0] = -1;
 	state->errfds[1] = -1;
-	state->waitfds[0] = -1;
-	state->waitfds[1] = -1;
 }
 /* }}} */
 
@@ -120,8 +117,6 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 		return ratchet_error_errno (L, "ratchet.exec.start()", "pipe");
 	if (-1 == pipe (state->errfds))
 		return ratchet_error_errno (L, "ratchet.exec.start()", "pipe");
-	if (-1 == pipe (state->waitfds))
-		return ratchet_error_errno (L, "ratchet.exec.start()", "pipe");
 
 	pid_t pid = fork ();
 
@@ -145,7 +140,6 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 		set_nonblocking (state->infds[1]);
 		set_nonblocking (state->outfds[0]);
 		set_nonblocking (state->errfds[0]);
-		set_nonblocking (state->waitfds[0]);
 
 		state->pid = pid;
 	}
@@ -185,11 +179,9 @@ static int rexec_clean_up (lua_State *L)
 	if (state->infds[1] >= 0) close (state->infds[1]);
 	if (state->outfds[0] >= 0) close (state->outfds[0]);
 	if (state->errfds[0] >= 0) close (state->errfds[0]);
-	if (state->waitfds[0] >= 0) close (state->waitfds[0]);
 	state->infds[1] = -1;
 	state->outfds[0] = -1;
 	state->errfds[0] = -1;
-	state->waitfds[0] = -1;
 	return 0;
 }
 /* }}} */
@@ -230,15 +222,9 @@ static int rexec_start (lua_State *L)
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "stderr");
 
-	int **waitfd = (int **) lua_newuserdata (L, sizeof (int *));
-	luaL_getmetatable (L, "ratchet_exec_file_read_meta");
-	lua_setmetatable (L, -2);
-	lua_setfield (L, -2, "waitfd");
-
 	*infd = &state->infds[1];
 	*outfd = &state->outfds[0];
 	*errfd = &state->errfds[0];
-	*waitfd = &state->waitfds[0];
 
 	return 0;
 }
@@ -318,33 +304,9 @@ static int rexec_kill (lua_State *L)
 	struct rexec_state *state = (struct rexec_state *) luaL_checkudata (L, 1, "ratchet_exec_meta");
 	lua_settop (L, 2);
 
-	int sig = SIGTERM;
-	if (lua_isnumber (L, 2))
-		sig = (int) lua_tointeger (L, 2);
-	if (lua_isstring (L, 2))
-	{
-		CHECK_SIG_NAME (L, 2, SIGHUP)
-		else CHECK_SIG_NAME (L, 2, SIGINT)
-		else CHECK_SIG_NAME (L, 2, SIGQUIT)
-		else CHECK_SIG_NAME (L, 2, SIGILL)
-		else CHECK_SIG_NAME (L, 2, SIGABRT)
-		else CHECK_SIG_NAME (L, 2, SIGFPE)
-		else CHECK_SIG_NAME (L, 2, SIGKILL)
-		else CHECK_SIG_NAME (L, 2, SIGSEGV)
-		else CHECK_SIG_NAME (L, 2, SIGPIPE)
-		else CHECK_SIG_NAME (L, 2, SIGALRM)
-		else CHECK_SIG_NAME (L, 2, SIGTERM)
-		else CHECK_SIG_NAME (L, 2, SIGUSR1)
-		else CHECK_SIG_NAME (L, 2, SIGUSR2)
-		else CHECK_SIG_NAME (L, 2, SIGCHLD)
-		else CHECK_SIG_NAME (L, 2, SIGCONT)
-		else CHECK_SIG_NAME (L, 2, SIGSTOP)
-		else CHECK_SIG_NAME (L, 2, SIGTSTP)
-		else CHECK_SIG_NAME (L, 2, SIGTTIN)
-		else CHECK_SIG_NAME (L, 2, SIGTTOU)
-		else
-			return luaL_argerror (L, 2, "Unknown signal name.");
-	}
+	int sig = get_signal (L, 2, SIGTERM);
+	if (-1 == sig)
+		return luaL_argerror (L, 2, "Invalid signal.");
 
 	if (-1 == kill (state->pid, sig))
 		return ratchet_error_errno (L, "ratchet.exec.kill()", "kill");

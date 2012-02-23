@@ -67,6 +67,11 @@ function unpause(thread, ...)
 --  @return The item from the read or write table that triggered an event.
 function block_on(reads, writes, timeout)
 
+--- Blocks the current thread until the current process receives the given
+--  signal.
+--  @param signal A signal by number or name (see signal(7)).
+function sigwait(signal)
+
 --- Kills a given thread. If the thread is yielding on any events, those events
 --  are cleaned up and the thread is dropped.
 --  @param thread The thread to kill.
