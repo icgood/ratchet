@@ -201,8 +201,8 @@ int set_nonblocking (int fd)
 }
 /* }}} */
 
-/* {{{ printf_index() */
-static void printf_index (lua_State *L, int i)
+/* {{{ fprintf_index() */
+static void fprintf_index (lua_State *L, FILE *out, int i)
 {
 	int t = lua_type (L, i);
 	int j;
@@ -210,15 +210,15 @@ static void printf_index (lua_State *L, int i)
 	switch (t)
 	{
 		case LUA_TSTRING: {
-			printf ("'%s'", lua_tostring (L, i));
+			fprintf (out, "'%s'", lua_tostring (L, i));
 			break;
 		}
 		case LUA_TBOOLEAN: {
-			printf (lua_toboolean (L, i) ? "true" : "false");
+			fprintf (out, lua_toboolean (L, i) ? "true" : "false");
 			break;
 		}
 		case LUA_TNUMBER: {
-			printf ("%g", lua_tonumber (L, i));
+			fprintf (out, "%g", lua_tonumber (L, i));
 			break;
 		}
 		case LUA_TTABLE: {
@@ -226,71 +226,73 @@ static void printf_index (lua_State *L, int i)
 			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
 				n++;
 			
-			printf ("<%d:{", n);
+			fprintf (out, "<%d:{", n);
 			for (lua_pushnil (L); lua_next (L, i); lua_pop (L, 1))
 			{
 				int top = lua_gettop (L);
-				printf_index (L, top-1);
-				printf ("=");
+				fprintf_index (L, out, top-1);
+				fprintf (out, "=");
 				if (lua_istable (L, top))
 				{
 					for (j=1; j<=top-2; j++)
 					{
 						if (lua_compare (L, j, top, LUA_OPEQ))
 						{
-							printf ("<table:%p>", lua_topointer (L, top));
+							fprintf (out, "<table:%p>", lua_topointer (L, top));
 							break;
 						}
 					}
 					if (j >= top-1)
-						printf_index (L, top);
+						fprintf_index (L, out, top);
 				}
 				else
-					printf_index (L, top);
-				printf (",");
+					fprintf_index (L, out, top);
+				fprintf (out, ",");
 			}
-			printf ("}:%p>", lua_topointer (L, i));
+			fprintf (out, "}:%p>", lua_topointer (L, i));
 			break;
 		}
 		case LUA_TTHREAD:
 		case LUA_TLIGHTUSERDATA: {
-			printf ("<%s", lua_typename (L, t));
-			printf (":%p>", lua_topointer (L, i));
+			fprintf (out, "<%s", lua_typename (L, t));
+			fprintf (out, ":%p>", lua_topointer (L, i));
 			break;
 		}
 		case LUA_TUSERDATA: {
-			printf ("<userdata:");
+			fprintf (out, "<userdata:");
 			lua_getuservalue (L, i);
 			if (!lua_isnil (L, -1))
 			{
-				printf_index (L, lua_gettop (L));
-				printf (":");
+				fprintf_index (L, out, lua_gettop (L));
+				fprintf (out, ":");
 			}
 			lua_pop (L, 1);
-			printf ("%p>", lua_topointer (L, i));
+			fprintf (out, "%p>", lua_topointer (L, i));
 			break;
 		}
 		default: {
-			printf ("%s", lua_typename (L, t));
+			fprintf (out, "%s", lua_typename (L, t));
 			break;
 		}
 	}
 }
 /* }}} */
 
-/* {{{ stackdump_ln() */
-void stackdump_ln (lua_State *L, const char *file, int line)
+/* {{{ fstackdump_ln() */
+void fstackdump_ln (lua_State *L, FILE *out, const char *file, int line)
 {
 	int i;
 	int top = lua_gettop (L);
 
-	printf ("------ stackdump %s:%d -------\n", file, line);
+	fprintf (out, "------ stackdump %s:%d -------\n", file, line);
 	for (i=1; i<=top; i++)
 	{
-		printf ("%d: ", i);
-		printf_index (L, i);
-		printf ("\n");
+		fprintf (out, "%d: ", i);
+		fprintf_index (L, out, i);
+		fprintf (out, "\n");
 	}
+
+	fflush (out);
 }
 /* }}} */
 

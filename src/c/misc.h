@@ -7,7 +7,8 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#define stackdump(L) stackdump_ln (L, __FILE__, __LINE__)
+#define stackdump(L) fstackdump_ln (L, stdout, __FILE__, __LINE__)
+#define fstackdump(L, out) fstackdump_ln (L, out, __FILE__, __LINE__)
 
 int strmatch (lua_State *L, int index, const char *match);
 int strequal (lua_State *L, int index, const char *s2);
@@ -21,7 +22,7 @@ int gettimespec_arg (lua_State *L, int index, struct timespec *tv);
 int gettimespec_opt (lua_State *L, int index, struct timespec *tv);
 int get_signal (lua_State *L, int index, int def);
 int set_nonblocking (int fd);
-void stackdump_ln (lua_State *L, const char *file, int line);
+void fstackdump_ln (lua_State *L, FILE *out, const char *file, int line);
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:
