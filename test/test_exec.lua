@@ -17,10 +17,10 @@ function cat_test()
     local p = ratchet.exec.new({"cat"})
     p:start()
     p:stdin():write("test\n")
+    p:stdin():close()
     local line = p:stdout():read()
     line = line:gsub("%\r?%\n$", "")
     assert("test" == line)
-    p:kill()
     assert(0 == p:wait())
 
     tests = tests + 1

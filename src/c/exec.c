@@ -122,6 +122,9 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 
 	if (pid == 0)
 	{
+		close (state->infds[1]);
+		close (state->outfds[0]);
+		close (state->errfds[0]);
 		close (STDIN_FILENO);
 		close (STDOUT_FILENO);
 		close (STDERR_FILENO);
@@ -137,6 +140,9 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 
 	else
 	{
+		close (state->infds[0]);
+		close (state->outfds[1]);
+		close (state->errfds[1]);
 		set_nonblocking (state->infds[1]);
 		set_nonblocking (state->outfds[0]);
 		set_nonblocking (state->errfds[0]);
