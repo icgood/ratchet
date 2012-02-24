@@ -27,7 +27,7 @@ end
 
 -- {{{ smtp_extensions:add()
 function smtp_extensions:add(ext, param)
-    if param and #param > 0 then
+    if param then
         self.extensions[ext:upper()] = param
     else
         self.extensions[ext:upper()] = true
@@ -65,7 +65,7 @@ function smtp_extensions:build_string(header)
         if v == true then
             table.insert(lines, k)
         else
-            table.insert(lines, k.." "..v)
+            table.insert(lines, k.." "..tostring(v))
         end
     end
     return table.concat(lines, "\r\n")

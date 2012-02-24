@@ -1230,6 +1230,9 @@ int luaopen_ratchet (lua_State *L)
 	luaL_requiref (L, "ratchet.exec", luaopen_ratchet_exec, 0);
 	lua_setfield (L, -2, "exec");
 
+	luaL_requiref (L, "ratchet.base64", luaopen_ratchet_base64, 0);
+	lua_setfield (L, -2, "base64");
+
 #if HAVE_SOCKET
 	luaL_requiref (L, "ratchet.socket", luaopen_ratchet_socket, 0);
 	lua_setfield (L, -2, "socket");
