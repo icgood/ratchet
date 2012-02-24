@@ -284,6 +284,46 @@ function commands.STARTTLS(self, arg)
 
         self.extensions:drop("STARTTLS")
         self.ehlo_as = nil
+        self.using_tls = true
+    end
+end
+-- }}}
+
+-- {{{ commands.AUTH()
+function commands.AUTH(self, arg)
+    local ext = self.extensions:has("AUTH")
+    if not ext then
+        return self:unknown_command("AUTH", arg)
+    end
+
+    if not self.ehlo_as or self.authed or self.have_mailfrom then
+        return self:bad_sequence("AUTH", arg)        
+    end
+
+    local reply = {
+        code = "235",
+        message = "Authentication successful",
+        enhanced_status_code = "2.7.0",
+    }
+
+    local challenge_response
+    local data = {}
+    while true do
+        local challenge = ext:challenge(arg, reply, data, challenge_response, self.using_tls)
+        if not challenge then
+            break
+        end
+
+        self.io:send_reply("334", challenge)
+        self.io:flush_send()
+        challenge_response = self.io:recv_line()
+    end
+
+    send_ESC_reply(self, reply)
+    self.io:flush_send()
+
+    if reply.code == "235" then
+        self.authed = true
     end
 end
 -- }}}

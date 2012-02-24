@@ -118,24 +118,30 @@ function smtp_io:recv_reply()
 end
 -- }}}
 
--- {{{ smtp_io:recv_command()
-function smtp_io:recv_command()
+-- {{{ smtp_io:recv_line()
+function smtp_io:recv_line()
     local input = self.recv_buffer
 
     while true do
         local line, end_i = input:match("^(.-)%\r?%\n()")
         if line then
             self.recv_buffer = self.recv_buffer:sub(end_i)
-
-            local command, extra = line:match("^(%a+)%s*(.-)%s*$")
-            if command then
-                return command:upper(), extra
-            else
-                return line
-            end
+            return line
         end
 
         input = self:buffered_recv()
+    end
+end
+-- }}}
+
+-- {{{ smtp_io:recv_command()
+function smtp_io:recv_command()
+    local line = self:recv_line()
+    local command, extra = line:match("^(%a+)%s*(.-)%s*$")
+    if command then
+        return command:upper(), extra
+    else
+        return line
     end
 end
 -- }}}

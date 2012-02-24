@@ -9,7 +9,8 @@ smtp_sources = smtp/client.lua \
 	       smtp/data_sender.lua \
 	       smtp/smtp_extensions.lua \
 	       smtp/smtp_io.lua \
-	       smtp/smtp_reply.lua
+	       smtp/smtp_reply.lua \
+	       smtp/smtp_auth.lua
 
 bus_sources = bus/init.lua \
 	      bus/samestate.lua \
