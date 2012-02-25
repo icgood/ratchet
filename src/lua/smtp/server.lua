@@ -511,7 +511,7 @@ local function custom_command(self, command, arg)
         message = "Ok",
     }
 
-    self.handlers[command](self.handlers, reply, arg, io)
+    self.handlers[command](self.handlers, reply, arg, self.io, self.extensions)
 
     if reply.enhanced_status_code then
         send_ESC_reply(self, reply)
