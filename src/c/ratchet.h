@@ -17,7 +17,6 @@ int luaopen_ratchet_dns (lua_State *L);
 int luaopen_ratchet_dns_hosts (lua_State *L);
 int luaopen_ratchet_dns_resolv_conf (lua_State *L);
 int luaopen_ratchet_exec (lua_State *L);
-int luaopen_ratchet_base64 (lua_State *L);
 
 /* Error handling convenience functions. */
 #define ratchet_error_errno(L, f, s) ratchet_error_errno_ln (L, f, s, __FILE__, __LINE__)

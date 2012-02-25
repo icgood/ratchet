@@ -8,7 +8,6 @@ TESTS_ENVIRONMENT = LUA_PATH="./?.lua;./?/init.lua;;" @LUA@ -e \
 endif
 
 TESTS = test_exec.lua \
-	test_base64.lua \
 	test_listen_connect.lua \
 	test_send_recv.lua \
 	test_pcall_errors.lua \
@@ -49,7 +48,6 @@ cert.pem:
 	openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout $@ -out $@ > /dev/null
 else
 XFAIL_TESTS += test_ssl_send_recv.lua
-XFAIL_TESTS += test_base64.lua
 endif
 
 if !HAVE_SOCKET
