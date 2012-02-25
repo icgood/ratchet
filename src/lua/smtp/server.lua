@@ -35,17 +35,21 @@ ratchet.smtp.server.__index = ratchet.smtp.server
 local commands = {}
 
 -- {{{ ratchet.smtp.server.new()
-function ratchet.smtp.server.new(socket, handlers, send_size)
+function ratchet.smtp.server.new(socket, handlers, tls_context)
     local self = {}
     setmetatable(self, ratchet.smtp.server)
 
     self.handlers = handlers
-    self.io = smtp_io.new(socket, send_size)
+    self.io = smtp_io.new(socket)
+    self.tls_context = tls_context
 
     self.extensions = smtp_extensions.new()
     self.extensions:add("8BITMIME")
     self.extensions:add("PIPELINING")
     self.extensions:add("ENHANCEDSTATUSCODES")
+    if tls_context then
+        self.extensions:add("STARTTLS")
+    end
 
     return self
 end
@@ -183,6 +187,18 @@ function ratchet.smtp.server:timed_out(command, arg, message)
 end
 -- }}}
 
+-- {{{ ratchet.smtp.server:unhandled_error()
+function ratchet.smtp.server:unhandled_error(command, arg, message)
+    local reply = {
+        code = "421",
+        message = message or "Unhandled system error.",
+        enhanced_status_code = "4.3.0",
+    }
+    send_ESC_reply(self, reply)
+    self.io:flush_send()
+end
+-- }}}
+
 -- }}}
 
 -- {{{ Built-in Commands
@@ -259,6 +275,8 @@ end
 function commands.STARTTLS(self, arg)
     if not self.extensions:has("STARTTLS") then
         return self:unknown_command("STARTTLS", arg)
+    elseif not self.tls_context then
+        error("SSL context required.")
     end
 
     if not self.ehlo_as then
@@ -279,51 +297,13 @@ function commands.STARTTLS(self, arg)
     self.io:flush_send()
 
     if reply.code == "220" then
-        local enc = self.io.socket:encrypt(ssl_server.SSLv3)
+        local enc = self.io.socket:encrypt(self.tls_context)
         enc:server_handshake()
 
-        self.extensions:drop("STARTTLS")
         self.ehlo_as = nil
         self.using_tls = true
-    end
-end
--- }}}
 
--- {{{ commands.AUTH()
-function commands.AUTH(self, arg)
-    local ext = self.extensions:has("AUTH")
-    if not ext then
-        return self:unknown_command("AUTH", arg)
-    end
-
-    if not self.ehlo_as or self.authed or self.have_mailfrom then
-        return self:bad_sequence("AUTH", arg)        
-    end
-
-    local reply = {
-        code = "235",
-        message = "Authentication successful",
-        enhanced_status_code = "2.7.0",
-    }
-
-    local challenge_response
-    local data = {}
-    while true do
-        local challenge = ext:challenge(arg, reply, data, challenge_response, self.using_tls)
-        if not challenge then
-            break
-        end
-
-        self.io:send_reply("334", challenge)
-        self.io:flush_send()
-        challenge_response = self.io:recv_line()
-    end
-
-    send_ESC_reply(self, reply)
-    self.io:flush_send()
-
-    if reply.code == "235" then
-        self.authed = true
+        self.extensions:drop("STARTTLS")
     end
 end
 -- }}}
@@ -533,7 +513,11 @@ local function custom_command(self, command, arg)
 
     self.handlers[command](self.handlers, reply, arg, io)
 
-    send_ESC_reply(self, reply)
+    if reply.enhanced_status_code then
+        send_ESC_reply(self, reply)
+    else
+        self.io:send_reply(reply.code, reply.message)
+    end
     self.io:flush_send()
 end
 -- }}}
@@ -557,14 +541,19 @@ end
 
 -- {{{ ratchet.smtp.server:handle()
 function ratchet.smtp.server:handle()
-    local successful, ret = pcall(handle_propagate_errors, self)
+    local successful, err = pcall(handle_propagate_errors, self)
+    if not successful then
+        if ratchet.error.is(err, "ETIMEDOUT") then
+            self:timed_out()
+        else
+            self:unhandled_error()
+        end
 
-    if not successful and ratchet.error.is(ret, "ETIMEDOUT") then
-        self:timed_out()
+        self:close()
+        error(err, 0)
+    else
+        self:close()
     end
-    self:close()
-
-    return successful, ret
 end
 -- }}}
 
