@@ -1001,7 +1001,7 @@ static int rsock_try_encrypted_send (lua_State *L)
 	(void) socket_fd (L, 1);
 	int ctx = 0;
 	if (LUA_YIELD == lua_getctx (L, &ctx))
-		return 2;
+		goto encrypted_send_complete;
 
 	lua_settop (L, 2);
 
@@ -1014,14 +1014,20 @@ static int rsock_try_encrypted_send (lua_State *L)
 		lua_getfield (L, -1, "write");
 		lua_pushvalue (L, -2);
 		lua_pushvalue (L, 2);
-		lua_callk (L, 2, 2, 1, rsock_try_encrypted_send);
-		return 2;
+		lua_callk (L, 2, 0, 1, rsock_try_encrypted_send);
+		goto encrypted_send_complete;
 	}
 	else
 	{
 		lua_settop (L, 2);
 		return rsock_send (L);
 	}
+
+encrypted_send_complete:
+	lua_pushvalue (L, 2);
+	call_tracer (L, 1, "encrypted send", 1);
+
+	return 0;
 }
 /* }}} */
 
@@ -1031,7 +1037,7 @@ static int rsock_try_encrypted_recv (lua_State *L)
 	(void) socket_fd (L, 1);
 	int ctx = 0;
 	if (LUA_YIELD == lua_getctx (L, &ctx))
-		return 2;
+		goto encrypted_recv_complete;
 
 	lua_settop (L, 2);
 
@@ -1044,14 +1050,20 @@ static int rsock_try_encrypted_recv (lua_State *L)
 		lua_getfield (L, -1, "read");
 		lua_pushvalue (L, -2);
 		lua_pushvalue (L, 2);
-		lua_callk (L, 2, 2, 1, rsock_try_encrypted_recv);
-		return 2;
+		lua_callk (L, 2, 1, 1, rsock_try_encrypted_recv);
+		goto encrypted_recv_complete;
 	}
 	else
 	{
 		lua_settop (L, 2);
 		return rsock_recv (L);
 	}
+
+encrypted_recv_complete:
+	lua_pushvalue (L, -1);
+	call_tracer (L, 1, "encrypted recv", 1);
+
+	return 1;
 }
 /* }}} */
 #endif
