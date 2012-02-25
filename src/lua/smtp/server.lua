@@ -290,7 +290,7 @@ function commands.STARTTLS(self, arg)
     }
 
     if self.handlers.STARTTLS then
-        self.handlers:STARTTLS(reply)
+        self.handlers:STARTTLS(reply, extensions)
     end
 
     send_ESC_reply(self, reply)
