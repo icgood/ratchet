@@ -48,11 +48,14 @@ function server_handlers:HAVE_DATA(reply, data)
     reply.message = "test data received"
 end
 
-function server_handlers:SLIMTA(reply, arg)
-    reply.code = "123"
-    reply.message = "custom command okay"
+function server_handlers:SLIMTA(arg)
+    local reply = {
+        code = "123",
+        message = "custom command okay",
+    }
 
     server_received_message = true
+    return reply
 end
 
 function server_handlers:QUIT(reply)

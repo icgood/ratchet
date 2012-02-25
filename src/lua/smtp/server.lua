@@ -290,7 +290,7 @@ function commands.STARTTLS(self, arg)
     }
 
     if self.handlers.STARTTLS then
-        self.handlers:STARTTLS(reply, extensions)
+        self.handlers:STARTTLS(reply, self.extensions)
     end
 
     send_ESC_reply(self, reply)
@@ -511,14 +511,16 @@ local function custom_command(self, command, arg)
         message = "Ok",
     }
 
-    self.handlers[command](self.handlers, reply, arg, self.io, self.extensions)
+    local reply = self.handlers[command](self.handlers, arg, self)
 
-    if reply.enhanced_status_code then
-        send_ESC_reply(self, reply)
-    else
-        self.io:send_reply(reply.code, reply.message)
+    if reply then
+        if reply.enhanced_status_code then
+            send_ESC_reply(self, reply)
+        else
+            self.io:send_reply(reply.code, reply.message)
+        end
+        self.io:flush_send()
     end
-    self.io:flush_send()
 end
 -- }}}
 
@@ -546,7 +548,7 @@ function ratchet.smtp.server:handle()
         if ratchet.error.is(err, "ETIMEDOUT") then
             self:timed_out()
         else
-            self:unhandled_error()
+            pcall(self.unhandled_error, self)
         end
 
         self:close()
