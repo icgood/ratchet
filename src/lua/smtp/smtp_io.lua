@@ -49,6 +49,11 @@ end
 
 -- {{{ smtp_io:flush_send()
 function smtp_io:flush_send()
+    if not self.send_buffer[1] then
+        -- Don't try to send nothing.
+        return
+    end
+
     local send_buffer = table.concat(self.send_buffer)
     self.send_buffer = {}
 
