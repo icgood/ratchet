@@ -35,20 +35,22 @@ ratchet.smtp.server.__index = ratchet.smtp.server
 local commands = {}
 
 -- {{{ ratchet.smtp.server.new()
-function ratchet.smtp.server.new(socket, handlers, tls_context)
+function ratchet.smtp.server.new(socket, handlers, tls)
     local self = {}
     setmetatable(self, ratchet.smtp.server)
 
     self.handlers = handlers
     self.io = smtp_io.new(socket)
-    self.tls_context = tls_context
 
     self.extensions = smtp_extensions.new()
     self.extensions:add("8BITMIME")
     self.extensions:add("PIPELINING")
     self.extensions:add("ENHANCEDSTATUSCODES")
-    if tls_context then
+    if tls == true then
+        self.using_tls = true
+    elseif tls then
         self.extensions:add("STARTTLS")
+        self.tls_context = tls
     end
 
     return self

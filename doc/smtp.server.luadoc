@@ -1,10 +1,4 @@
 
---- This library provides client-side access an an SMTP server, commonly used
---  to transport email messages. Currently the client will take advantage of
---  the SIZE, STARTTLS and PIPELINING extensions and can send custom, arbitrary
---  commands. It is provided for convenience and as an example of using the
---  ratchet libraries.
-
 --- This library provides server-side capabilities for an SMTP server. Currently
 --  the server will advertize the 8BITMIME, PIPELINING, and ENHANCEDSTATUSCODES
 --  extensions and is capable of handling arbitrary, custom commands as well. It
@@ -24,10 +18,12 @@ module "ratchet.smtp.server"
 --                  table that the method can use to set the "code" and
 --                  "message" keys to control the response. See the manual for
 --                  more details.
---  @param send_size Used as the maximum size of a send() operation, defaults
---                   to half of the SO_SNDBUF socket option.
+--  @param tls If given as a ratchet.ssl context object, the STARTTLS extension
+--             will be enabled allowing clients to encrypt the session. If given
+--             as boolean true, it is assumed that the socket was previously
+--             encrypted and the session is secure.
 --  @return a new smtp.server object.
-function new(socket, handlers, send_size)
+function new(socket, handlers, send_size, tls_context)
 
 --- Sends a banner and starts listening for and responding to SMTP commands from
 --  the client. This function continues until the client sends a QUIT command.
