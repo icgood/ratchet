@@ -255,7 +255,7 @@ function commands.HELO(self, ehlo_as)
     }
 
     if self.handlers.EHLO then
-        self.handlers:EHLO(reply, ehlo_as)
+        self.handlers:EHLO(reply, ehlo_as, true)
     end
 
     self.io:send_reply(reply.code, reply.message)
