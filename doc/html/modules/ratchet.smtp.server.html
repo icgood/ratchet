@@ -55,6 +55,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
@@ -133,7 +137,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, send_size)</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, send_size, tls_context, tls)</td>
 	<td class="summary">Creates a new SMTP server object.</td>
 	</tr>
 
@@ -206,7 +210,7 @@ Sends a banner and starts listening for and responding to SMTP commands from the
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, send_size)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, send_size, tls_context, tls)</dt>
 <dd>
 Creates a new SMTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
 
@@ -223,7 +227,15 @@ Creates a new SMTP server object. A new object should be created with this funct
 	</li>
 	
 	<li>
-	  send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+	  send_size: 
+	</li>
+	
+	<li>
+	  tls_context: 
+	</li>
+	
+	<li>
+	  tls: If given as a ratchet.ssl context object, the STARTTLS extension will be enabled allowing clients to encrypt the session. If given as boolean true, it is assumed that the socket was previously encrypted and the session is secure.
 	</li>
 	
 </ul>

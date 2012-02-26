@@ -53,6 +53,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
@@ -148,7 +152,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(entry)</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(entry, errh)</td>
 	<td class="summary">Constructs and returns a new ratchet object.</td>
 	</tr>
 
@@ -320,7 +324,7 @@ false if all threads have completed execution, true otherwise.
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(entry)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(entry, errh)</dt>
 <dd>
 Constructs and returns a new ratchet object. This also creates a new libevent control structure that is freed when the object is collected.
 
@@ -330,6 +334,10 @@ Constructs and returns a new ratchet object. This also creates a new libevent co
 	
 	<li>
 	  entry: called initially as the entry-point ratchet thread.
+	</li>
+	
+	<li>
+	  errh: called after an error in a ratchet thread before the stack is unwound. It is given two arguments, the error and the thread.
 	</li>
 	
 </ul>

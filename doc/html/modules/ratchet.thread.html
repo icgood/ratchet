@@ -55,6 +55,10 @@
 	</li>
 
 	<li>
+		<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+	</li>
+
+	<li>
 		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
 	</li>
 
@@ -155,6 +159,11 @@
 	<tr>
 	<td class="name" nowrap><a href="#self">self</a>&nbsp;()</td>
 	<td class="summary">Returns the Lua thread object that is currently running, or nil for the main thread.</td>
+	</tr>
+
+	<tr>
+	<td class="name" nowrap><a href="#sigwait">sigwait</a>&nbsp;(signal)</td>
+	<td class="summary">Blocks the current thread until the current process receives the given signal.</td>
 	</tr>
 
 	<tr>
@@ -381,6 +390,32 @@ Returns the Lua thread object that is currently running, or nil for the main thr
 
 <h3>Return value:</h3>
 thread object or nil.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="sigwait"></a><strong>sigwait</strong>&nbsp;(signal)</dt>
+<dd>
+Blocks the current thread until the current process receives the given signal.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  signal: A signal by number or name (see signal(7)).
+	</li>
+	
+</ul>
+
+
+
+
+
 
 
 
