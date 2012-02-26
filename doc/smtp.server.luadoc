@@ -18,12 +18,16 @@ module "ratchet.smtp.server"
 --                  table that the method can use to set the "code" and
 --                  "message" keys to control the response. See the manual for
 --                  more details.
---  @param tls If given as a ratchet.ssl context object, the STARTTLS extension
---             will be enabled allowing clients to encrypt the session. If given
---             as boolean true, it is assumed that the socket was previously
---             encrypted and the session is secure.
+--  @param tls_context If given as a ratchet.ssl context object, the STARTTLS
+--                     extension will be enabled allowing clients to encrypt the
+--                     session. If given as boolean true, it is assumed that the
+--                     socket was previously encrypted and the session is
+--                     secure.
+--  @param tls_immediately If enabled, instead of providing the STARTTLS
+--                         extension, the connection would be immediately
+--                         encrypted with tls_context before sending the banner.
 --  @return a new smtp.server object.
-function new(socket, handlers, send_size, tls_context)
+function new(socket, handlers, tls_context, tls_immediately)
 
 --- Sends a banner and starts listening for and responding to SMTP commands from
 --  the client. This function continues until the client sends a QUIT command.
