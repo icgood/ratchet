@@ -32,6 +32,7 @@ TESTS = test_exec.lua \
 	test_smtp.lua \
 	test_smtp_bigmessage.lua \
 	test_smtp_starttls.lua \
+	test_smtp_tls.lua \
 	test_sockopt.lua
 XFAIL_TESTS = 
 EXTRA_DIST = $(TESTS)
@@ -49,7 +50,8 @@ cert.pem:
 	openssl req -x509 -nodes -subj '/CN=localhost' -newkey rsa:1024 -keyout $@ -out $@ > /dev/null
 else
 XFAIL_TESTS += test_ssl_send_recv.lua \
-	       test_smtp_starttls.lua
+	       test_smtp_starttls.lua \
+	       test_smtp_tls.lua
 endif
 
 if !HAVE_SOCKET

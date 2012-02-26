@@ -131,6 +131,7 @@ function server_ctx(host, port)
 
     local handler = ratchet.smtp.server.new(client, server_handlers, ssl1)
     handler:handle()
+    assert(handler.using_tls)
 end
 -- }}}
 

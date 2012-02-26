@@ -35,25 +35,32 @@ ratchet.smtp.server.__index = ratchet.smtp.server
 local commands = {}
 
 -- {{{ ratchet.smtp.server.new()
-function ratchet.smtp.server.new(socket, handlers, tls)
+function ratchet.smtp.server.new(socket, handlers, tls_context, tls_immediately)
     local self = {}
     setmetatable(self, ratchet.smtp.server)
 
     self.handlers = handlers
     self.io = smtp_io.new(socket)
+    self.tls_context = tls_context
+    self.tls_immediately = tls_immediately
 
     self.extensions = smtp_extensions.new()
     self.extensions:add("8BITMIME")
     self.extensions:add("PIPELINING")
     self.extensions:add("ENHANCEDSTATUSCODES")
-    if tls == true then
-        self.using_tls = true
-    elseif tls then
+    if tls_context and not tls_immediately then
         self.extensions:add("STARTTLS")
-        self.tls_context = tls
     end
 
     return self
+end
+-- }}}
+
+-- {{{ encrypt_socket()
+local function encrypt_socket(self)
+    local enc = self.io.socket:encrypt(self.tls_context)
+    enc:server_handshake()
+    self.using_tls = true
 end
 -- }}}
 
@@ -299,11 +306,9 @@ function commands.STARTTLS(self, arg)
     self.io:flush_send()
 
     if reply.code == "220" then
-        local enc = self.io.socket:encrypt(self.tls_context)
-        enc:server_handshake()
+        encrypt_socket(self)
 
         self.ehlo_as = nil
-        self.using_tls = true
 
         self.extensions:drop("STARTTLS")
     end
@@ -528,6 +533,10 @@ end
 
 -- {{{ handle_propagate_errors()
 local function handle_propagate_errors(self)
+    if self.tls_immediately then
+        encrypt_socket(self)
+    end
+
     commands.BANNER(self)
 
     repeat
