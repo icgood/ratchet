@@ -304,6 +304,216 @@ static int rexec_wait (lua_State *L)
 }
 /* }}} */
 
+/* {{{ rexec_communicate() */
+static int rexec_communicate (lua_State *L)
+{
+	(void) luaL_checkudata (L, 1, "ratchet_exec_meta");
+	int ctx = 0;
+
+	lua_getctx (L, &ctx);
+
+	const char *data = NULL;
+	if (ctx <= 2)
+		data = luaL_optstring (L, 2, NULL);
+
+top:
+
+	if (ctx == 0)
+	{
+		lua_settop (L, 2);
+		lua_pushliteral (L, "");
+		lua_pushliteral (L, "");
+
+		lua_getfield (L, 1, "start");
+		lua_pushvalue (L, 1);
+		lua_callk (L, 1, 0, 1, rexec_communicate);
+		ctx = 1;
+		goto top;
+	}
+
+	else if (ctx == 1)
+	{
+		if (data)
+		{
+			lua_getuservalue (L, 1);
+			lua_getfield (L, -1, "stdin");
+			lua_remove (L, -2);
+			lua_getfield (L, -1, "write");
+			lua_insert (L, -2);
+			lua_pushvalue (L, 2);
+			lua_callk (L, 2, 0, 2, rexec_communicate);
+			ctx = 2;
+			goto top;
+		}
+		else
+		{
+			ctx = 2;
+			goto top;
+		}
+	}
+
+	else if (ctx == 2)
+	{
+		lua_getuservalue (L, 1);
+		lua_getfield (L, -1, "stdin");
+		lua_remove (L, -2);
+		lua_getfield (L, -1, "close");
+		lua_insert (L, -2);
+		lua_callk (L, 1, 0, 3, rexec_communicate);
+
+		lua_getuservalue (L, 1);
+		lua_createtable (L, 2, 0);
+		lua_getfield (L, -2, "stdout");
+		lua_rawseti (L, -2, 1);
+		lua_getfield (L, -2, "stderr");
+		lua_rawseti (L, -2, 2);
+		lua_replace (L, 2);
+		lua_pop (L, 1);
+
+		ctx = 3;
+		goto top;
+	}
+
+	else if (ctx == 3)
+	{
+		lua_rawgeti (L, 2, 1);
+		if (lua_isnil (L, -1))
+		{
+			lua_pop (L, 1);
+			ctx = 9;
+			goto top;
+		}
+		lua_pop (L, 1);
+
+		lua_pushlightuserdata (L, RATCHET_YIELD_MULTIRW);
+		lua_pushvalue (L, 2);
+		lua_yieldk (L, 2, 4, rexec_communicate);
+		return luaL_error (L, "unreachable");
+	}
+
+	else if (ctx == 4)
+	{
+		if (lua_isnumber (L, -1) && SIGPIPE == lua_tointeger (L, -1))
+		{
+			lua_pop (L, 1);
+			ctx = 9;
+			goto top;
+		}
+
+		lua_getuservalue (L, 1);
+		lua_getfield (L, -1, "stdout");
+		if (lua_compare (L, -1, -3, LUA_OPEQ))
+		{
+			lua_replace (L, -3);
+			lua_pop (L, 1);
+			ctx = 5;
+			goto top;
+		}
+		lua_pop (L, 1);
+
+		lua_getfield (L, -1, "stderr");
+		if (lua_compare (L, -1, -3, LUA_OPEQ))
+		{
+			lua_replace (L, -3);
+			lua_pop (L, 1);
+			ctx = 7;
+			goto top;
+		}
+		lua_pop (L, 3);
+
+		ctx = 3;
+		goto top;
+	}
+
+	else if (ctx == 5)
+	{
+		lua_getfield (L, -1, "read");
+		lua_insert (L, -2);
+		lua_callk (L, 1, 1, 6, rexec_communicate);
+		ctx = 6;
+		goto top;
+	}
+
+	else if (ctx == 6)
+	{
+		if (0 == strcmp ("", lua_tostring (L, -1)))
+		{
+			lua_pop (L, 1);
+			lua_pushvalue (L, 2);
+			lua_rawgeti (L, -1, 2);
+			lua_rawseti (L, -2, 1);
+			lua_pushnil (L);
+			lua_rawseti (L, -2, 2);
+			lua_pop (L, 1);
+			ctx = 3;
+			goto top;
+		}
+		else
+		{
+			lua_pushvalue (L, 3);
+			lua_insert (L, -2);
+			lua_concat (L, 2);
+			lua_replace (L, 3);
+			ctx = 3;
+			goto top;
+		}
+	}
+
+	else if (ctx == 7)
+	{
+		lua_getfield (L, -1, "read");
+		lua_insert (L, -2);
+		lua_callk (L, 1, 1, 8, rexec_communicate);
+		ctx = 8;
+		goto top;
+	}
+
+	else if (ctx == 8)
+	{
+		if (0 == strcmp ("", lua_tostring (L, -1)))
+		{
+			lua_pop (L, 1);
+			lua_pushvalue (L, 2);
+			lua_rawgeti (L, -1, 2);
+			if (lua_isnil (L, -1))
+				lua_rawseti (L, -2, 1);
+			else
+			{
+				lua_pop (L, 1);
+				lua_pushnil (L);
+				lua_rawseti (L, -2, 2);
+			}
+			lua_pop (L, 1);
+			ctx = 3;
+			goto top;
+		}
+		else
+		{
+			lua_pushvalue (L, 4);
+			lua_insert (L, -2);
+			lua_concat (L, 2);
+			lua_replace (L, 4);
+			ctx = 3;
+			goto top;
+		}
+	}
+
+	else if (ctx == 9)
+	{
+		lua_getfield (L, 1, "wait");
+		lua_pushvalue (L, 1);
+		lua_callk (L, 1, 1, 10, rexec_communicate);
+		ctx = 10;
+		goto top;
+	}
+
+	else if (ctx == 10)
+		return 3;
+
+	return luaL_error (L, "unreachable");
+}
+/* }}} */
+
 /* {{{ rexec_kill() */
 static int rexec_kill (lua_State *L)
 {
@@ -434,6 +644,7 @@ int luaopen_ratchet_exec (lua_State *L)
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_argv", rexec_get_argv},
+		{"communicate", rexec_communicate},
 		{"start", rexec_start},
 		{"stdin", rexec_stdin},
 		{"stdout", rexec_stdout},
