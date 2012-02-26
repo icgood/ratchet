@@ -492,14 +492,14 @@ static int rssl_session_shutdown (lua_State *L)
 			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
 		case SSL_ERROR_SYSCALL:
-			if (ret == 0)
+			if (ret == 0 || (ret == -1 && orig_errno == EPIPE))
 			{
 				lua_pushboolean (L, 0);
 				return 1;
 			}
 
 		default:
-			return handle_ssl_error (L, "ratchet.ssl.session.write()", ret, error, orig_errno);
+			return handle_ssl_error (L, "ratchet.ssl.session.shutdown()", ret, error, orig_errno);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -557,7 +557,7 @@ static int rssl_session_read (lua_State *L)
 			return lua_yieldk (L, 2, 1, rssl_session_read);
 
 		default:
-			return handle_ssl_error (L, "ratchet.ssl.session.write()", ret, error, orig_errno);
+			return handle_ssl_error (L, "ratchet.ssl.session.read()", ret, error, orig_errno);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -649,7 +649,7 @@ static int rssl_session_connect (lua_State *L)
 			return lua_yieldk (L, 2, 1, rssl_session_connect);
 
 		default:
-			return handle_ssl_error (L, "ratchet.ssl.session.write()", ret, error, orig_errno);
+			return handle_ssl_error (L, "ratchet.ssl.session.client_handshake()", ret, error, orig_errno);
 	}
 
 	return luaL_error (L, "unreachable");
@@ -693,7 +693,7 @@ static int rssl_session_accept (lua_State *L)
 			return lua_yieldk (L, 2, 1, rssl_session_accept);
 
 		default:
-			return handle_ssl_error (L, "ratchet.ssl.session.write()", ret, error, orig_errno);
+			return handle_ssl_error (L, "ratchet.ssl.session.server_handshake()", ret, error, orig_errno);
 	}
 
 	return luaL_error (L, "unreachable");
