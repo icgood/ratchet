@@ -8,8 +8,10 @@ module "ratchet"
 --- Constructs and returns a new ratchet object. This also creates a new libevent
 --  control structure that is freed when the object is collected.
 --  @param entry called initially as the entry-point ratchet thread.
+--  @param errh called after an error in a ratchet thread before the stack is
+--              unwound. It is given two arguments, the error and the thread.
 --  @return a new ratchet object.
-function new(entry)
+function new(entry, errh)
 
 --- Returns the polling method used behind-the-scenes by libevent.
 --  @param self the ratchet object.
