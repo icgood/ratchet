@@ -813,6 +813,7 @@ static int ratchet_wait_for_timeout (lua_State *L)
 static int ratchet_wait_for_multi (lua_State *L)
 {
 	/* Gather args into usable data. */
+	lua_settop (L, 5);
 	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
 	luaL_checktype (L, 3, LUA_TTABLE);
@@ -825,7 +826,6 @@ static int ratchet_wait_for_multi (lua_State *L)
 	}
 	struct timeval tv;
 	int use_tv = gettimeval_opt (L, 5, &tv);
-	lua_settop (L, 5);
 
 	int i, nread = lua_rawlen (L, 3), nwrite = lua_rawlen (L, 4);
 
