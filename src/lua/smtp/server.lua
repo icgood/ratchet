@@ -534,6 +534,9 @@ end
 -- {{{ handle_propagate_errors()
 local function handle_propagate_errors(self)
     if self.tls_immediately then
+        if self.handlers.STARTTLS then
+            self.handlers:STARTTLS({}, self.extensions)
+        end
         encrypt_socket(self)
     end
 
