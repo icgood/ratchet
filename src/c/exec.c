@@ -341,7 +341,7 @@ top:
 			lua_getfield (L, -1, "write");
 			lua_insert (L, -2);
 			lua_pushvalue (L, 2);
-			lua_callk (L, 2, 0, 2, rexec_communicate);
+			lua_callk (L, 2, 1, 2, rexec_communicate);
 			ctx = 2;
 			goto top;
 		}
@@ -354,6 +354,15 @@ top:
 
 	else if (ctx == 2)
 	{
+		if (!lua_isnil (L, -1))
+		{
+			lua_replace (L, 2);
+			data = lua_tostring (L, 2);
+			ctx = 1;
+			goto top;
+		}
+		lua_pop (L, 1);
+
 		lua_getuservalue (L, 1);
 		lua_getfield (L, -1, "stdin");
 		lua_remove (L, -2);
