@@ -137,7 +137,7 @@
 	</tr>
 
 	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, send_size, tls_context, tls)</td>
+	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, tls_context, tls_immediately)</td>
 	<td class="summary">Creates a new SMTP server object.</td>
 	</tr>
 
@@ -210,7 +210,7 @@ Sends a banner and starts listening for and responding to SMTP commands from the
 
 
 
-<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, send_size, tls_context, tls)</dt>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, tls_context, tls_immediately)</dt>
 <dd>
 Creates a new SMTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
 
@@ -227,15 +227,11 @@ Creates a new SMTP server object. A new object should be created with this funct
 	</li>
 	
 	<li>
-	  send_size: 
+	  tls_context: If given as a ratchet.ssl context object, the STARTTLS extension will be enabled allowing clients to encrypt the session. If given as boolean true, it is assumed that the socket was previously encrypted and the session is secure.
 	</li>
 	
 	<li>
-	  tls_context: 
-	</li>
-	
-	<li>
-	  tls: If given as a ratchet.ssl context object, the STARTTLS extension will be enabled allowing clients to encrypt the session. If given as boolean true, it is assumed that the socket was previously encrypted and the session is secure.
+	  tls_immediately: If enabled, instead of providing the STARTTLS extension, the connection would be immediately encrypted with tls_context before sending the banner.
 	</li>
 	
 </ul>

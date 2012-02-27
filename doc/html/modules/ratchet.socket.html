@@ -298,7 +298,7 @@ Pauses the current thread until a new connection to the socket is attempted. The
 
 
 <h3>Return value:</h3>
-a new socket object for the connection, followed by a string with the IP address of the connecting host.
+a new socket object for the connection, followed by the sockaddr userdata of the connecting host (convertible to an IP address with tostring()).
 
 
 

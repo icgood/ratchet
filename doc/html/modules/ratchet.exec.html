@@ -127,6 +127,11 @@
 <table class="function_list">
 
 	<tr>
+	<td class="name" nowrap><a href="#communicate">communicate</a>&nbsp;(self, data)</td>
+	<td class="summary">Starts the command process.</td>
+	</tr>
+
+	<tr>
 	<td class="name" nowrap><a href="#get_argv">get_argv</a>&nbsp;(self)</td>
 	<td class="summary">Returns the table array of arguments that the exec object was created with.</td>
 	</tr>
@@ -180,6 +185,39 @@
 
 <h2><a name="functions"></a>Functions</h2>
 <dl class="function">
+
+
+
+<dt><a name="communicate"></a><strong>communicate</strong>&nbsp;(self, data)</dt>
+<dd>
+Starts the command process. After writing optional data, stdin is closed. Reads data from stdout and stderr until both are closed. Finally, calls wait() to finish the command process. Functions similarly to the Popen.communicate() method of the subprocess module in Python.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the exec object.
+	</li>
+	
+	<li>
+	  data: optional data to write to stdin before closing it.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+The concatenations of stdout and stderr, respectively, followed by the exit status.
+
+
+
+</dd>
+
 
 
 
