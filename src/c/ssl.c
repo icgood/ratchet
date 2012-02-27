@@ -48,9 +48,10 @@ static int handle_ssl_error (lua_State *L, const char *func, int ret, unsigned l
 	unsigned long error_queue = ERR_get_error ();
 	if (error_queue)
 	{
-		ERR_clear_error ();
 		const char *reason = ERR_reason_error_string (error);
-		return ratchet_error_str (L, func, "SSLERROR", "SSL error: %s", reason);
+		ERR_clear_error ();
+		if (reason)
+			return ratchet_error_str (L, func, "SSLERROR", "SSL error: %s", reason);
 	}
 
 	if (error == SSL_ERROR_SYSCALL)
