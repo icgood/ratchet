@@ -65,7 +65,7 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 		char buffer[INET_ADDRSTRLEN];
 		struct in_addr *in = &((struct sockaddr_in *) addr)->sin_addr;
 		if (!inet_ntop (AF_INET, in, buffer, INET_ADDRSTRLEN))
-			return ratchet_error_errno (L, NULL, "inet_ntop");
+			return ratchet_error_errno (L, "ratchet.socket.sockaddr.__tostring()", "inet_ntop");
 		lua_pushstring (L, buffer);
 	}
 
@@ -74,9 +74,12 @@ static int push_inet_ntop (lua_State *L, struct sockaddr *addr)
 		char buffer[INET6_ADDRSTRLEN];
 		struct in6_addr *in = &((struct sockaddr_in6 *) addr)->sin6_addr;
 		if (!inet_ntop (AF_INET6, in, buffer, INET6_ADDRSTRLEN))
-			return ratchet_error_errno (L, NULL, "inet_ntop");
+			return ratchet_error_errno (L, "ratchet.socket.sockaddr.__tostring()", "inet_ntop");
 		lua_pushstring (L, buffer);
 	}
+
+	else if (addr->sa_family == AF_UNIX)
+		lua_pushstring (L, ((struct sockaddr_un *) addr)->sun_path);
 
 	else
 		lua_pushnil (L);
@@ -101,19 +104,6 @@ static int call_tracer (lua_State *L, int index, const char *type, int args)
 	lua_insert (L, -args-1);
 
 	lua_call (L, args+1, 0);
-
-	return 0;
-}
-/* }}} */
-
-/* {{{ throw_fd_errors() */
-static int throw_fd_errors (lua_State *L, int fd)
-{
-	int error = 0;
-	socklen_t errorlen = sizeof (int);
-
-	if (getsockopt (fd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
-		return ratchet_error_errno (L, NULL, "getsockopt");
 
 	return 0;
 }
@@ -190,6 +180,9 @@ static int build_tcp_info (lua_State *L)
 			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
 
 			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
+			luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+			lua_setmetatable (L, -2);
+
 			memset (addr, 0, sizeof (struct sockaddr_in6));
 			addr->sin6_family = AF_INET6;
 			addr->sin6_port = htons (port);
@@ -218,6 +211,9 @@ static int build_tcp_info (lua_State *L)
 			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
 
 			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
+			luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+			lua_setmetatable (L, -2);
+
 			memset (addr, 0, sizeof (struct sockaddr_in));
 			addr->sin_family = AF_INET;
 			addr->sin_port = htons (port);
@@ -268,6 +264,9 @@ static int build_udp_info (lua_State *L)
 			struct in6_addr *iaddr = (struct in6_addr *) lua_topointer (L, -1);
 
 			struct sockaddr_in6 *addr = (struct sockaddr_in6 *) lua_newuserdata (L, sizeof (struct sockaddr_in6));
+			luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+			lua_setmetatable (L, -2);
+
 			memset (addr, 0, sizeof (struct sockaddr_in6));
 			addr->sin6_family = AF_INET6;
 			addr->sin6_port = htons (port);
@@ -295,6 +294,9 @@ static int build_udp_info (lua_State *L)
 			struct in_addr *iaddr = (struct in_addr *) lua_topointer (L, -1);
 
 			struct sockaddr_in *addr = (struct sockaddr_in *) lua_newuserdata (L, sizeof (struct sockaddr_in));
+			luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+			lua_setmetatable (L, -2);
+
 			memset (addr, 0, sizeof (struct sockaddr_in));
 			addr->sin_family = AF_INET;
 			addr->sin_port = htons (port);
@@ -328,7 +330,7 @@ static int rsock_new (lua_State *L)
 		return ratchet_error_errno (L, "ratchet.socket.new()", "socket");
 
 	if (set_nonblocking (*fd) < 0)
-		return ratchet_error_errno (L, "ratchet.socket.new()", NULL);
+		return ratchet_error_errno (L, "ratchet.socket.new()", "fcntl");
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -360,9 +362,9 @@ static int rsock_new_pair (lua_State *L)
 	*fd2 = sv[1];
 
 	if (set_nonblocking (*fd1) < 0)
-		return ratchet_error_errno (L, "ratchet.socket.new_pair()", NULL);
+		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
 	if (set_nonblocking (*fd2) < 0)
-		return ratchet_error_errno (L, "ratchet.socket.new_pair()", NULL);
+		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -393,7 +395,7 @@ static int rsock_from_fd (lua_State *L)
 		return ratchet_error_str (L, "ratchet.socket.from_fd()", "EBADF", "Invalid file descriptor.");
 
 	if (set_nonblocking (*fd) < 0)
-		return ratchet_error_errno (L, "ratchet.socket.from_fd()", NULL);
+		return ratchet_error_errno (L, "ratchet.socket.from_fd()", "fcntl");
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -425,6 +427,9 @@ static int rsock_prepare_unix (lua_State *L)
 	lua_setfield (L, 2, "protocol");
 
 	struct sockaddr_un *addr = (struct sockaddr_un *) lua_newuserdata (L, sizeof (struct sockaddr_un));
+	luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+	lua_setmetatable (L, -2);
+
 	addr->sun_family = AF_UNIX;
 	strncpy (addr->sun_path, path, UNIX_PATH_MAX-1);
 	addr->sun_path[UNIX_PATH_MAX-1] = '\0';
@@ -647,6 +652,15 @@ static int rsock_multi_recv (lua_State *L)
 
 /* ---- Member Functions ---------------------------------------------------- */
 
+/* {{{ rsock_sockaddr_tostring() */
+static int rsock_sockaddr_tostring (lua_State *L)
+{
+	struct sockaddr *addr = (struct sockaddr *) luaL_checkudata (L, 1, "ratchet_socket_sockaddr_meta");
+	push_inet_ntop (L, addr);
+	return 1;
+}
+/* }}} */
+
 /* {{{ rsock_gc() */
 static int rsock_gc (lua_State *L)
 {
@@ -722,7 +736,7 @@ static int rsock_check_errors (lua_State *L)
 	if (error)
 	{
 		errno = error;
-		return ratchet_error_errno (L, "ratchet.socket.check_errors()", NULL);
+		return ratchet_error_errno (L, "ratchet.socket.check_errors()", "<unknown>");
 	}
 	else
 		lua_pushboolean (L, 1);
@@ -735,8 +749,7 @@ static int rsock_check_errors (lua_State *L)
 static int rsock_bind (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
-	luaL_checktype (L, 2, LUA_TUSERDATA);
-	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
+	struct sockaddr *addr = (struct sockaddr *) luaL_checkudata (L, 2, "ratchet_socket_sockaddr_meta");
 	socklen_t addrlen = (socklen_t) lua_rawlen (L, 2);
 
 	if (addr->sa_family == AF_UNIX)
@@ -828,8 +841,7 @@ static int rsock_set_tracer (lua_State *L)
 static int rsock_connect (lua_State *L)
 {
 	int sockfd = socket_fd (L, 1);
-	luaL_checktype (L, 2, LUA_TUSERDATA);
-	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
+	struct sockaddr *addr = (struct sockaddr *) luaL_checkudata (L, 2, "ratchet_socket_sockaddr_meta");
 	socklen_t addrlen = (socklen_t) lua_rawlen (L, 2);
 
 	int ctx = 0;
@@ -851,9 +863,13 @@ static int rsock_connect (lua_State *L)
 			return ratchet_error_errno (L, "ratchet.socket.connect()", "connect");
 	}
 
-	throw_fd_errors (L, sockfd);
+	int error = 0;
+	socklen_t errorlen = sizeof (int);
 
-	lua_pushvalue (L, 2);
+	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, (void *) &error, &errorlen) < 0)
+		return ratchet_error_errno (L, "ratchet.socket.connect()", "getsockopt");
+
+	push_inet_ntop (L, addr);
 	call_tracer (L, 1, "connect", 1);
 
 	return 0;
@@ -867,14 +883,21 @@ static int rsock_accept (lua_State *L)
 
 	int ctx = 0;
 	lua_getctx (L, &ctx);
-	if (ctx == 1 && !lua_toboolean (L, 2))
+	if (ctx == 1 && !lua_toboolean (L, 3))
 		return ratchet_error_str (L, "ratchet.socket.accept()", "ETIMEDOUT", "Timed out on accept.");
-	lua_settop (L, 1);
+	lua_settop (L, 2);
 
 	socklen_t addr_len = sizeof (struct sockaddr_storage);
-	struct sockaddr_storage addr;
+	struct sockaddr *addr = (struct sockaddr *) lua_touserdata (L, 2);
+	if (!addr)
+	{
+		addr = (struct sockaddr *) lua_newuserdata (L, sizeof (struct sockaddr_storage));
+		luaL_getmetatable (L, "ratchet_socket_sockaddr_meta");
+		lua_setmetatable (L, -2);
+		lua_replace (L, 2);
+	}
 
-	int clientfd = accept (sockfd, (struct sockaddr *) &addr, &addr_len);
+	int clientfd = accept (sockfd, addr, &addr_len);
 	if (clientfd == -1)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -895,9 +918,9 @@ static int rsock_accept (lua_State *L)
 	lua_call (L, 1, 1);
 	lua_remove (L, -2);
 
-	push_inet_ntop (L, (struct sockaddr *) &addr);
+	lua_pushvalue (L, 2);
 
-	lua_pushvalue (L, -1);
+	push_inet_ntop (L, addr);
 	call_tracer (L, 1, "accept", 1);
 
 	return 2;
@@ -1128,6 +1151,12 @@ int luaopen_ratchet_socket (lua_State *L)
 		{NULL}
 	};
 
+	/* Meta-methods for struct sockaddr userdata. */
+	static const luaL_Reg sockaddrmeta[] = {
+		{"__tostring", rsock_sockaddr_tostring},
+		{NULL}
+	};
+
 	/* Set up the ratchet.socket namespace functions. */
 	luaL_newlib (L, funcs);
 	lua_pushvalue (L, -1);
@@ -1138,6 +1167,11 @@ int luaopen_ratchet_socket (lua_State *L)
 	luaL_setfuncs (L, metameths, 0);
 	luaL_newlib (L, meths);
 	lua_setfield (L, -2, "__index");
+	lua_pop (L, 1);
+
+	/* Set up the struct sockaddr userdata metatable. */
+	luaL_newmetatable (L, "ratchet_socket_sockaddr_meta");
+	luaL_setfuncs (L, sockaddrmeta, 0);
 	lua_pop (L, 1);
 
 	return 1;

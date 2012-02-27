@@ -11,7 +11,7 @@ function ctx1(host, port)
 
     local client, from = socket:accept()
 
-    local ptr = ratchet.dns.query(from, "ptr")
+    local ptr = ratchet.dns.query(tostring(from), "ptr")
     assert(ptr and ptr[1] == "localhost.")
 end
 
