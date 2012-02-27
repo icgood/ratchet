@@ -52,7 +52,7 @@ static int rtfd_new (lua_State *L)
 		return ratchet_error_errno (L, "ratchet.timerfd.new()", "timerfd_create");
 
 	if (set_nonblocking (*tfd) < 0)
-		return ratchet_error_errno (L, "ratchet.timerfd.new()", NULL);
+		return ratchet_error_errno (L, "ratchet.timerfd.new()", "<unknown>");
 
 	luaL_getmetatable (L, "ratchet_timerfd_meta");
 	lua_setmetatable (L, -2);

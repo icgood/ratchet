@@ -54,7 +54,7 @@ static int rsockopt_get_boolean (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 
@@ -70,7 +70,7 @@ static int rsockopt_get_int (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 
@@ -86,7 +86,7 @@ static int rsockopt_get_string (lua_State *L, int fd, int opt, int maxlen)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 
@@ -106,7 +106,7 @@ static int rsockopt_get_linger (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 
@@ -129,7 +129,7 @@ static int rsockopt_get_peercred (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 #endif
@@ -150,7 +150,7 @@ static int rsockopt_get_timeval (lua_State *L, int fd, int opt)
 		return 1;
 	}
 	else
-		return ratchet_error_errno (L, NULL, "getsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.getsockopt()", "getsockopt");
 }
 /* }}} */
 
@@ -162,7 +162,7 @@ static int rsockopt_set_boolean (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 
@@ -174,7 +174,7 @@ static int rsockopt_set_int (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 
@@ -187,7 +187,7 @@ static int rsockopt_set_string (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 
@@ -207,7 +207,7 @@ static int rsockopt_set_linger (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 
@@ -232,7 +232,7 @@ static int rsockopt_set_peercred (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 #endif
@@ -253,7 +253,7 @@ static int rsockopt_set_timeval (lua_State *L, int fd, int opt, int valindex)
 	if (ret == 0)
 		return 0;
 	else
-		return ratchet_error_errno (L, NULL, "setsockopt");
+		return ratchet_error_errno (L, "ratchet.socket.setsockopt()", "setsockopt");
 }
 /* }}} */
 

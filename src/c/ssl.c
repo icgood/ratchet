@@ -61,7 +61,7 @@ static int handle_ssl_error (lua_State *L, const char *func, int ret, unsigned l
 		else if (ret == -1 && orig_errno)
 		{
 			errno = orig_errno;
-			return ratchet_error_errno (L, func, NULL);
+			return ratchet_error_errno (L, func, "<unknown>");
 		}
 	}
 
@@ -492,7 +492,7 @@ static int rssl_session_shutdown (lua_State *L)
 			return lua_yieldk (L, 2, 1, rssl_session_shutdown);
 
 		case SSL_ERROR_SYSCALL:
-			if (ret == 0 || (ret == -1 && orig_errno == EPIPE))
+			if (ret == 0 || (ret == -1 && (orig_errno == EPIPE || orig_errno == EBADF)))
 			{
 				lua_pushboolean (L, 0);
 				return 1;
