@@ -1,0 +1,475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>ratchet.ssl.session: Module Index</title>
+    <link rel="stylesheet" href="../luadoc.css" type="text/css" />
+    <!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
+</head>
+
+<body>
+<div id="container">
+
+<div id="product">
+    <div id="product_logo"></div>
+    <div id="product_name"><big><b></b></big></div>
+    <div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+<div id="navigation">
+
+
+<h1>LuaDoc</h1>
+<ul>
+	
+	<li><a href="../index.html">Index</a></li>
+	
+</ul>
+
+
+<!-- Module list -->
+
+<h1>Modules</h1>
+<ul>
+
+	<li>
+		<a href="../modules/ratchet.html">ratchet</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.error.html">ratchet.error</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+	</li>
+
+	<li><strong>ratchet.ssl.session</strong></li>
+	
+	<li>
+		<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+	</li>
+
+</ul>
+
+
+
+<!-- File list -->
+
+
+
+
+
+
+</div><!-- id="navigation" -->
+
+<div id="content">
+
+<h1>Module <code>ratchet.ssl.session</code></h1>
+
+<p>The ssl.session library provides an SSL encryption session. This session will apply to one encrypted session, such as a socket. These objects are not created directly, but are returned by ssl:create_session(). These functions can fail, see error handling section in manual for details.</p>
+
+
+
+
+
+<h2>Functions</h2>
+<table class="function_list">
+
+    <tr>
+    <td class="name" nowrap><a href="#client_handshake">client_handshake</a>&nbsp;(self)</td>
+    <td class="summary">Initiates the encryption handshake for the client-side connection, e.g.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#get_cipher">get_cipher</a>&nbsp;(self)</td>
+    <td class="summary">Gets the current SSL cipher.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#get_engine">get_engine</a>&nbsp;(self)</td>
+    <td class="summary">Returns the communication engine powering the encrypted session, generally a socket object.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#get_rfc2253">get_rfc2253</a>&nbsp;(self)</td>
+    <td class="summary">Gets a RFC 2253 string representation of the remote peer certificate.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#read">read</a>&nbsp;(self, maxlen)</td>
+    <td class="summary">Reads data on the encrypted session.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#server_handshake">server_handshake</a>&nbsp;(self)</td>
+    <td class="summary">Initiates the encryption handshake for the server-side connection, e.g.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#shutdown">shutdown</a>&nbsp;(self, the)</td>
+    <td class="summary">Initiates a clean shutdown of the encryption session.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#verify_certificate">verify_certificate</a>&nbsp;(self, host)</td>
+    <td class="summary">Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#write">write</a>&nbsp;(self, data)</td>
+    <td class="summary">Writes data on the encrypted session.</td>
+    </tr>
+
+</table>
+
+
+
+
+
+
+<br/>
+<br/>
+
+
+
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+
+
+
+<dt><a name="client_handshake"></a><strong>client_handshake</strong>&nbsp;(self)</dt>
+<dd>
+Initiates the encryption handshake for the client-side connection, e.g. the socket that ran connect().
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_cipher"></a><strong>get_cipher</strong>&nbsp;(self)</dt>
+<dd>
+Gets the current SSL cipher.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+current cipher name.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_engine"></a><strong>get_engine</strong>&nbsp;(self)</dt>
+<dd>
+Returns the communication engine powering the encrypted session, generally a socket object.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+the communication engine object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="get_rfc2253"></a><strong>get_rfc2253</strong>&nbsp;(self)</dt>
+<dd>
+Gets a RFC 2253 string representation of the remote peer certificate.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+see RFC 2253.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="read"></a><strong>read</strong>&nbsp;(self, maxlen)</dt>
+<dd>
+Reads data on the encrypted session. This method is rarely called directly, as it is usually called by the communication engine itself. For example, with socket objects, calling recv() after encrypt() will actually call this method. The return value will be an empty string if the other side has shut down.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+	<li>
+	  maxlen: optional maximum number of bytes to read.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+string of data received on the session, or nil on timeout.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="server_handshake"></a><strong>server_handshake</strong>&nbsp;(self)</dt>
+<dd>
+Initiates the encryption handshake for the server-side connection, e.g. the socket returned by accept().
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="shutdown"></a><strong>shutdown</strong>&nbsp;(self, the)</dt>
+<dd>
+Initiates a clean shutdown of the encryption session.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: 
+	</li>
+	
+	<li>
+	  the: ssl session object.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="verify_certificate"></a><strong>verify_certificate</strong>&nbsp;(self, host)</dt>
+<dd>
+Checks the remote peer's certificate against the trusted CAs, and optionally checks that Common-Name field of the certificate matches the given host.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+	<li>
+	  host: optional host to compare against "Common Name" field(s).
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a boolean if the peer provided a certificate, a boolean if the peer's certificate verified, and a boolean if host is provided and matches the certificate's "Common Name" field(s).
+
+
+
+</dd>
+
+
+
+
+<dt><a name="write"></a><strong>write</strong>&nbsp;(self, data)</dt>
+<dd>
+Writes data on the encrypted session. This method is rarely called directly, as it is usually called by the communication engine itself. For example, with socket objects, calling send() after encrypt() will actually call this method.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the ssl session object.
+	</li>
+	
+	<li>
+	  data: the data to send on the session.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+true if sent successfully, nil on timeout.
+
+
+
+</dd>
+
+
+</dl>
+
+
+
+
+
+
+</div> <!-- id="content" -->
+
+</div> <!-- id="main" -->
+
+<div id="about">
+    <p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
+</div> <!-- id="about" -->
+
+</div> <!-- id="container" -->
+</body>
+</html>

@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>ratchet.thread: Module Index</title>
+    <link rel="stylesheet" href="../luadoc.css" type="text/css" />
+    <!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
+</head>
+
+<body>
+<div id="container">
+
+<div id="product">
+    <div id="product_logo"></div>
+    <div id="product_name"><big><b></b></big></div>
+    <div id="product_description"></div>
+</div> <!-- id="product" -->
+
+<div id="main">
+
+<div id="navigation">
+
+
+<h1>LuaDoc</h1>
+<ul>
+	
+	<li><a href="../index.html">Index</a></li>
+	
+</ul>
+
+
+<!-- Module list -->
+
+<h1>Modules</h1>
+<ul>
+
+	<li>
+		<a href="../modules/ratchet.html">ratchet</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.error.html">ratchet.error</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+	</li>
+
+	<li><strong>ratchet.thread</strong></li>
+	
+	<li>
+		<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+	</li>
+
+	<li>
+		<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+	</li>
+
+</ul>
+
+
+
+<!-- File list -->
+
+
+
+
+
+
+</div><!-- id="navigation" -->
+
+<div id="content">
+
+<h1>Module <code>ratchet.thread</code></h1>
+
+<p>This module provides as set of functions for creating and controlling threads from within the context of a running ratchet. These functions do not need to be passed a ratchet object, they will deduce it from the current thread.</p>
+
+
+
+
+
+<h2>Functions</h2>
+<table class="function_list">
+
+    <tr>
+    <td class="name" nowrap><a href="#attach">attach</a>&nbsp;(func, ...)</td>
+    <td class="summary">Queues a new thread for execution.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#attach_background">attach_background</a>&nbsp;(func, ...)</td>
+    <td class="summary">Queues a new thread for execution.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#block_on">block_on</a>&nbsp;(reads, writes, timeout)</td>
+    <td class="summary">Blocks on multiple items, with a single timeout.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#kill">kill</a>&nbsp;(thread)</td>
+    <td class="summary">Kills a given thread.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#kill_all">kill_all</a>&nbsp;(threads)</td>
+    <td class="summary">Kills all threads in the table sequence.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#pause">pause</a>&nbsp;()</td>
+    <td class="summary">Pauses the current thread indefinitely.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#self">self</a>&nbsp;()</td>
+    <td class="summary">Returns the Lua thread object that is currently running, or nil for the main thread.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#sigwait">sigwait</a>&nbsp;(signal)</td>
+    <td class="summary">Blocks the current thread until the current process receives the given signal.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#space">space</a>&nbsp;(premade)</td>
+    <td class="summary">Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#timer">timer</a>&nbsp;(seconds)</td>
+    <td class="summary">Pauses the current thread for the given period.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#unpause">unpause</a>&nbsp;(thread, ...)</td>
+    <td class="summary">Unpauses the given thread.</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#wait_all">wait_all</a>&nbsp;(threads)</td>
+    <td class="summary">Pauses the current thread until all threads listed in the given table have completed their execution either normally or by error.</td>
+    </tr>
+
+</table>
+
+
+
+
+
+
+<br/>
+<br/>
+
+
+
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+
+
+
+<dt><a name="attach"></a><strong>attach</strong>&nbsp;(func, ...)</dt>
+<dd>
+Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. All threads attached with this method must be completed before loop() will finish.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  func: the function to run in the thread.
+	</li>
+	
+	<li>
+	  ...: extra parameters to function.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a Lua thread object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="attach_background"></a><strong>attach_background</strong>&nbsp;(func, ...)</dt>
+<dd>
+Queues a new thread for execution. The thread calls func and gives it any extra arguments as its parameters. The thread is not started by this method, instead it is started on next iteration of the loop. Threads attached with this method as opposed to attach() will be destroyed when loop() finishes, whether completed or not.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  func: the function to run in the thread.
+	</li>
+	
+	<li>
+	  ...: extra parameters to function.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a Lua thread object.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="block_on"></a><strong>block_on</strong>&nbsp;(reads, writes, timeout)</dt>
+<dd>
+Blocks on multiple items, with a single timeout. This function will block until the first event on any one of the items. Items given in the read and write argument tables must have a get_fd() method that returns its file descriptor.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  reads: Table of items to wait for read events on.
+	</li>
+	
+	<li>
+	  writes: Table of items to wait for write events on.
+	</li>
+	
+	<li>
+	  timeout: Returns nil if this many seconds elapse with no events.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+The item from the read or write table that triggered an event.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="kill"></a><strong>kill</strong>&nbsp;(thread)</dt>
+<dd>
+Kills a given thread. If the thread is yielding on any events, those events are cleaned up and the thread is dropped.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  thread: The thread to kill.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="kill_all"></a><strong>kill_all</strong>&nbsp;(threads)</dt>
+<dd>
+Kills all threads in the table sequence. Essentially this function is the same as kill() but run in a loop over a table.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  threads: table array of threads to kill.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="pause"></a><strong>pause</strong>&nbsp;()</dt>
+<dd>
+Pauses the current thread indefinitely. The thread must be resumed by a call to unpause() from another thread.
+
+
+
+
+
+
+
+<h3>Return value:</h3>
+any extra arguments passed to unpause() from other thread.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="self"></a><strong>self</strong>&nbsp;()</dt>
+<dd>
+Returns the Lua thread object that is currently running, or nil for the main thread.
+
+
+
+
+
+
+
+<h3>Return value:</h3>
+thread object or nil.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="sigwait"></a><strong>sigwait</strong>&nbsp;(signal)</dt>
+<dd>
+Blocks the current thread until the current process receives the given signal.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  signal: A signal by number or name (see signal(7)).
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="space"></a><strong>space</strong>&nbsp;(premade)</dt>
+<dd>
+Returns a table that is specific to the currently-running thread that can be used as scratch-space for thread-scope data. This table is not created until the first time this method is called for in thread.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  premade: optionally pass in a pre-existing object to be stored as the thread's scratch space instead of the default a new table.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+a table specific to the current thread.
+
+
+
+</dd>
+
+
+
+
+<dt><a name="timer"></a><strong>timer</strong>&nbsp;(seconds)</dt>
+<dd>
+Pauses the current thread for the given period.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  seconds: resume thread after this many seconds elapse.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="unpause"></a><strong>unpause</strong>&nbsp;(thread, ...)</dt>
+<dd>
+Unpauses the given thread. The paused thread will resume on next iteration of the main loop. Extra parameters to this function will be given to the paused thread as return values from pause().
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  thread: the thread to unpause.
+	</li>
+	
+	<li>
+	  ...: extra parameters will be returned by pause().
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+
+
+<dt><a name="wait_all"></a><strong>wait_all</strong>&nbsp;(threads)</dt>
+<dd>
+Pauses the current thread until all threads listed in the given table have completed their execution either normally or by error.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  threads: table containing threads to wait for.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+
+
+</dd>
+
+
+</dl>
+
+
+
+
+
+
+</div> <!-- id="content" -->
+
+</div> <!-- id="main" -->
+
+<div id="about">
+    <p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
+</div> <!-- id="about" -->
+
+</div> <!-- id="container" -->
+</body>
+</html>
