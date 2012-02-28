@@ -562,7 +562,9 @@ function ratchet.smtp.server:handle()
         if ratchet.error.is(err, "ETIMEDOUT") then
             self:timed_out()
         elseif ratchet.error.is(err, "ECONNCLOSED") then
-            -- Purposefully no-op: client broke RFC, but it's not really an error.
+        elseif ratchet.error.is(err, "SSLERROR") then
+        elseif ratchet.error.is(err, "SSLEOF") then
+            -- These are purposefully no-op: client broke RFC, but not really errors.
         else
             pcall(self.unhandled_error, self)
             self:close()
