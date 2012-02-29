@@ -1,19 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-    <title>Reference</title>
+    <title>ratchet.smtp.client: Module Index</title>
     <link rel="stylesheet" href="../luadoc.css" type="text/css" />
-	<!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
+    <!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
 </head>
 
 <body>
 <div id="container">
 
 <div id="product">
-	<div id="product_logo"></div>
-	<div id="product_name"><big><b></b></big></div>
-	<div id="product_description"></div>
+    <div id="product_logo"></div>
+    <div id="product_name"><big><b></b></big></div>
+    <div id="product_description"></div>
 </div> <!-- id="product" -->
 
 <div id="main">
@@ -126,70 +127,70 @@
 <h2>Functions</h2>
 <table class="function_list">
 
-	<tr>
-	<td class="name" nowrap><a href="#custom_command">custom_command</a>&nbsp;(self, command, arg)</td>
-	<td class="summary">Sends a custom command.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#custom_command">custom_command</a>&nbsp;(self, command, arg)</td>
+    <td class="summary">Sends a custom command.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#data">data</a>&nbsp;(self)</td>
-	<td class="summary">Sends the DATA command, indicating to the server that you are ready to send message data.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#data">data</a>&nbsp;(self)</td>
+    <td class="summary">Sends the DATA command, indicating to the server that you are ready to send message data.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#ehlo">ehlo</a>&nbsp;(self, ehlo_as)</td>
-	<td class="summary">Sends the EHLO command.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#ehlo">ehlo</a>&nbsp;(self, ehlo_as)</td>
+    <td class="summary">Sends the EHLO command.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#get_banner">get_banner</a>&nbsp;(self)</td>
-	<td class="summary">Receives the SMTP banner from the server.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#get_banner">get_banner</a>&nbsp;(self)</td>
+    <td class="summary">Receives the SMTP banner from the server.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#helo">helo</a>&nbsp;(self, helo_as)</td>
-	<td class="summary">Sends the HELO command.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#helo">helo</a>&nbsp;(self, helo_as)</td>
+    <td class="summary">Sends the HELO command.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#mailfrom">mailfrom</a>&nbsp;(self, address, data_size)</td>
-	<td class="summary">Sends a MAIL FROM command, which starts a new message transmission on the session and specifies the sending address.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#mailfrom">mailfrom</a>&nbsp;(self, address, data_size)</td>
+    <td class="summary">Sends a MAIL FROM command, which starts a new message transmission on the session and specifies the sending address.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size, iter_size)</td>
-	<td class="summary">Creates a new SMTP client object.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size, iter_size)</td>
+    <td class="summary">Creates a new SMTP client object.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#quit">quit</a>&nbsp;(self)</td>
-	<td class="summary">Sends a QUIT command, and closes the connection.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#quit">quit</a>&nbsp;(self)</td>
+    <td class="summary">Sends a QUIT command, and closes the connection.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#rcptto">rcptto</a>&nbsp;(self, address)</td>
-	<td class="summary">Sends a RCPT TO command, which specifies one (of possibly many) recipient for the current message transaction, as started by mailfrom().</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#rcptto">rcptto</a>&nbsp;(self, address)</td>
+    <td class="summary">Sends a RCPT TO command, which specifies one (of possibly many) recipient for the current message transaction, as started by mailfrom().</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#rset">rset</a>&nbsp;(self)</td>
-	<td class="summary">Sends a RSET command.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#rset">rset</a>&nbsp;(self)</td>
+    <td class="summary">Sends a RSET command.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#send_data">send_data</a>&nbsp;(self, data)</td>
-	<td class="summary">Sends arbitrary message data.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#send_data">send_data</a>&nbsp;(self, data)</td>
+    <td class="summary">Sends arbitrary message data.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#send_empty_data">send_empty_data</a>&nbsp;(self)</td>
-	<td class="summary">Sends empty message data.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#send_empty_data">send_empty_data</a>&nbsp;(self)</td>
+    <td class="summary">Sends empty message data.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#starttls">starttls</a>&nbsp;(self)</td>
-	<td class="summary">Sends a STARTTLS request to the server, which indicates that, on a 250 reply from the server, you will initiate a TLS handshake.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#starttls">starttls</a>&nbsp;(self)</td>
+    <td class="summary">Sends a STARTTLS request to the server, which indicates that, on a 250 reply from the server, you will initiate a TLS handshake.</td>
+    </tr>
 
 </table>
 
@@ -635,9 +636,9 @@ A reply table with "code" and "message" keys.
 </div> <!-- id="main" -->
 
 <div id="about">
-	<p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
+    <p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
 </div> <!-- id="about" -->
 
-</div> <!-- id="container" -->	
+</div> <!-- id="container" -->
 </body>
 </html>

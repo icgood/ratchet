@@ -1,19 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
-    <title>Reference</title>
+    <title>ratchet.exec: Module Index</title>
     <link rel="stylesheet" href="../luadoc.css" type="text/css" />
-	<!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
+    <!--meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/-->
 </head>
 
 <body>
 <div id="container">
 
 <div id="product">
-	<div id="product_logo"></div>
-	<div id="product_name"><big><b></b></big></div>
-	<div id="product_description"></div>
+    <div id="product_logo"></div>
+    <div id="product_name"><big><b></b></big></div>
+    <div id="product_description"></div>
 </div> <!-- id="product" -->
 
 <div id="main">
@@ -126,45 +127,50 @@
 <h2>Functions</h2>
 <table class="function_list">
 
-	<tr>
-	<td class="name" nowrap><a href="#get_argv">get_argv</a>&nbsp;(self)</td>
-	<td class="summary">Returns the table array of arguments that the exec object was created with.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#communicate">communicate</a>&nbsp;(self, data)</td>
+    <td class="summary">Starts the command process.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#kill">kill</a>&nbsp;(self, signal)</td>
-	<td class="summary">Sends a signal to the command process.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#get_argv">get_argv</a>&nbsp;(self)</td>
+    <td class="summary">Returns the table array of arguments that the exec object was created with.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#new">new</a>&nbsp;(argv)</td>
-	<td class="summary">Creates a new execution object, running the command stored in table argv.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#kill">kill</a>&nbsp;(self, signal)</td>
+    <td class="summary">Sends a signal to the command process.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#start">start</a>&nbsp;(self)</td>
-	<td class="summary">Starts the command process.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#new">new</a>&nbsp;(argv)</td>
+    <td class="summary">Creates a new execution object, running the command stored in table argv.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#stderr">stderr</a>&nbsp;(self)</td>
-	<td class="summary">Returns the standard error file, which has its own methods close() and read().</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#start">start</a>&nbsp;(self)</td>
+    <td class="summary">Starts the command process.</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#stdin">stdin</a>&nbsp;(self)</td>
-	<td class="summary">Returns the standard input file, which has its own methods close() and write().</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#stderr">stderr</a>&nbsp;(self)</td>
+    <td class="summary">Returns the standard error file, which has its own methods close() and read().</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#stdout">stdout</a>&nbsp;(self)</td>
-	<td class="summary">Returns the standard output file, which has its own methods close() and read().</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#stdin">stdin</a>&nbsp;(self)</td>
+    <td class="summary">Returns the standard input file, which has its own methods close() and write().</td>
+    </tr>
 
-	<tr>
-	<td class="name" nowrap><a href="#wait">wait</a>&nbsp;(self)</td>
-	<td class="summary">Waits for the command process to terminate.</td>
-	</tr>
+    <tr>
+    <td class="name" nowrap><a href="#stdout">stdout</a>&nbsp;(self)</td>
+    <td class="summary">Returns the standard output file, which has its own methods close() and read().</td>
+    </tr>
+
+    <tr>
+    <td class="name" nowrap><a href="#wait">wait</a>&nbsp;(self)</td>
+    <td class="summary">Waits for the command process to terminate.</td>
+    </tr>
 
 </table>
 
@@ -180,6 +186,39 @@
 
 <h2><a name="functions"></a>Functions</h2>
 <dl class="function">
+
+
+
+<dt><a name="communicate"></a><strong>communicate</strong>&nbsp;(self, data)</dt>
+<dd>
+Starts the command process. After writing optional data, stdin is closed. Reads data from stdout and stderr until both are closed. Finally, calls wait() to finish the command process. Functions similarly to the Popen.communicate() method of the subprocess module in Python.
+
+
+<h3>Parameters</h3>
+<ul>
+	
+	<li>
+	  self: the exec object.
+	</li>
+	
+	<li>
+	  data: optional data to write to stdin before closing it.
+	</li>
+	
+</ul>
+
+
+
+
+
+
+<h3>Return value:</h3>
+The concatenations of stdout and stderr, respectively, followed by the exit status.
+
+
+
+</dd>
+
 
 
 
@@ -423,9 +462,9 @@ The exit status integer.
 </div> <!-- id="main" -->
 
 <div id="about">
-	<p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
+    <p><a href="http://validator.w3.org/check?uri=referer"><img src="http://www.w3.org/Icons/valid-xhtml10" alt="Valid XHTML 1.0!" height="31" width="88" /></a></p>
 </div> <!-- id="about" -->
 
-</div> <!-- id="container" -->	
+</div> <!-- id="container" -->
 </body>
 </html>
