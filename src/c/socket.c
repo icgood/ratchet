@@ -952,8 +952,7 @@ static int rsock_send (lua_State *L)
 		return ratchet_error_str (L, "ratchet.socket.send()", "ETIMEDOUT", "Timed out on send.");
 	lua_settop (L, 2);
 
-	int flags = MSG_NOSIGNAL;
-	ret = send (sockfd, data, data_len, flags);
+	ret = send (sockfd, data, data_len, MSG_NOSIGNAL);
 	if (ret == -1)
 	{
 		if (errno == EAGAIN || errno == EWOULDBLOCK)

@@ -29,12 +29,15 @@
 #include <event.h>
 #include <netdb.h>
 #include <string.h>
+#include <signal.h>
 
 #include "ratchet.h"
 #include "misc.h"
 
 #define get_event_base(L, index) (*(struct event_base **) luaL_checkudata (L, index, "ratchet_meta"))
 #define get_thread(L, index, s) luaL_checktype (L, index, LUA_TTHREAD); lua_State *s = lua_tothread (L, index)
+
+typedef void (*signal_handler) (int);
 
 const char *ratchet_version (void);
 
@@ -55,6 +58,11 @@ static int setup_persistance_tables (lua_State *L)
 	 * collection. */
 	lua_newtable (L);
 	lua_setfield (L, -2, "threads");
+
+	/* Block SIGPIPE and save the old handler. */
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
+	lua_pushlightuserdata (L, old);
+	lua_setfield (L, -2, "old_sigpipe_handler");
 
 	/* Error handler from constructor. */
 	lua_pushvalue (L, 2);
@@ -171,6 +179,18 @@ static void end_all_waiting_thread_events (lua_State *L)
 		}
 		lua_pop (L, 1);
 	}
+}
+/* }}} */
+
+/* {{{ revert_sigpipe_handler() */
+static void revert_sigpipe_handler (lua_State *L, int index)
+{
+	lua_getuservalue (L, index);
+	lua_getfield (L, -1, "old_sigpipe_handler");
+	signal_handler old = (signal_handler) lua_touserdata (L, -1);
+	if (old)
+		signal (SIGPIPE, old);
+	lua_pop (L, 2);
 }
 /* }}} */
 
@@ -356,6 +376,8 @@ static int ratchet_gc (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
 	event_base_free (e_b);
+
+	revert_sigpipe_handler (L, 1);
 
 	return 0;
 }
