@@ -151,7 +151,7 @@ other:
 static int build_tcp_info (lua_State *L)
 {
 	luaL_checktype (L, 1, LUA_TTABLE);
-	luaL_checkstring (L, 2);
+	const char *host = luaL_checkstring (L, 2);
 	int port = luaL_checkint (L, 3);
 	lua_settop (L, 3);
 
@@ -228,7 +228,18 @@ static int build_tcp_info (lua_State *L)
 	}
 	lua_pop (L, 1);
 
-	return 0;
+	lua_getfield (L, 1, "aaaa_error");
+	lua_getfield (L, 1, "a_error");
+	const char *aaaa_error = lua_tostring (L, -2);
+	const char *a_error = lua_tostring (L, -1);
+	if (aaaa_error && a_error)
+		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s, %s", aaaa_error, a_error);
+	else if (aaaa_error)
+		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", aaaa_error);
+	else if (a_error)
+		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", a_error);
+	else
+		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", host);
 }
 /* }}} */
 
