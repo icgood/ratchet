@@ -33,7 +33,7 @@ function new_server(socket, request_from_bus, response_to_bus)
 --                        into a string.
 --  @param response_from_bus an arbitrary function that accepts a string and
 --                           converts it into a response object.
-function new_server(socket, request_from_bus, response_to_bus)
+function new_client(socket, request_to_bus, response_from_bus)
 
 --- Receives a request from the server-side of a message bus. This function can
 --  be used by a local message bus object created with <code>new_local()</code>
