@@ -19,7 +19,7 @@ function new_local()
 --  will wait for a new client connection and a request on that connection.
 --  The response is then sent back over the connection to the client-side of the
 --  bus.
---  @param a socket already listening for new connections.
+--  @param socket a socket already listening for new connections.
 --  @param request_from_bus an arbitrary function that accepts a string and
 --                          converts it into a request object.
 --  @param response_to_bus an arbitrary function that converts a response object
@@ -28,7 +28,7 @@ function new_server(socket, request_from_bus, response_to_bus)
 
 --- Creates the client-side of a socket-based message bus. After sending a
 --  request, the client-side will need wait to receive a response.
---  @param a socket already connected to a server.
+--  @param socket a socket already connected to a server.
 --  @param request_to_bus an arbitrary function that converts a request object
 --                        into a string.
 --  @param response_from_bus an arbitrary function that accepts a string and
