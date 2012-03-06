@@ -52,20 +52,30 @@ AC_ARG_ENABLE([openssl], [AS_HELP_STRING([--disable-openssl],
 
 #####################
 # Configure options: --with-lua-cpath=CPATH
+AC_MSG_CHECKING([Lua C module path])
 AC_ARG_WITH([lua-cpath], [AS_HELP_STRING([--with-lua-cpath=CPATH],
 	                                 [Install Lua C modules to CPATH])])
 if test "x${with_lua_cpath}" == "x"; then
 	with_lua_cpath="`pkg-config lua --variable=INSTALL_CMOD`"
+	if test $? -ne 0 -o "x${with_lua_cpath}" == "x"; then
+		with_lua_cpath="/usr/lib/lua/5.2"
+	fi
 fi
+AC_MSG_RESULT([$with_lua_cpath])
 AC_SUBST([LUA_CPATH], ["$with_lua_cpath"])
 
 #####################
 # Configure options: --with-lua-lpath=LPATH
+AC_MSG_CHECKING([Lua module path])
 AC_ARG_WITH([lua-lpath], [AS_HELP_STRING([--with-lua-lpath=LPATH],
 	                                 [Install Lua modules to LPATH])])
 if test "x${with_lua_lpath}" == "x"; then
 	with_lua_lpath="`pkg-config lua --variable=INSTALL_LMOD`"
+	if test $? -ne 0 -o "x${with_lua_lpath}" == "x"; then
+		with_lua_lpath="/usr/share/lua/5.2"
+	fi
 fi
+AC_MSG_RESULT([$with_lua_lpath])
 AC_SUBST([LUA_LPATH], ["$with_lua_lpath"])
 
 #####################
