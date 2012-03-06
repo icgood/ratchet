@@ -39,6 +39,8 @@
 #include "ratchet.h"
 #include "misc.h"
 
+typedef void (*signal_handler) (int);
+
 #define CHECK_SIG_NAME(L, i, s) if (0 == strcmp (#s, lua_tostring (L, i))) { sig = s; }
 
 /* {{{ struct rexec_state */
@@ -606,9 +608,14 @@ static int rexec_file_write (lua_State *L)
 
 	lua_settop (L, 2);
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	ret = write (fd, data, data_len);
+	int orig_errno = errno;
+	signal (SIGPIPE, old);
+
 	if (ret == -1)
 	{
+		errno = orig_errno;
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 		{
 			lua_pushlightuserdata (L, RATCHET_YIELD_WRITE);

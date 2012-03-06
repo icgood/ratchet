@@ -42,6 +42,8 @@
 #include "ratchet.h"
 #include "misc.h"
 
+typedef void (*signal_handler) (int);
+
 /* {{{ handle_ssl_error() */
 static int handle_ssl_error (lua_State *L, const char *func, int ret, unsigned long error, int orig_errno)
 {
@@ -464,10 +466,12 @@ static int rssl_session_shutdown (lua_State *L)
 		return ratchet_error_str (L, "ratchet.ssl.session.shutdown()", "ETIMEDOUT", "Timed out on shutdown.");
 	lua_settop (L, 1);
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	int ret = SSL_shutdown (session);
 	if (ret == 0)
 		ret = SSL_shutdown (session);
 	int orig_errno = errno;
+	signal (SIGPIPE, old);
 
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -524,8 +528,10 @@ static int rssl_session_read (lua_State *L)
 	if (len > LUAL_BUFFERSIZE)
 		return luaL_error (L, "Cannot recv more than %u bytes, %u requested", (unsigned) LUAL_BUFFERSIZE, (unsigned) len);
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	int ret = SSL_read (session, prepped, len);
 	int orig_errno = errno;
+	signal (SIGPIPE, old);
 
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -576,8 +582,10 @@ static int rssl_session_write (lua_State *L)
 
 	ERR_clear_error ();
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	int ret = SSL_write (session, data, (int) size);
 	int orig_errno = errno;
+	signal (SIGPIPE, old);
 
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -618,8 +626,10 @@ static int rssl_session_connect (lua_State *L)
 		return ratchet_error_str (L, "ratchet.ssl.session.client_handshake()", "ETIMEDOUT", "Timed out on client_handshake.");
 	lua_settop (L, 1);
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	int ret = SSL_connect (session);
 	int orig_errno = errno;
+	signal (SIGPIPE, old);
 
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
@@ -660,8 +670,10 @@ static int rssl_session_accept (lua_State *L)
 		return ratchet_error_str (L, "ratchet.ssl.session.server_handshake()", "ETIMEDOUT", "Timed out on server_handshake.");
 	lua_settop (L, 1);
 
+	signal_handler old = signal (SIGPIPE, SIG_IGN);
 	int ret = SSL_accept (session);
 	int orig_errno = errno;
+	signal (SIGPIPE, old);
 
 	unsigned long error = SSL_get_error (session, ret);
 	switch (error)
