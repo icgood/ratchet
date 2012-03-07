@@ -31,6 +31,12 @@ function get_argv(self)
 --  @param self the exec object.
 function start(self)
 
+--- Returns the UNIX timestamp when the process command process was started,
+--  that is, when the start() method was called.
+--  @param self the exec object.
+--  @return timestamp when the process was started, or nil if unstarted.
+function get_start_time(self)
+
 --- Returns the standard input file, which has its own methods close() and
 --  write(). Data written with write() will show up in the command process's
 --  standard input.

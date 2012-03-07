@@ -35,6 +35,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 
 #include "ratchet.h"
 #include "misc.h"
@@ -209,11 +210,15 @@ static int rexec_start (lua_State *L)
 {
 	struct rexec_state *state = (struct rexec_state *) luaL_checkudata (L, 1, "ratchet_exec_meta");
 
+	time_t start_time = time (NULL);
 	char **argv = alloc_argv_array (L, 1);
 	start_process (L, state, argv);
 	free_argv_array (argv);
 
 	lua_getuservalue (L, 1);
+
+	lua_pushnumber (L, (lua_Number) start_time);
+	lua_setfield (L, -2, "start_time");
 
 	int **infd = (int **) lua_newuserdata (L, sizeof (int *));
 	luaL_getmetatable (L, "ratchet_exec_file_write_meta");
@@ -235,6 +240,16 @@ static int rexec_start (lua_State *L)
 	*errfd = &state->errfds[0];
 
 	return 0;
+}
+/* }}} */
+
+/* {{{ rexec_get_start_time() */
+static int rexec_get_start_time (lua_State *L)
+{
+	(void) luaL_checkudata (L, 1, "ratchet_exec_meta");
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "start_time");
+	return 1;
 }
 /* }}} */
 
@@ -669,6 +684,7 @@ int luaopen_ratchet_exec (lua_State *L)
 		{"get_argv", rexec_get_argv},
 		{"communicate", rexec_communicate},
 		{"start", rexec_start},
+		{"get_start_time", rexec_get_start_time},
 		{"stdin", rexec_stdin},
 		{"stdout", rexec_stdout},
 		{"stderr", rexec_stderr},
