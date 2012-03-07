@@ -54,8 +54,9 @@ function stderr(self)
 
 --- Waits for the command process to terminate.
 --  @param self the exec object.
+--  @param timeout number of seconds to wait (fractions are ok), default forever.
 --  @return The exit status integer.
-function wait(self)
+function wait(self, timeout)
 
 --- Sends a signal to the command process.
 --  @param self the exec object.

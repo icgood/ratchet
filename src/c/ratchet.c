@@ -765,6 +765,8 @@ static int ratchet_wait_for_signal (lua_State *L)
 	struct event_base *e_b = get_event_base (L, 1);
 	get_thread (L, 2, L1);
 	int sig = (int) lua_tointeger (L, 3);
+	struct timeval tv;
+	int use_tv = gettimeval_opt (L, 4, &tv);
 
 	/* Cleanup table for kill()ing the thread. */
 	lua_createtable (L1, 0, 1);
@@ -777,7 +779,7 @@ static int ratchet_wait_for_signal (lua_State *L)
 	/* Queue up the event. */
 	event_set (ev, sig, EV_SIGNAL, event_triggered, L1);
 	event_base_set (e_b, ev);
-	event_add (ev, NULL);
+	event_add (ev, (use_tv ? &tv : NULL));
 
 	lua_setfield (L1, -2, "event");
 

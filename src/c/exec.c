@@ -284,8 +284,14 @@ static int rexec_stderr (lua_State *L)
 static int rexec_wait (lua_State *L)
 {
 	struct rexec_state *state = (struct rexec_state *) luaL_checkudata (L, 1, "ratchet_exec_meta");
+	if (!lua_isnoneornil (L, 2) && !lua_isnumber (L, 2))
+		return luaL_argerror (L, 2, "Optional timeout number or nil expected.");
 
-	lua_settop (L, 1);
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+	if (ctx == 1 && !lua_toboolean (L, 3))
+		return ratchet_error_str (L, "ratchet.exec.wait()", "ETIMEDOUT", "Timed out on wait.");
+	lua_settop (L, 2);
 
 	int status = 0;
 	int ret = waitpid (state->pid, &status, WNOHANG);
@@ -295,7 +301,8 @@ static int rexec_wait (lua_State *L)
 	{
 		lua_pushlightuserdata (L, RATCHET_YIELD_SIGNAL);
 		lua_pushinteger (L, SIGCHLD);
-		return lua_yieldk (L, 2, 1, rexec_wait);
+		lua_pushvalue (L, 2);
+		return lua_yieldk (L, 3, 1, rexec_wait);
 	}
 
 	rexec_clean_up (L);
