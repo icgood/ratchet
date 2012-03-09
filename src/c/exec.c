@@ -137,6 +137,10 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 			_exit (1);
 		if (-1 == dup2 (state->errfds[1], STDERR_FILENO))
 			_exit (1);
+		close (state->infds[0]);
+		close (state->outfds[1]);
+		close (state->errfds[1]);
+
 		if (-1 == execvp (argv[0], argv))
 			_exit (1);
 	}
