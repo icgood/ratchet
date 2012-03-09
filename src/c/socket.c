@@ -335,13 +335,27 @@ static int rsock_new (lua_State *L)
 	int socktype = luaL_optint (L, 2, SOCK_STREAM);
 	int protocol = luaL_optint (L, 3, 0);
 
+	int extra_flags = 0;
+#ifdef SOCK_NONBLOCK
+	extra_flags |= SOCK_NONBLOCK;
+#endif
+#ifdef SOCK_CLOEXEC
+	extra_flags |= SOCK_CLOEXEC;
+#endif
+
 	int *fd = (int *) lua_newuserdata (L, sizeof (int));
-	*fd = socket (family, socktype, protocol);
+	*fd = socket (family, socktype | extra_flags, protocol);
 	if (*fd < 0)
 		return ratchet_error_errno (L, "ratchet.socket.new()", "socket");
 
+#ifndef SOCK_NONBLOCK
 	if (set_nonblocking (*fd) < 0)
 		return ratchet_error_errno (L, "ratchet.socket.new()", "fcntl");
+#endif
+#ifndef SOCK_CLOEXEC
+	if (set_closeonexec (*fd) < 0)
+		return ratchet_error_errno (L, "ratchet.socket.new()", "fcntl");
+#endif
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -365,17 +379,33 @@ static int rsock_new_pair (lua_State *L)
 	int *fd1 = (int *) lua_newuserdata (L, sizeof (int));
 	int *fd2 = (int *) lua_newuserdata (L, sizeof (int));
 
+	int extra_flags = 0;
+#ifdef SOCK_NONBLOCK
+	extra_flags |= SOCK_NONBLOCK;
+#endif
+#ifdef SOCK_CLOEXEC
+	extra_flags |= SOCK_CLOEXEC;
+#endif
+
 	int sv[2];
-	int ret = socketpair (family, socktype, protocol, sv);
+	int ret = socketpair (family, socktype | extra_flags, protocol, sv);
 	if (ret < 0)
 		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "socketpair");
 	*fd1 = sv[0];
 	*fd2 = sv[1];
 
+#ifndef SOCK_NONBLOCK
 	if (set_nonblocking (*fd1) < 0)
 		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
 	if (set_nonblocking (*fd2) < 0)
 		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
+#endif
+#ifndef SOCK_CLOEXEC
+	if (set_closeonexec (*fd1) < 0)
+		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
+	if (set_closeonexec (*fd2) < 0)
+		return ratchet_error_errno (L, "ratchet.socket.new_pair()", "fcntl");
+#endif
 
 	luaL_getmetatable (L, "ratchet_socket_meta");
 	lua_setmetatable (L, -2);
@@ -406,6 +436,8 @@ static int rsock_from_fd (lua_State *L)
 		return ratchet_error_str (L, "ratchet.socket.from_fd()", "EBADF", "Invalid file descriptor.");
 
 	if (set_nonblocking (*fd) < 0)
+		return ratchet_error_errno (L, "ratchet.socket.from_fd()", "fcntl");
+	if (set_closeonexec (*fd) < 0)
 		return ratchet_error_errno (L, "ratchet.socket.from_fd()", "fcntl");
 
 	luaL_getmetatable (L, "ratchet_socket_meta");

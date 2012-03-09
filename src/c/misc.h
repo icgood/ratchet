@@ -22,6 +22,7 @@ int gettimespec_arg (lua_State *L, int index, struct timespec *tv);
 int gettimespec_opt (lua_State *L, int index, struct timespec *tv);
 int get_signal (lua_State *L, int index, int def);
 int set_nonblocking (int fd);
+int set_closeonexec (int fd);
 void fstackdump_ln (lua_State *L, FILE *out, const char *file, int line);
 
 #endif

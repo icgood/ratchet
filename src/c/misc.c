@@ -195,9 +195,19 @@ int set_nonblocking (int fd)
 		flags = 0;
 	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 #else
-	return ioctl(fd, FIOBIO, &flags);
+	return ioctl(fd, FIONBIO, &flags);
 #endif
 
+}
+/* }}} */
+
+/* {{{ set_closeonexec() */
+int set_closeonexec (int fd)
+{
+	int flags;
+	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | FD_CLOEXEC);
 }
 /* }}} */
 

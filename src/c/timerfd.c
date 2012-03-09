@@ -46,13 +46,27 @@ static int rtfd_new (lua_State *L)
 	static const int howlst[] = {CLOCK_MONOTONIC, CLOCK_REALTIME};
 	int how = howlst[luaL_checkoption (L, 1, "monotonic", lst)];
 
+	int flags = 0;
+#ifdef TFD_NONBLOCK
+	flags |= TFD_NONBLOCK;
+#endif
+#ifdef TFD_CLOEXEC
+	flags |= TFD_CLOEXEC;
+#endif
+
 	int *tfd = (int *) lua_newuserdata (L, sizeof (int));
-	*tfd = timerfd_create (how, 0);
+	*tfd = timerfd_create (how, flags);
 	if (*tfd < 0)
 		return ratchet_error_errno (L, "ratchet.timerfd.new()", "timerfd_create");
 
+#ifndef TFD_NONBLOCK
 	if (set_nonblocking (*tfd) < 0)
-		return ratchet_error_errno (L, "ratchet.timerfd.new()", "<unknown>");
+		return ratchet_error_errno (L, "ratchet.timerfd.new()", "fcntl");
+#endif
+#ifndef TFD_CLOEXEC
+	if (set_closeonexec (*tfd) < 0)
+		return ratchet_error_errno (L, "ratchet.timerfd.new()", "fcntl");
+#endif
 
 	luaL_getmetatable (L, "ratchet_timerfd_meta");
 	lua_setmetatable (L, -2);
