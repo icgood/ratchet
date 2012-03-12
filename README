@@ -11,13 +11,12 @@ written on top of libevent (http://monkey.org/~provos/libevent/).
 The ratchet library provides and manages a blend of libevent event loops and
 Lua coroutines to provide the effect of synchronous socket programming. Each
 call to a blocking socket (or DNS or ZeroMQ) method actually yields execution
-until the action is ready to be taken. Contexts (the ratchet library's given
-name for Lua coroutines) may also wait for each other, though that must happen
-when the "child" context is created. Any application protocol (text-based or
-binary) can be implemented. Currently, example HTTP and SMTP client and server
-implementations are provided, see docs for details.
+until the action is ready to be taken. Ratchet coroutines may also wait for each
+other. Any application protocol (text-based or binary) can be implemented.
+Currently, example HTTP and SMTP client and server implementations are provided,
+see docs for details.
 
-The project itself is build using autotools for portability, though it depends
+The project itself is built using autotools for portability, though it depends
 on several GNU/Linux features. The project provides a suite of post-build tests
 which double as sample usages, executed with "make check".
 
