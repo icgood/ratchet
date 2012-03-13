@@ -141,7 +141,7 @@ static int ratchet_error_new (lua_State *L)
 	lua_pushvalue (L, 2);
 	lua_setfield (L, -2, "code");
 
-	luaL_checkstring (L, 3);
+	luaL_optstring (L, 3, NULL);
 	lua_pushvalue (L, 3);
 	lua_setfield (L, -2, "function");
 
