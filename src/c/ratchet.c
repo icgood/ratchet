@@ -26,7 +26,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-#include <event.h>
+#include <event2/event.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -708,13 +708,12 @@ static int ratchet_wait_for_write (lua_State *L)
 	int use_tv = gettimeval (timeout, &tv);
 
 	/* Build event. */
-	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
-	event_set (ev, fd, EV_WRITE, event_triggered, L1);
-	event_base_set (e_b, ev);
+	event_assign (ev, e_b, fd, EV_WRITE, event_triggered, L1);
 	event_add (ev, (use_tv ? &tv : NULL));
 
 	lua_setfield (L1, -2, "event");
@@ -743,13 +742,12 @@ static int ratchet_wait_for_read (lua_State *L)
 	int use_tv = gettimeval (timeout, &tv);
 
 	/* Build event. */
-	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
-	event_set (ev, fd, EV_READ, event_triggered, L1);
-	event_base_set (e_b, ev);
+	event_assign (ev, e_b, fd, EV_READ, event_triggered, L1);
 	event_add (ev, (use_tv ? &tv : NULL));
 
 	lua_setfield (L1, -2, "event");
@@ -772,13 +770,12 @@ static int ratchet_wait_for_signal (lua_State *L)
 	lua_createtable (L1, 0, 1);
 
 	/* Build event. */
-	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
-	event_set (ev, sig, EV_SIGNAL, event_triggered, L1);
-	event_base_set (e_b, ev);
+	event_assign (ev, e_b, sig, EV_SIGNAL, event_triggered, L1);
 	event_add (ev, (use_tv ? &tv : NULL));
 
 	lua_setfield (L1, -2, "event");
@@ -800,10 +797,9 @@ static int ratchet_wait_for_timeout (lua_State *L)
 	lua_createtable (L1, 0, 1);
 
 	/* Build event and queue it up. */
-	struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
-	timeout_set (ev, timeout_triggered, L1);
-	event_base_set (e_b, ev);
-	event_add (ev, &tv);
+	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
+	evtimer_assign (ev, e_b, timeout_triggered, L1);
+	evtimer_add (ev, &tv);
 
 	lua_setfield (L1, -2, "event");
 
@@ -836,16 +832,15 @@ static int ratchet_wait_for_multi (lua_State *L)
 	lua_createtable (L1, 1+nread+nwrite, 0);
 
 	/* Create timeout event. */
-	struct event *timeout = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+	struct event *timeout = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
 	lua_rawseti (L1, -2, 1);
 
 	/* Queue up timeout event. */
-	timeout_set (timeout, timeout_triggered, L1);
-	event_base_set (e_b, timeout);
+	evtimer_assign (timeout, e_b, timeout_triggered, L1);
 	if (use_tv)
-		event_add (timeout, &tv);
+		evtimer_add (timeout, &tv);
 
 	for (i=1; i<=nread; i++)
 	{
@@ -857,14 +852,13 @@ static int ratchet_wait_for_multi (lua_State *L)
 		lua_rawset (L1, -4);
 
 		/* Build event. */
-		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+		struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 		luaL_getmetatable (L1, "ratchet_event_internal_meta");
 		lua_setmetatable (L1, -2);
 		lua_rawseti (L1, -2, i+1);
 
 		/* Queue up the event. */
-		event_set (ev, fd, EV_READ, multi_event_triggered, L1);
-		event_base_set (e_b, ev);
+		event_assign (ev, e_b, fd, EV_READ, multi_event_triggered, L1);
 		event_add (ev, NULL);
 	}
 
@@ -878,14 +872,13 @@ static int ratchet_wait_for_multi (lua_State *L)
 		lua_rawset (L1, -4);
 
 		/* Build event. */
-		struct event *ev = (struct event *) lua_newuserdata (L1, sizeof (struct event));
+		struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 		luaL_getmetatable (L1, "ratchet_event_internal_meta");
 		lua_setmetatable (L1, -2);
 		lua_rawseti (L1, -2, nread+i+1);
 
 		/* Queue up the event. */
-		event_set (ev, fd, EV_WRITE, multi_event_triggered, L1);
-		event_base_set (e_b, ev);
+		event_assign (ev, e_b, fd, EV_WRITE, multi_event_triggered, L1);
 		event_add (ev, NULL);
 	}
 
