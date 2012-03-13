@@ -18,10 +18,8 @@ module "ratchet.http.server"
 --  @param from Passed as the last argument to a handler function, typically
 --              used to send the source address of the connection (the second
 --              value returned by accept()).
---  @param send_size Used as the maximum size of a send() operation, defaults
---                   to half of the SO_SNDBUF socket option.
 --  @return a new http.server object.
-function new(socket, handlers, from, send_size)
+function new(socket, handlers, from)
 
 --- Receives an HTTP query, calls the corresponding handler, and returns the
 --  results.

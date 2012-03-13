@@ -17,7 +17,7 @@ end
 -- {{{ iterator_func()
 local function iterator_func(invariant, i)
     local message = invariant.full_message
-    local len = invariant.send_size
+    local len = invariant.iter_size
     local last_part = invariant.last_part
 
     -- If we're done iterator, jump out.
@@ -53,7 +53,7 @@ end
 
 -- {{{ data_sender:iter()
 function data_sender:iter()
-    local invariant = {send_size = self.iter_size,
+    local invariant = {iter_size = self.iter_size,
                        last_part = "",
                        done = false,
                        full_message = self.data}

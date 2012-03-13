@@ -9,10 +9,8 @@ module "ratchet.http.client"
 --  @param socket Used as the underlying socket for the query, under the
 --                assumption that encryption has been established as needed
 --                and no other I/O has taken place.
---  @param send_size Used as the maximum size of a send() operation, defaults
---                   to half of the SO_SNDBUF socket option.
 --  @return a new http.client object.
-function new(socket, send_size)
+function new(socket)
 
 --- Sends an HTTP query, and returns the results.
 --  @param self the http.client object.

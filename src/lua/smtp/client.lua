@@ -11,11 +11,11 @@ ratchet.smtp.client = {}
 ratchet.smtp.client.__index = ratchet.smtp.client
 
 -- {{{ratchet.smtp.client.new()
-function ratchet.smtp.client.new(socket, send_size, iter_size)
+function ratchet.smtp.client.new(socket, iter_size)
     local self = {}
     setmetatable(self, ratchet.smtp.client)
 
-    self.io = smtp_io.new(socket, send_size)
+    self.io = smtp_io.new(socket)
     self.iter_size = iter_size
     self.extensions = smtp_extensions.new()
 
@@ -50,7 +50,7 @@ end
 -- }}}
 
 -- {{{ratchet.smtp.client:ehlo()
-function ratchet.smtp.client:ehlo(ehlo_as)
+function ratchet.smtp.client:ehlo(ehlo_as, flush)
     local ehlo = smtp_reply.new("EHLO")
     table.insert(self.recv_queue, ehlo)
 
@@ -61,6 +61,10 @@ function ratchet.smtp.client:ehlo(ehlo_as)
     if ehlo.code == "250" then
         self.extensions:reset()
         ehlo.message = self.extensions:parse_string(ehlo.message)
+    end
+
+    if flush then
+        recv_batch(self)
     end
 
     return ehlo

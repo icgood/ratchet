@@ -10,12 +10,10 @@ module "ratchet.smtp.client"
 --  @param socket Used as the underlying socket for the session, under the
 --                assumption that no I/O has taken place, except possibly
 --                encryption if not using STARTTLS.
---  @param send_size Used as the maximum size of a send() operation, defaults
---                   to half of the SO_SNDBUF socket option.
 --  @param iter_size Maximum size of each iteration over message data, defaults
 --                   to 1024 bytes at a time.
 --  @return a new smtp.client object.
-function new(socket, send_size, iter_size)
+function new(socket, iter_size)
 
 --- Receives the SMTP banner from the server. When this function returns, you
 --  can safely expect the return table to be populated.

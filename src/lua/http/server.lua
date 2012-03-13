@@ -7,7 +7,7 @@ ratchet.http.server = {}
 ratchet.http.server.__index = ratchet.http.server
 
 -- {{{ ratchet.http.server.new()
-function ratchet.http.server.new(socket, from, handlers, send_size)
+function ratchet.http.server.new(socket, from, handlers)
     local self = {}
     setmetatable(self, ratchet.http.server)
 
