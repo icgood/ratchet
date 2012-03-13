@@ -50,7 +50,7 @@ end
 -- }}}
 
 -- {{{ratchet.smtp.client:ehlo()
-function ratchet.smtp.client:ehlo(ehlo_as, flush)
+function ratchet.smtp.client:ehlo(ehlo_as)
     local ehlo = smtp_reply.new("EHLO")
     table.insert(self.recv_queue, ehlo)
 
@@ -61,10 +61,6 @@ function ratchet.smtp.client:ehlo(ehlo_as, flush)
     if ehlo.code == "250" then
         self.extensions:reset()
         ehlo.message = self.extensions:parse_string(ehlo.message)
-    end
-
-    if flush then
-        recv_batch(self)
     end
 
     return ehlo
