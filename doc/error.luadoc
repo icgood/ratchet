@@ -26,4 +26,18 @@ function new(description, code, func, file, line, syscall, errno)
 --  @return true if the error matches the code, false otherwise.
 function is(error, code)
 
+--- Returns a human-readable error message, with no traceback information.
+--  @param self the ratchet.error object.
+--  @return an error string.
+function get_string(self)
+
+--- This meta-method converts the error object into a Lua traceback string
+--  including a human-readable error message. If the error occured in a thread,
+--  the traceback is taken from within that thread.
+--  @param self the ratchet.error object.
+--  @return a Lua traceback string.
+--  @see debug.traceback()
+--  @see tostring()
+function __tostring(self)
+
 -- vim:filetype=lua:sw=4:ts=4:sts=4:et:

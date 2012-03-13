@@ -263,8 +263,8 @@ static int ratchet_error_is (lua_State *L)
 }
 /* }}} */
 
-/* {{{ ratchet_error_tostring() */
-static int ratchet_error_tostring (lua_State *L)
+/* {{{ ratchet_error_get_string() */
+static int ratchet_error_get_string (lua_State *L)
 {
 	lua_settop (L, 1);
 
@@ -290,6 +290,25 @@ static int ratchet_error_tostring (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_error_tostring() */
+static int ratchet_error_tostring (lua_State *L)
+{
+	lua_settop (L, 1);
+
+	lua_getfield (L, 1, "thread");
+	lua_State *L1 = lua_tothread (L, -1);
+
+	lua_getfield (L, 1, "get_string");
+	lua_pushvalue (L, 1);
+	lua_call (L, 1, 1);
+	const char *msg = lua_tostring (L, -1);
+
+	if (L1)
+		luaL_traceback (L, L1, msg, 1);
+	return 1;
+}
+/* }}} */
+
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet_error() */
@@ -304,6 +323,7 @@ int luaopen_ratchet_error (lua_State *L)
 	static const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"is", ratchet_error_is},
+		{"get_string", ratchet_error_get_string},
 		/* Undocumented, helper methods. */
 		{NULL}
 	};
