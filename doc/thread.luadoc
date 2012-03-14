@@ -45,6 +45,12 @@ function self()
 --  @param seconds resume thread after this many seconds elapse.
 function timer(seconds)
 
+--- Adds a background timer to the current thread. If the thread outruns the
+--  timer, the callback is run and a ratchet error of type "ALARM" is thrown.
+--  @param seconds trigger the alarm after this many seconds elapse.
+--  @param callback optional callback function to run before throwing error.
+function alarm(seconds, callback)
+
 --- Pauses the current thread indefinitely. The thread must be resumed by a call
 --  to unpause() from another thread.
 --  @return any extra arguments passed to unpause() from other thread.

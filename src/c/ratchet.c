@@ -76,6 +76,22 @@ static int setup_persistance_tables (lua_State *L)
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "waiting_on");
 
+	/* Set up a weak-key table to hold alarm events for threads. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "k");
+	lua_setfield (L, -2, "__mode");
+	lua_setmetatable (L, -2);
+	lua_setfield (L, -2, "alarm_events");
+
+	/* Set up a weak-key table to hold alarm callbacks for threads. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "k");
+	lua_setfield (L, -2, "__mode");
+	lua_setmetatable (L, -2);
+	lua_setfield (L, -2, "alarm_callbacks");
+
 	/* Set up scratch-space for threads to store thread-scope data. */
 	lua_newtable (L);
 	lua_newtable (L);
@@ -129,6 +145,16 @@ static void end_thread_persist (lua_State *L, int index)
 	lua_pushnil (L);
 	lua_settable (L, -3);
 	lua_pop (L, 1);
+
+	lua_getfield (L, -1, "alarm_events");
+	lua_pushvalue (L, index);
+	lua_rawget (L, -2);
+	if (!lua_isnil (L, -1))
+	{
+		struct event *ev = (struct event *) lua_touserdata (L, -1);
+		event_del (ev);
+	}
+	lua_pop (L, 2);
 
 	lua_getfield (L, -1, "waiting_on");
 	for (lua_pushnil (L); lua_next (L, -2) != 0; lua_pop (L, 1))
@@ -234,6 +260,22 @@ static void timeout_triggered (int fd, short event, void *arg)
 
 	/* Call the run_thread() helper method. */
 	lua_getfield (L, 1, "run_thread");
+	lua_pushvalue (L, 1);
+	lua_settop (L1, 0);
+	lua_pushthread (L1);
+	lua_xmove (L1, L, 1);
+	lua_call (L, 2, 0);
+}
+/* }}} */
+
+/* {{{ alarm_triggered() */
+static void alarm_triggered (int fd, short event, void *arg)
+{
+	lua_State *L1 = (lua_State *) arg;
+	lua_State *L = lua_tothread (L1, 1);
+
+	/* Call the run_thread() helper method. */
+	lua_getfield (L, 1, "alarm_thread");
 	lua_pushvalue (L, 1);
 	lua_settop (L1, 0);
 	lua_pushthread (L1);
@@ -580,6 +622,48 @@ static int ratchet_start_threads_done_waiting (lua_State *L)
 
 	lua_pushboolean (L, some_ready);
 	return 1;
+}
+/* }}} */
+
+/* {{{ ratchet_alarm_thread() */
+static int ratchet_alarm_thread (lua_State *L)
+{
+	(void) get_event_base (L, 1);
+	get_thread (L, 2, L1);
+
+	int ctx = 0;
+	lua_getctx (L, &ctx);
+
+	if (ctx == 0)
+	{
+		lua_getuservalue (L, 1);
+		lua_getfield (L, -1, "alarm_callbacks");
+		lua_pushvalue (L, 2);
+		lua_rawget (L, -2);
+		if (!lua_isnil (L, -1))
+		{
+			lua_xmove (L, L1, 1);
+			lua_callk (L1, 0, 0, 1, ratchet_alarm_thread);
+		}
+		else
+			lua_pop (L, 1);
+	}
+
+	lua_settop (L, 2);
+
+	lua_settop (L1, 0);
+	ratchet_error_push_constructor (L1);
+	lua_pushliteral (L1, "Thread alarm!");
+	lua_pushliteral (L1, "ALARM");
+	lua_pushliteral (L1, "ratchet.thread.alarm()");
+	lua_call (L1, 3, 1);
+
+	lua_xmove (L1, L, 1);
+	end_thread_persist (L, 2);
+
+	handle_thread_error (L, 2);
+
+	return 0;
 }
 /* }}} */
 
@@ -1145,6 +1229,55 @@ static int ratchet_kill_all (lua_State *L)
 }
 /* }}} */
 
+/* {{{ ratchet_alarm() */
+static int ratchet_alarm (lua_State *L)
+{
+	int ctx = 0;
+	if (LUA_OK == lua_getctx (L, &ctx))
+	{
+		lua_pushlightuserdata (L, RATCHET_YIELD_GET);
+		return lua_yieldk (L, 1, ctx, ratchet_alarm);
+	}
+
+	lua_insert (L, 1);
+	lua_settop (L, 3);
+	if (lua_pushthread (L))
+		return luaL_error (L, "ratchet.thread.alarm() cannot be called from main thread.");
+
+	struct event_base *e_b = get_event_base (L, 1);
+	struct timeval tv;
+	gettimeval_arg (L, 2, &tv);
+
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "alarm_events");
+
+	/* Clean up and delete any existing alarm. */
+	lua_pushvalue (L, 4);
+	lua_rawget (L, -2);
+	if (!lua_isnil (L, -1))
+	{
+		struct event *ev = (struct event *) lua_touserdata (L, -1);
+		event_del (ev);
+	}
+	lua_pop (L, 1);
+
+	/* Setup new alarm event. */
+	lua_pushvalue (L, 4);
+	struct event *ev = (struct event *) lua_newuserdata (L, event_get_struct_event_size ());
+	evtimer_assign (ev, e_b, alarm_triggered, L);
+	evtimer_add (ev, &tv);
+	lua_rawset (L, -3);
+
+	/* Set the callback, if given. */
+	lua_getfield (L, 5, "alarm_callbacks");
+	lua_pushvalue (L, 4);
+	lua_pushvalue (L, 3);
+	lua_rawset (L, -3);
+
+	return 0;
+}
+/* }}} */
+
 /* ---- Public Functions ---------------------------------------------------- */
 
 /* {{{ luaopen_ratchet() */
@@ -1164,6 +1297,7 @@ int luaopen_ratchet (lua_State *L)
 		{"loop_once", ratchet_loop_once},
 		{"get_space", ratchet_get_space},
 		/* Undocumented, helper methods. */
+		{"alarm_thread", ratchet_alarm_thread},
 		{"run_thread", ratchet_run_thread},
 		{"yield_thread", ratchet_yield_thread},
 		{"wait_for_write", ratchet_wait_for_write},
@@ -1188,6 +1322,7 @@ int luaopen_ratchet (lua_State *L)
 		{"wait_all", ratchet_wait_all},
 		{"space", ratchet_thread_space},
 		{"timer", ratchet_timer},
+		{"alarm", ratchet_alarm},
 		{NULL}
 	};
 

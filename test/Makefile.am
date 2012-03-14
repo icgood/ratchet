@@ -14,6 +14,7 @@ TESTS = test_exec.lua \
 	test_wait_all.lua \
 	test_thread_kill.lua \
 	test_thread_space.lua \
+	test_thread_alarm.lua \
 	test_shutdown.lua \
 	test_socketpair.lua \
 	test_socketpad.lua \
