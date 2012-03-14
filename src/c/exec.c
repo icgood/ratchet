@@ -161,6 +161,58 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 }
 /* }}} */
 
+/* {{{ sigchld_handler() */
+static void sigchld_handler (int sig)
+{
+	/* Intentially empty. */
+}
+/* }}} */
+
+/* {{{ enable_sigchld() */
+static int enable_sigchld (lua_State *L)
+{
+	/* This function's intention is to set a handler for SIGCHLD so
+	 * that it is not ignored. POSIX states that ignoring SIGCHLD
+	 * will result in child processes being immediately cleaned up
+	 * and possibly resulting in ECHILD errors from waitpid().
+	 *
+	 * It attempts to leave existing handlers in place by checking
+	 * against SIG_IGN and SIG_DFL.
+	 */
+
+#if HAVE_SIGACTION
+	struct sigaction old;
+	if (-1 == sigaction (SIGCHLD, NULL, &old))
+		return ratchet_error_errno (L, "ratchet.exec", "sigaction");
+
+	if (SIG_IGN != old.sa_handler && SIG_DFL != old.sa_handler)
+		return 0;
+
+	struct sigaction new;
+	memset (&new, 0, sizeof (struct sigaction));
+	new.sa_handler = sigchld_handler;
+	sigemptyset (&new.sa_mask);
+	if (-1 == sigaction (SIGCHLD, &new, NULL))
+		return ratchet_error_errno (L, "ratchet.exec", "sigaction");
+
+	return 0;
+#else
+	typedef void (*sighandler) (int);
+	sighandler ret = signal (SIGCHLD, sigchld_handler);
+
+	if (SIG_ERR == ret)
+		return ratchet_error_errno (L, "ratchet.exec", "signal");
+	else if (SIG_IGN != ret && SIG_DFL != ret)
+	{
+		if (SIG_ERR == signal (SIGCHLD, ret))
+			return ratchet_error_errno (L, "ratchet.exec", "signal");
+	}
+
+	return 0;
+#endif
+}
+/* }}} */
+
 /* ---- Namespace Functions ------------------------------------------------- */
 
 /* {{{ rexec_new() */
@@ -738,6 +790,9 @@ int luaopen_ratchet_exec (lua_State *L)
 	luaL_newlib (L, meths);
 	lua_setfield (L, -2, "__index");
 	lua_pop (L, 1);
+
+	/* Ensure that the SIGCHLD signal is not being ignored. */
+	enable_sigchld (L);
 
 	return 1;
 }

@@ -262,7 +262,7 @@ AC_TYPE_SSIZE_T
 
 #####################
 # Checks for library functions.
-AC_CHECK_FUNCS([memset writev modf])
+AC_CHECK_FUNCS([memset writev modf sigaction])
 AC_FUNC_STRERROR_R
 
 #####################
