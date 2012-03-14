@@ -277,7 +277,6 @@ static void alarm_triggered (int fd, short event, void *arg)
 	/* Call the run_thread() helper method. */
 	lua_getfield (L, 1, "alarm_thread");
 	lua_pushvalue (L, 1);
-	lua_settop (L1, 0);
 	lua_pushthread (L1);
 	lua_xmove (L1, L, 1);
 	lua_call (L, 2, 0);
@@ -636,6 +635,10 @@ static int ratchet_alarm_thread (lua_State *L)
 
 	if (ctx == 0)
 	{
+		if (LUA_YIELD == lua_status (L1))
+			end_all_waiting_thread_events (L1);
+		lua_settop (L1, 0);
+
 		lua_getuservalue (L, 1);
 		lua_getfield (L, -1, "alarm_callbacks");
 		lua_pushvalue (L, 2);
@@ -651,7 +654,6 @@ static int ratchet_alarm_thread (lua_State *L)
 
 	lua_settop (L, 2);
 
-	lua_settop (L1, 0);
 	ratchet_error_push_constructor (L1);
 	lua_pushliteral (L1, "Thread alarm!");
 	lua_pushliteral (L1, "ALARM");
