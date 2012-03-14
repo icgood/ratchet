@@ -29,6 +29,7 @@ function get_argv(self)
 
 --- Starts the command process. No other methods may be called before this one.
 --  @param self the exec object.
+--  @return the operating system PID of the new process.
 function start(self)
 
 --- Returns the UNIX timestamp when the process command process was started,

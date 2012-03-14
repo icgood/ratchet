@@ -295,7 +295,8 @@ static int rexec_start (lua_State *L)
 	*outfd = &state->outfds[0];
 	*errfd = &state->errfds[0];
 
-	return 0;
+	lua_pushinteger (L, (int) state->pid);
+	return 1;
 }
 /* }}} */
 
