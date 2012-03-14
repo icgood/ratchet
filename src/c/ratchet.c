@@ -630,6 +630,7 @@ static int ratchet_alarm_thread (lua_State *L)
 	(void) get_event_base (L, 1);
 	get_thread (L, 2, L1);
 
+	int ret = LUA_OK;
 	int ctx = 0;
 	lua_getctx (L, &ctx);
 
@@ -646,7 +647,7 @@ static int ratchet_alarm_thread (lua_State *L)
 		if (!lua_isnil (L, -1))
 		{
 			lua_xmove (L, L1, 1);
-			lua_callk (L1, 0, 0, 1, ratchet_alarm_thread);
+			ret = lua_pcall (L1, 0, 0, 0);
 		}
 		else
 			lua_pop (L, 1);
@@ -654,11 +655,14 @@ static int ratchet_alarm_thread (lua_State *L)
 
 	lua_settop (L, 2);
 
-	ratchet_error_push_constructor (L1);
-	lua_pushliteral (L1, "Thread alarm!");
-	lua_pushliteral (L1, "ALARM");
-	lua_pushliteral (L1, "ratchet.thread.alarm()");
-	lua_call (L1, 3, 1);
+	if (ret == 0)
+	{
+		ratchet_error_push_constructor (L1);
+		lua_pushliteral (L1, "Thread alarm!");
+		lua_pushliteral (L1, "ALARM");
+		lua_pushliteral (L1, "ratchet.thread.alarm()");
+		lua_call (L1, 3, 1);
+	}
 
 	lua_xmove (L1, L, 1);
 	end_thread_persist (L, 2);
