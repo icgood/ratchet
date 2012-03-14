@@ -99,8 +99,8 @@ AM_CONDITIONAL([HAVE_LUA_INTERPRETER], [test "x${LUA}" != "x"])
 
 # Libevent
 AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
-AC_CHECK_HEADERS([event.h], [have_libevent=yes], [have_libevent=no])
-AC_SEARCH_LIBS([event_set], [event], [], [have_libevent=no])
+AC_CHECK_HEADERS([event2/event.h], [have_libevent=yes], [have_libevent=no])
+AC_SEARCH_LIBS([event_assign], [event], [], [have_libevent=no])
 if test "x${have_libevent}" != "xyes"; then
 	AC_MSG_ERROR([Libevent libraries required for building.])
 else

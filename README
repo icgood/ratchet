@@ -109,7 +109,7 @@ Dependencies
 ============
 
  * Lua 5.2+ (http://www.lua.org)
- * libevent 1.4.10+ (http://monkey.org/~provos/libevent/)
+ * libevent 2+ (http://libevent.org/)
 
  * Without --disable-zeromq:  ZeroMQ 2.1.0+ (http://www.zeromq.org)
  * Without --disable-timerfd: Linux kernel 2.6.25+, Glibc 2.8+
