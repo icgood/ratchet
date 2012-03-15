@@ -366,7 +366,7 @@ static int rexec_wait (lua_State *L)
 	lua_settop (L, 2);
 
 	int status = 0;
-	int ret = waitpid (state->pid, &status, WNOHANG);
+	pid_t ret = waitpid (state->pid, &status, WNOHANG);
 	if (ret == -1)
 		return ratchet_error_errno (L, "ratchet.exec.wait()", "waitpid");
 	else if (0 == ret)
