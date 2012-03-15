@@ -27,6 +27,7 @@
 #include <lualib.h>
 
 #include <event2/event.h>
+#include <sys/wait.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -91,6 +92,18 @@ static int setup_persistance_tables (lua_State *L)
 	lua_setfield (L, -2, "__mode");
 	lua_setmetatable (L, -2);
 	lua_setfield (L, -2, "alarm_callbacks");
+
+	/* Set up a weak-value table to hold threads waiting on pids. */
+	lua_newtable (L);
+	lua_newtable (L);
+	lua_pushliteral (L, "v");
+	lua_setfield (L, -2, "__mode");
+	lua_setmetatable (L, -2);
+	lua_setfield (L, -2, "waitpid_threads");
+
+	/* Set up a table to hold finished process statuses by pid. */
+	lua_newtable (L);
+	lua_setfield (L, -2, "waitpid_statuses");
 
 	/* Set up scratch-space for threads to store thread-scope data. */
 	lua_newtable (L);
@@ -348,6 +361,167 @@ static void handle_thread_error (lua_State *L, int thread_i)
 }
 /* }}} */
 
+/* {{{ get_waitpid_thread() */
+static int get_waitpid_thread (lua_State *L, pid_t pid)
+{
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "waitpid_threads");
+	lua_pushinteger (L, (lua_Integer) pid);
+	lua_rawget (L, -2);
+
+	if (lua_isnil (L, -1))
+	{
+		lua_pop (L, 3);
+		return 0;
+	}
+
+	lua_remove (L, -2);
+	lua_remove (L, -2);
+	return 1;
+}
+/* }}} */
+
+/* {{{ set_waitpid_thread() */
+static void set_waitpid_thread (lua_State *L, pid_t pid, int index)
+{
+	int abs_index = lua_absindex (L, index);
+
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "waitpid_threads");
+	lua_pushinteger (L, (lua_Integer) pid);
+	lua_pushvalue (L, abs_index);
+	lua_rawset (L, -3);
+	lua_pop (L, 2);
+}
+/* }}} */
+
+/* {{{ clear_waitpid_thread() */
+static void clear_waitpid_thread (lua_State *L, pid_t pid)
+{
+	lua_pushnil (L);
+	set_waitpid_thread (L, pid, -1);
+	lua_pop (L, 1);
+}
+/* }}} */
+
+/* {{{ get_waitpid_status() */
+static int get_waitpid_status (lua_State *L, pid_t pid)
+{
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "waitpid_statuses");
+	lua_pushinteger (L, (lua_Integer) pid);
+	lua_rawget (L, -2);
+
+	if (lua_isnil (L, -1))
+	{
+		lua_pop (L, 3);
+		return 0;
+	}
+
+	lua_remove (L, -2);
+	lua_remove (L, -2);
+	return 1;
+}
+/* }}} */
+
+/* {{{ set_waitpid_status() */
+static void set_waitpid_status (lua_State *L, pid_t pid, int index)
+{
+	int abs_index = lua_absindex (L, index);
+
+	lua_getuservalue (L, 1);
+	lua_getfield (L, -1, "waitpid_statuses");
+	lua_pushinteger (L, (lua_Integer) pid);
+	lua_pushvalue (L, abs_index);
+	lua_rawset (L, -3);
+	lua_pop (L, 2);
+}
+/* }}} */
+
+/* {{{ clear_waitpid_status() */
+static void clear_waitpid_status (lua_State *L, pid_t pid)
+{
+	lua_pushnil (L);
+	set_waitpid_status (L, pid, -1);
+	lua_pop (L, 1);
+}
+/* }}} */
+
+/* {{{ waitpid_timeout_triggered() */
+static void waitpid_timeout_triggered (int fd, short event, void *arg)
+{
+	lua_State *L1 = (lua_State *) arg;
+	lua_State *L = lua_tothread (L1, 1);
+
+	/* This thread is no longer waiting on pid. */
+	lua_getfield (L1, 2, "pid");
+	pid_t pid = (pid_t) lua_tointeger (L1, -1);
+	lua_pop (L1, 1);
+	clear_waitpid_thread (L, pid);
+
+	/* Call the run_thread() helper method. */
+	lua_getfield (L, 1, "run_thread");
+	lua_pushvalue (L, 1);
+	lua_settop (L1, 0);
+	lua_pushthread (L1);
+	lua_xmove (L1, L, 1);
+	lua_pushboolean (L1, 0);
+	lua_call (L, 2, 0);
+}
+/* }}} */
+
+/* {{{ sigchld_triggered() */
+static void sigchld_triggered (int fd, short event, void *arg)
+{
+	lua_State *L = (lua_State *) arg;
+	int status = 0;
+	pid_t pid;
+
+	while ((pid = waitpid (-1, &status, WNOHANG)) > 0)
+	{
+		/* Check for thread waiting on pid and resume it. */
+		if (get_waitpid_thread (L, pid))
+		{
+			lua_State *L1 = lua_tothread (L, -1);
+			lua_settop (L1, 0);
+			lua_pushinteger (L1, (lua_Integer) status);
+
+			clear_waitpid_thread (L, pid);
+
+			/* Call the run_thread() helper method. */
+			lua_getfield (L, 1, "run_thread");
+			lua_pushvalue (L, 1);
+			lua_pushvalue (L, -3);
+			lua_call (L, 2, 0);
+
+			lua_pop (L, 1);
+			continue;
+		}
+
+		/* If not threads waiting, store the status. */
+		lua_pushinteger (L, (lua_Integer) status);
+		set_waitpid_status (L, pid, -1);
+		lua_pop (L, 1);
+	}
+}
+/* }}} */
+
+/* {{{ setup_sigchld_event() */
+static void setup_sigchld_event (lua_State *L, struct event_base *e_b)
+{
+	/* Build event. */
+	struct event *ev = (struct event *) lua_newuserdata (L, event_get_struct_event_size ());
+	luaL_getmetatable (L, "ratchet_event_internal_meta");
+	lua_setmetatable (L, -2);
+
+	/* Queue up the event. */
+	evsignal_assign (ev, e_b, SIGCHLD, sigchld_triggered, L);
+	evsignal_add (ev, NULL);
+
+	lua_setfield (L, -2, "sigchld_event");
+}
+/* }}} */
+
 /* ---- ratchet Functions --------------------------------------------------- */
 
 /* {{{ ratchet_new() */
@@ -365,6 +539,7 @@ static int ratchet_new (lua_State *L)
 
 	/* Set up persistance table. */
 	setup_persistance_tables (L);
+	setup_sigchld_event (L, *new);
 	lua_setuservalue (L, -2);
 
 	lua_insert (L, 1);
@@ -752,6 +927,9 @@ static int ratchet_yield_thread (lua_State *L)
 	else if (RATCHET_YIELD_MULTIRW == yield_type)
 		lua_getfield (L, 1, "wait_for_multi");
 
+	else if (RATCHET_YIELD_PID == yield_type)
+		lua_getfield (L, 1, "wait_for_pid");
+
 	else
 	{
 		lua_pushnil (L);
@@ -973,6 +1151,48 @@ static int ratchet_wait_for_multi (lua_State *L)
 	}
 
 	lua_setfield (L1, -3, "event_list");
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_wait_for_pid() */
+static int ratchet_wait_for_pid (lua_State *L)
+{
+	/* Gather args into usable data. */
+	struct event_base *e_b = get_event_base (L, 1);
+	get_thread (L, 2, L1);
+	pid_t pid = (pid_t) luaL_checkint (L, 3);
+	struct timeval tv;
+	int use_tv = gettimeval_opt (L, 4, &tv);
+
+	/* Check if the pid is already completed. */
+	if (get_waitpid_status (L, pid))
+	{
+		lua_xmove (L, L1, 1);
+		clear_waitpid_status (L, pid);
+		set_thread_ready (L, 2);
+		return 0;
+	}
+
+	/* Mark the thread as waiting. */
+	set_waitpid_thread (L, pid, 2);
+
+	/* Cleanup table for kill()ing the thread. */
+	lua_createtable (L1, 0, 1);
+
+	lua_pushinteger (L1, (lua_Integer) pid);
+	lua_setfield (L1, -2, "pid");
+
+	if (use_tv)
+	{
+		/* Build event and queue it up. */
+		struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
+		evtimer_assign (ev, e_b, waitpid_timeout_triggered, L1);
+		evtimer_add (ev, &tv);
+
+		lua_setfield (L1, -2, "event");
+	}
 
 	return 0;
 }
@@ -1311,6 +1531,7 @@ int luaopen_ratchet (lua_State *L)
 		{"wait_for_signal", ratchet_wait_for_signal},
 		{"wait_for_timeout", ratchet_wait_for_timeout},
 		{"wait_for_multi", ratchet_wait_for_multi},
+		{"wait_for_pid", ratchet_wait_for_pid},
 		{"start_threads_ready", ratchet_start_threads_ready},
 		{"start_threads_done_waiting", ratchet_start_threads_done_waiting},
 		{NULL}

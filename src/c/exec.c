@@ -247,6 +247,7 @@ static int rexec_clean_up (lua_State *L)
 	state->infds[1] = -1;
 	state->outfds[0] = -1;
 	state->errfds[0] = -1;
+	state->pid = -1;
 	return 0;
 }
 /* }}} */
@@ -361,27 +362,28 @@ static int rexec_wait (lua_State *L)
 
 	int ctx = 0;
 	lua_getctx (L, &ctx);
-	if (ctx == 1 && !lua_toboolean (L, 3))
-		return ratchet_error_str (L, "ratchet.exec.wait()", "ETIMEDOUT", "Timed out on wait.");
-	lua_settop (L, 2);
-
-	int status = 0;
-	pid_t ret = waitpid (state->pid, &status, WNOHANG);
-	if (ret == -1)
-		return ratchet_error_errno (L, "ratchet.exec.wait()", "waitpid");
-	else if (0 == ret)
+	if (ctx == 1)
 	{
-		lua_pushlightuserdata (L, RATCHET_YIELD_SIGNAL);
-		lua_pushinteger (L, SIGCHLD);
-		lua_pushvalue (L, 2);
-		return lua_yieldk (L, 3, 1, rexec_wait);
+		if (!lua_toboolean (L, 3))
+			return ratchet_error_str (L, "ratchet.exec.wait()", "ETIMEDOUT", "Timed out on wait.");
+
+		rexec_clean_up (L);
+
+		int status = (int) lua_tointeger (L, 3);
+		lua_pushinteger (L, (lua_Integer) WEXITSTATUS (status));
+		lua_pushboolean (L, WIFEXITED (status));
+		return 2;
 	}
 
-	rexec_clean_up (L);
+	if (state->pid < 0)
+		return ratchet_error_str (L, "ratchet.exec.wait()", "ECHILD", "Child process no longer exists.");
 
-	lua_pushinteger (L, (lua_Integer) WEXITSTATUS (status));
-	lua_pushboolean (L, WIFEXITED (status));
-	return 2;
+	lua_settop (L, 2);
+
+	lua_pushlightuserdata (L, RATCHET_YIELD_PID);
+	lua_pushinteger (L, (lua_Integer) state->pid);
+	lua_pushvalue (L, 2);
+	return lua_yieldk (L, 3, 1, rexec_wait);
 }
 /* }}} */
 

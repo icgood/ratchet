@@ -37,6 +37,7 @@ int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, 
 #define RATCHET_YIELD_MULTIRW ((void *) 6)
 #define RATCHET_YIELD_PAUSE ((void *) 7)
 #define RATCHET_YIELD_SIGNAL ((void *) 8)
+#define RATCHET_YIELD_PID ((void *) 9)
 
 #endif
 // vim:foldmethod=marker:ai:ts=4:sw=4:
