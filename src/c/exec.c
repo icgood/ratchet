@@ -359,10 +359,10 @@ static int rexec_wait (lua_State *L)
 	if (!lua_isnoneornil (L, 2) && !lua_isnumber (L, 2))
 		return luaL_argerror (L, 2, "Optional timeout number or nil expected.");
 
-	int ctx = 0;
+	int ctx = 0, timed_out = 0;
 	lua_getctx (L, &ctx);
 	if (ctx == 1 && !lua_toboolean (L, 3))
-		return ratchet_error_str (L, "ratchet.exec.wait()", "ETIMEDOUT", "Timed out on wait.");
+		timed_out = 1;
 	lua_settop (L, 2);
 
 	int status = 0;
@@ -371,6 +371,9 @@ static int rexec_wait (lua_State *L)
 		return ratchet_error_errno (L, "ratchet.exec.wait()", "waitpid");
 	else if (0 == ret)
 	{
+		if (timed_out)
+			return ratchet_error_str (L, "ratchet.exec.wait()", "ETIMEDOUT", "Timed out on wait.");
+
 		lua_pushlightuserdata (L, RATCHET_YIELD_SIGNAL);
 		lua_pushinteger (L, SIGCHLD);
 		lua_pushvalue (L, 2);
