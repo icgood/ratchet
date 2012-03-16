@@ -887,8 +887,8 @@ static int ratchet_wait_for_signal (lua_State *L)
 		lua_rawseti (L1, -2, 2);
 
 		/* Queue up the timeout event. */
-		event_assign (timeout, e_b, sig, EV_SIGNAL, signal_triggered, L1);
-		event_add (timeout, &tv);
+		evtimer_assign (timeout, e_b, signal_triggered, L1);
+		evtimer_add (timeout, &tv);
 	}
 
 	lua_setfield (L1, -2, "event_list");
@@ -911,10 +911,12 @@ static int ratchet_wait_for_timeout (lua_State *L)
 
 	/* Build event and queue it up. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
+	luaL_getmetatable (L1, "ratchet_event_internal_meta");
+	lua_setmetatable (L1, -2);
+	lua_setfield (L1, -2, "event");
+
 	evtimer_assign (ev, e_b, timeout_triggered, L1);
 	evtimer_add (ev, &tv);
-
-	lua_setfield (L1, -2, "event");
 
 	return 0;
 }
