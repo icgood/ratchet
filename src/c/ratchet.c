@@ -197,6 +197,7 @@ static void end_all_waiting_thread_events (lua_State *L)
 		}
 		lua_pop (L, 1);
 	}
+	lua_pop (L, 1);
 }
 /* }}} */
 
@@ -239,7 +240,30 @@ static double get_timeout_from_object (lua_State *L, int index)
 static void event_triggered (int fd, short event, void *arg)
 {
 	lua_State *L1 = (lua_State *) arg;
+	if (!lua_isthread (L1, 1))
+		luaL_error (L1, "ratchet internal error.");
 	lua_State *L = lua_tothread (L1, 1);
+
+	/* Call the run_thread() helper method. */
+	lua_getfield (L, 1, "run_thread");
+	lua_pushvalue (L, 1);
+	lua_settop (L1, 0);
+	lua_pushthread (L1);
+	lua_xmove (L1, L, 1);
+	lua_pushboolean (L1, !(event & EV_TIMEOUT));
+	lua_call (L, 2, 0);
+}
+/* }}} */
+
+/* {{{ signal_triggered() */
+static void signal_triggered (int sig, short event, void *arg)
+{
+	lua_State *L1 = (lua_State *) arg;
+	if (!lua_isthread (L1, 1))
+		luaL_error (L1, "ratchet internal error.");
+	lua_State *L = lua_tothread (L1, 1);
+
+	end_all_waiting_thread_events (L1);
 
 	/* Call the run_thread() helper method. */
 	lua_getfield (L, 1, "run_thread");
@@ -256,6 +280,8 @@ static void event_triggered (int fd, short event, void *arg)
 static void timeout_triggered (int fd, short event, void *arg)
 {
 	lua_State *L1 = (lua_State *) arg;
+	if (!lua_isthread (L1, 1))
+		luaL_error (L1, "ratchet internal error.");
 	lua_State *L = lua_tothread (L1, 1);
 
 	/* Call the run_thread() helper method. */
@@ -272,6 +298,8 @@ static void timeout_triggered (int fd, short event, void *arg)
 static void alarm_triggered (int fd, short event, void *arg)
 {
 	lua_State *L1 = (lua_State *) arg;
+	if (!lua_isthread (L1, 1))
+		luaL_error (L1, "ratchet internal error.");
 	lua_State *L = lua_tothread (L1, 1);
 
 	/* Call the run_thread() helper method. */
@@ -308,6 +336,8 @@ static void multi_event_del_all (lua_State *L, int index)
 static void multi_event_triggered (int fd, short event, void *arg)
 {
 	lua_State *L1 = (lua_State *) arg;
+	if (!lua_isthread (L1, 1))
+		luaL_error (L1, "ratchet internal error.");
 	lua_State *L = lua_tothread (L1, 1);
 
 	lua_getfield (L1, 2, "event_list");
@@ -685,9 +715,9 @@ restart_thread:
 	nargs = lua_gettop (L1);
 	if (lua_status (L1) != LUA_YIELD)
 		nargs--;
-	ret = lua_resume (L1, NULL, nargs);
+	ret = lua_resume (L1, L, nargs);
 
-	if (ret == 0)
+	if (ret == LUA_OK)
 		end_thread_persist (L, 2);	/* Remove the entry from the persistance tables. */
 
 	else if (ret == LUA_YIELD)
@@ -714,6 +744,7 @@ restart_thread:
 	else
 	{
 		lua_xmove (L1, L, 1);
+		end_all_waiting_thread_events (L1);
 		end_thread_persist (L, 2);
 
 		handle_thread_error (L, 2);
@@ -865,7 +896,7 @@ static int ratchet_wait_for_signal (lua_State *L)
 	lua_setmetatable (L1, -2);
 
 	/* Queue up the event. */
-	event_assign (ev, e_b, sig, EV_SIGNAL, event_triggered, L1);
+	event_assign (ev, e_b, sig, EV_SIGNAL, signal_triggered, L1);
 	event_add (ev, (use_tv ? &tv : NULL));
 
 	lua_setfield (L1, -2, "event");
