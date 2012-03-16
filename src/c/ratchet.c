@@ -192,7 +192,7 @@ static void end_all_waiting_thread_events (lua_State *L)
 				struct event *ev = lua_touserdata (L, -1);
 				event_del (ev);
 			}
-			else
+			else if (lua_isnil (L, -1))
 				break;
 		}
 		lua_pop (L, 1);
@@ -311,27 +311,6 @@ static void alarm_triggered (int fd, short event, void *arg)
 }
 /* }}} */
 
-/* {{{ multi_event_del_all() */
-static void multi_event_del_all (lua_State *L, int index)
-{
-	int i;
-
-	for (i=1; ; i++)
-	{
-		lua_rawgeti (L, index, i);
-		if (lua_isnil (L, -1))
-		{
-			lua_pop (L, 1);
-			break;
-		}
-
-		struct event *ev = (struct event *) lua_touserdata (L, -1);
-		event_del (ev);
-		lua_pop (L, 1);
-	}
-}
-/* }}} */
-
 /* {{{ multi_event_triggered() */
 static void multi_event_triggered (int fd, short event, void *arg)
 {
@@ -340,9 +319,7 @@ static void multi_event_triggered (int fd, short event, void *arg)
 		luaL_error (L1, "ratchet internal error.");
 	lua_State *L = lua_tothread (L1, 1);
 
-	lua_getfield (L1, 2, "event_list");
-	multi_event_del_all (L1, -1);
-	lua_pop (L1, 1);
+	end_all_waiting_thread_events (L1);
 
 	/* Figure out which object was triggered based on fd. */
 	lua_rawgeti (L1, 3, fd);
@@ -889,17 +866,32 @@ static int ratchet_wait_for_signal (lua_State *L)
 
 	/* Cleanup table for kill()ing the thread. */
 	lua_createtable (L1, 0, 1);
+	lua_newtable (L1);
 
-	/* Build event. */
+	/* Build signal event. */
 	struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
+	lua_rawseti (L1, -2, 1);
 
-	/* Queue up the event. */
+	/* Queue up the signal event. */
 	event_assign (ev, e_b, sig, EV_SIGNAL, signal_triggered, L1);
-	event_add (ev, (use_tv ? &tv : NULL));
+	event_add (ev, NULL);
 
-	lua_setfield (L1, -2, "event");
+	if (use_tv)
+	{
+		/* Build timeout event. */
+		struct event *timeout = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
+		luaL_getmetatable (L1, "ratchet_event_internal_meta");
+		lua_setmetatable (L1, -2);
+		lua_rawseti (L1, -2, 2);
+
+		/* Queue up the timeout event. */
+		event_assign (timeout, e_b, sig, EV_SIGNAL, signal_triggered, L1);
+		event_add (timeout, &tv);
+	}
+
+	lua_setfield (L1, -2, "event_list");
 
 	return 0;
 }
@@ -948,20 +940,21 @@ static int ratchet_wait_for_multi (lua_State *L)
 
 	int i, nread = lua_rawlen (L, 3), nwrite = lua_rawlen (L, 4);
 
-	lua_createtable (L1, 0, 1);
-	lua_newtable (L1);
-	lua_createtable (L1, 1+nread+nwrite, 0);
+	lua_createtable (L1, 0, 2);
 
 	/* Create timeout event. */
 	struct event *timeout = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 	luaL_getmetatable (L1, "ratchet_event_internal_meta");
 	lua_setmetatable (L1, -2);
-	lua_rawseti (L1, -2, 1);
+	lua_setfield (L1, -2, "event");
 
 	/* Queue up timeout event. */
 	evtimer_assign (timeout, e_b, timeout_triggered, L1);
 	if (use_tv)
 		evtimer_add (timeout, &tv);
+
+	lua_newtable (L1);
+	lua_createtable (L1, nread+nwrite, 0);
 
 	for (i=1; i<=nread; i++)
 	{
@@ -976,7 +969,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 		struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 		luaL_getmetatable (L1, "ratchet_event_internal_meta");
 		lua_setmetatable (L1, -2);
-		lua_rawseti (L1, -2, i+1);
+		lua_rawseti (L1, -2, i);
 
 		/* Queue up the event. */
 		event_assign (ev, e_b, fd, EV_READ, multi_event_triggered, L1);
@@ -996,7 +989,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 		struct event *ev = (struct event *) lua_newuserdata (L1, event_get_struct_event_size ());
 		luaL_getmetatable (L1, "ratchet_event_internal_meta");
 		lua_setmetatable (L1, -2);
-		lua_rawseti (L1, -2, nread+i+1);
+		lua_rawseti (L1, -2, nread+i);
 
 		/* Queue up the event. */
 		event_assign (ev, e_b, fd, EV_WRITE, multi_event_triggered, L1);
