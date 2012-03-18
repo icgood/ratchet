@@ -38,14 +38,6 @@
 
 const char *ratchet_version (void);
 
-/* {{{ return_first_upvalue() */
-static int return_first_upvalue (lua_State *L)
-{
-	lua_pushvalue (L, lua_upvalueindex (1));
-	return 1;
-}
-/* }}} */
-
 /* {{{ setup_persistance_tables() */
 static int setup_persistance_tables (lua_State *L)
 {
@@ -450,7 +442,7 @@ static int ratchet_get_num_threads (lua_State *L)
 static int ratchet_loop_once (lua_State *L)
 {
 	struct event_base *e_b = get_event_base (L, 1);
-	int extra_flags = (lua_toboolean (L, 2) ? EVLOOP_NONBLOCK : 0);
+	int flags = (lua_toboolean (L, 2) ? EVLOOP_NONBLOCK : EVLOOP_ONCE);
 
 	lua_settop (L, 1);
 
@@ -487,8 +479,8 @@ static int ratchet_loop_once (lua_State *L)
 	}
 	lua_settop (L, 1);
 
-	/* Call event loop, break if we're out of events. */
-	int ret = event_base_loop (e_b, EVLOOP_ONCE | extra_flags);
+	/* Handle one iteration of event processing. */
+	int ret = event_base_loop (e_b, flags);
 	if (ret < 0)
 		return luaL_error (L, "libevent internal error.");
 	else if (ret > 0)
