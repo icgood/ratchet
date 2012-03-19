@@ -306,4 +306,4 @@ void fstackdump_ln (lua_State *L, FILE *out, const char *file, int line)
 }
 /* }}} */
 
-// vim:foldmethod=marker:ai:ts=4:sw=4:
+// vim:fdm=marker:ai:ts=4:sw=4:noet:

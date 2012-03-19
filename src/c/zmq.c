@@ -506,4 +506,4 @@ int luaopen_ratchet_zmqsocket (lua_State *L)
 }
 /* }}} */
 
-// vim:foldmethod=marker:ai:ts=4:sw=4:
+// vim:fdm=marker:ai:ts=4:sw=4:noet:

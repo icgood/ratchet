@@ -39,4 +39,4 @@ int ratchet_error_str_ln (lua_State *L, const char *function, const char *code, 
 #define RATCHET_YIELD_SIGNAL ((void *) 8)
 
 #endif
-// vim:foldmethod=marker:ai:ts=4:sw=4:
+// vim:fdm=marker:ai:ts=4:sw=4:noet:

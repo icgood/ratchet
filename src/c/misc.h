@@ -26,4 +26,4 @@ int set_closeonexec (int fd);
 void fstackdump_ln (lua_State *L, FILE *out, const char *file, int line);
 
 #endif
-// vim:foldmethod=marker:ai:ts=4:sw=4:
+// vim:fdm=marker:ai:ts=4:sw=4:noet:
