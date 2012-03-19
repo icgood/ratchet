@@ -313,10 +313,18 @@ static void multi_event_triggered (int fd, short event, void *arg)
 
 	end_all_waiting_thread_events (L1);
 
-	/* Figure out which object was triggered based on fd. */
-	lua_rawgeti (L1, 3, fd);
-	lua_replace (L1, 1);
-	lua_settop (L1, 1);
+	if (event & EV_TIMEOUT)
+	{
+		lua_settop (L1, 0);
+		lua_pushboolean (L1, 0);
+	}
+	else
+	{
+		/* Figure out which object was triggered based on fd. */
+		lua_rawgeti (L1, 3, fd);
+		lua_replace (L1, 1);
+		lua_settop (L1, 1);
+	}
 
 	/* Call the run_thread() helper method. */
 	lua_getfield (L, 1, "run_thread");
@@ -943,7 +951,7 @@ static int ratchet_wait_for_multi (lua_State *L)
 	lua_setfield (L1, -2, "event");
 
 	/* Queue up timeout event. */
-	evtimer_assign (timeout, e_b, timeout_triggered, L1);
+	evtimer_assign (timeout, e_b, multi_event_triggered, L1);
 	if (use_tv)
 		evtimer_add (timeout, &tv);
 
