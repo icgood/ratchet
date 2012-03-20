@@ -232,12 +232,10 @@ static int build_tcp_info (lua_State *L)
 	lua_getfield (L, 1, "a_error");
 	const char *aaaa_error = lua_tostring (L, -2);
 	const char *a_error = lua_tostring (L, -1);
-	if (aaaa_error && a_error)
-		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s, %s", aaaa_error, a_error);
+	if (a_error)
+		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", a_error);
 	else if (aaaa_error)
 		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", aaaa_error);
-	else if (a_error)
-		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", a_error);
 	else
 		return ratchet_error_str (L, "ratchet.dns.query()", "ENOENT", "No DNS records: %s", host);
 }

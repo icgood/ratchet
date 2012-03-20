@@ -751,9 +751,10 @@ static int mydns_query_all_collect_results (lua_State *L)
 
 		lua_getfield (L, -1, "is_query_done");
 		lua_pushvalue (L, -2);
-		lua_call (L, 1, 1);
-		int is_query_done = lua_toboolean (L, -1);
-		lua_pop (L, 1);
+		lua_call (L, 1, 2);
+		int is_query_done = lua_toboolean (L, -2);
+		int query_timeout = lua_toboolean (L, -1);
+		lua_pop (L, 2);
 
 		if (is_query_done)
 		{
@@ -761,7 +762,8 @@ static int mydns_query_all_collect_results (lua_State *L)
 			lua_pushvalue (L, -2);
 			lua_pushvalue (L, 2);
 			lua_rawgeti (L, 3, i);
-			lua_call (L, 3, 2);
+			lua_pushboolean (L, query_timeout);
+			lua_call (L, 4, 2);
 
 			/* Set the error to answers[type.."_error"]. */
 			lua_rawgeti (L, 3, i);
@@ -860,7 +862,11 @@ static int mydns_is_query_done (lua_State *L)
 
 		double elapsed = (double) dns_res_elapsed (res);
 		if (elapsed >= et)
+		{
 			lua_pushboolean (L, 1);
+			lua_pushboolean (L, 1);
+			return 2;
+		}
 		else
 		{
 			lua_pushinteger (L, tries+1);
@@ -880,9 +886,17 @@ static int mydns_parse_answer (lua_State *L)
 	struct dns_resolver *res = get_dns_res (L, 1);
 	const char *data = luaL_checkstring (L, 2);
 	enum dns_type type = get_query_type (L, 3);
+	int query_timeout = lua_toboolean (L, 4);
 	int error = 0;
 
 	lua_settop (L, 3);
+
+	if (query_timeout)
+	{
+		lua_pushnil (L);
+		lua_pushliteral (L, "Timed out.");
+		return 2;
+	}
 
 	struct dns_packet *answer = dns_res_fetch (res, &error);
 	if (!answer)
