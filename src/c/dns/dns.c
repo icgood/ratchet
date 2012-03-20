@@ -36,6 +36,7 @@
 #include "libdns/dns.h"
 
 #define DNS_GET_POLL_TIMEOUT(n) (pow (2.0, (double) n))
+#define DNS_GET_MULTI_POLL_TIMEOUT 2.0
 
 #define DNS_TXT_SIZE_REGISTRY_KEY "ratchet_dns_txt_size"
 
@@ -790,7 +791,7 @@ static int mydns_query_all_collect_results (lua_State *L)
 	}
 
 	lua_pushnil (L);
-	lua_pushnumber (L, (lua_Number) DNS_GET_POLL_TIMEOUT (tries));
+	lua_pushnumber (L, (lua_Number) DNS_GET_MULTI_POLL_TIMEOUT);
 
 	if (not_done > 0)
 		return lua_yieldk (L, 4, tries+1, mydns_query_all_collect_results);
