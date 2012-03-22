@@ -133,12 +133,12 @@ static int start_process (lua_State *L, struct rexec_state *state, char *const *
 		close (STDERR_FILENO);
 		if (-1 == dup2 (state->infds[0], STDIN_FILENO))
 			_exit (1);
+		close (state->infds[0]);
 		if (-1 == dup2 (state->outfds[1], STDOUT_FILENO))
 			_exit (1);
+		close (state->outfds[1]);
 		if (-1 == dup2 (state->errfds[1], STDERR_FILENO))
 			_exit (1);
-		close (state->infds[0]);
-		close (state->outfds[1]);
 		close (state->errfds[1]);
 
 		if (-1 == execvp (argv[0], argv))
@@ -247,6 +247,9 @@ static int rexec_clean_up (lua_State *L)
 	state->infds[1] = -1;
 	state->outfds[0] = -1;
 	state->errfds[0] = -1;
+	if (state->pid > 0)
+		waitpid (state->pid, NULL, WNOHANG);
+	state->pid = 0;
 	return 0;
 }
 /* }}} */
@@ -380,6 +383,7 @@ static int rexec_wait (lua_State *L)
 		return lua_yieldk (L, 3, 1, rexec_wait);
 	}
 
+	state->pid = 0;
 	rexec_clean_up (L);
 
 	lua_pushinteger (L, (lua_Integer) WEXITSTATUS (status));
