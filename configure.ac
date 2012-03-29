@@ -51,6 +51,22 @@ AC_ARG_ENABLE([openssl], [AS_HELP_STRING([--disable-openssl],
 	      [use_openssl="$enableval"], [use_openssl=yes])
 
 #####################
+# Configure options: --with-lua=PATH
+AC_ARG_WITH([lua], [AS_HELP_STRING([--with-lua=NAME],
+	                           [Look for Lua interpreter NAME (default "lua")])])
+if test "x${with_lua}" == "x"; then
+	with_lua="lua"
+fi
+
+#####################
+# Configure options: --with-lua-lib=NAME
+AC_ARG_WITH([lua-lib], [AS_HELP_STRING([--with-lua-lib=NAME],
+	                               [use -lNAME to look for Lua (default "lua")])])
+if test "x${with_lua_lib}" == "x"; then
+	with_lua_lib="lua"
+fi
+
+#####################
 # Configure options: --with-lua-cpath=CPATH
 AC_MSG_CHECKING([Lua C module path])
 AC_ARG_WITH([lua-cpath], [AS_HELP_STRING([--with-lua-cpath=CPATH],
@@ -81,32 +97,61 @@ AC_SUBST([LUA_LPATH], ["$with_lua_lpath"])
 #####################
 # Checks for libraries.
 
-# Lua
-AX_WITH_LUA
-if test "x${LUA}" == "x"; then
-	AC_MSG_NOTICE([Lua interpreter not found, disabling build tests.])
-else
-	AX_WITH_LUA([502])
+# Lua interpreter.
+AC_PATH_PROG([LUA], [$with_lua])
+AC_MSG_CHECKING([Lua interpreter version])
+if test "x${LUA}" != "x"; then
+	lua_text_version=$(LUA_INIT= $LUA -e 'print(_VERSION)' 2>&1 | cut -d' ' -f2)
+	case $lua_text_version in
+		5.2*) ;;
+		5.1*) ;;
+		*) LUA= ;;
+	esac
 fi
-AX_LUA_HEADERS
-AX_LUA_HEADERS_VERSION([502])
-AX_LUA_LIBS
-if test "x${LUA_LIB}" == "x"; then
-	AC_MSG_ERROR([Lua development libraries required for building.])
+if test "x${LUA}" == "x"; then
+	AC_MSG_NOTICE([Lua 5.1+ interpreter not found, disabling build tests.])
+	AC_MSG_RESULT([no])
+else
+	AC_MSG_RESULT([yes])
 fi
 AC_SUBST([LUA], ["$LUA"])
 AM_CONDITIONAL([HAVE_LUA_INTERPRETER], [test "x${LUA}" != "x"])
 
-# Libevent
-AC_DEFINE([HAVE_LIBEVENT], [0], [Define to 1 if you have the libevent library.])
-AC_CHECK_HEADERS([event2/event.h], [have_libevent=yes], [have_libevent=no])
-AC_SEARCH_LIBS([event_assign], [event], [], [have_libevent=no])
-if test "x${have_libevent}" != "xyes"; then
-	AC_MSG_ERROR([Libevent libraries required for building.])
+# Lua headers.
+AC_MSG_CHECKING([Lua headers])
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <lua.h>
+#include <lualib.h>
+#include <stdlib.h>
+#include <stdio.h>
+int main()
+{
+  printf("(found %s, %d)... ", LUA_VERSION, LUA_VERSION_NUM);
+  if (LUA_VERSION_NUM >= 501)
+    exit(EXIT_SUCCESS);
+  exit(EXIT_FAILURE);
+}
+]])],
+  [AC_MSG_RESULT([yes])],
+  [AC_MSG_RESULT([no])
+  AC_MSG_FAILURE([Lua 5.1+ headers required to build.])])
+
+# Lua libraries
+AC_CHECK_LIB([m], [exp])
+AC_CHECK_LIB([dl], [dlopen])
+AC_CHECK_LIB([$with_lua_lib], [lua_load], [],
+	     [AC_MSG_ERROR([Lua 5.1+ libraries required to build.])])
+
+# Libev
+AC_DEFINE([HAVE_LIBEV], [0], [Define to 1 if you have the libev library.])
+AC_CHECK_HEADERS([ev.h], [have_libev=yes], [have_libev=no])
+AC_SEARCH_LIBS([ev_run], [ev], [], [have_libev=no])
+if test "x${have_libev}" != "xyes"; then
+	AC_MSG_ERROR([Libev libraries required for building.])
 else
-	AC_DEFINE([HAVE_LIBEVENT], [1])
+	AC_DEFINE([HAVE_LIBEV], [1])
 fi
-AM_CONDITIONAL([HAVE_LIBEVENT], [test "x${have_libevent}" = "xyes"])
+AM_CONDITIONAL([HAVE_LIBEV], [test "x${have_libev}" = "xyes"])
 
 # OpenSSL
 AC_DEFINE([HAVE_OPENSSL], [0], [Define to 1 if you have the openssl library.])
