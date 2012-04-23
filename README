@@ -25,48 +25,56 @@ Build Information
 
 Lua 5.2+ is required to build, as this is a Lua library. Other than that, it
 should work on most modern GNU/Linux systems with kernel 2.6+ and glibc2. If
-your Lua installation is custom, you may need to explicitly point the configure
-script to its paths:
+your distribution or custom install added a suffixes to differentiate Lua
+versions, you can use the configure option:
 
-        --with-lua-prefix=DIR  Lua files are in DIR.
-        --with-lua-suffix=ARG  Gives suffix for Lua binary and library files.
+    --with-lua-suffix=ARG  Gives suffix for Lua binary and library files.
+
+Many distributions do not yet include Lua 5.2 in package management. To avoid
+blowing away an existing Lua 5.1 install, you might want to install Lua 5.2
+somewhere unique. Let's say you installed in /opt/lua-5.2:
+
+    PATH="/opt/lua-5.2/bin:$PATH" \
+    CFLAGS="$CFLAGS -I/opt/lua-5.2/include" \
+    LDFLAGS="$LDFLAGS -I/opt/lua-5.2/lib" \
+    ./configure
 
 If the paths to C and Lua module installation directories are not available from
 pkg-config, they may need to be manually specified with:
 
-        --with-lua-cpath=CPATH  Install Lua C modules to CPATH
-        --with-lua-lpath=LPATH  Install Lua modules to LPATH
+    --with-lua-cpath=CPATH  Install Lua C modules to CPATH
+    --with-lua-lpath=LPATH  Install Lua modules to LPATH
 
 There are two different ways to use this library: from C or from Lua. By
 default, both options are made available. If you don't need to use the library
 from the Lua interpreter, you can choose to disable that with the configure
 option:
 
-        --disable-module       Disable the Lua module.
+    --disable-module       Disable the Lua module.
 
 Similarly, if your Lua installation is custom, or the path to install Lua C
 modules is not available in pkg-config, you can define a custom installation
 path for the Lua module with a configure option:
 
-        --enable-module=PATH   Install the Lua module ratchet.so to PATH.
+    --enable-module=PATH   Install the Lua module ratchet.so to PATH.
 
 If you do not need the developement libraries and headers installed, you can
 choose to disable them with the configure option:
 
-        --disable-devel        Disable developement headers and libraries.
+    --disable-devel        Disable developement headers and libraries.
 
 By default, ratchet attempts to build with ZeroMQ (2.1.0+ is required). If you
 do not need access to ZeroMQ sockets or do not meet the version requirement,
 you can disable that portion of the library with a configure option:
 
-        --disable-zeromq       Disable usage of ZeroMQ libraries.
+    --disable-zeromq       Disable usage of ZeroMQ libraries.
 
 By default, ratchet uses dns.c to provide enhanced DNS querying. If you do not
 need access to DNS queries whatsoever, you can disable that portion of the build
 with the configure option below. Note, however, that currently there is no
 built-in method to build the data required for BSD sockets without this feature.
 
-        --disable-dns          Disable usage of dns.c libraries.
+    --disable-dns          Disable usage of dns.c libraries.
 
 To encrypt socket channels, ratchet can tie in to the OpenSSL suite. This is
 important, for example, to implement HTTPS or the STARTTLS SMTP command. If
@@ -75,43 +83,43 @@ a program using the ratchet library is started, regardless of if/when encryption
 is used (see SSL_library_init() and SSL_load_error_strings()). OpenSSL will not
 be included in the build if the following configure option is given:
 
-        --disable-openssl      Disable usage of OpenSSL libraries.
+    --disable-openssl      Disable usage of OpenSSL libraries.
 
 For Linux users (see version requirements below), there is access to the
 timerfd (man page timerfd_create(2)) routines for intelligent time keeping and
 time-based triggers. If the requirements can't be met, this feature can be
 disabled with a configure option:
 
-        --disable-timerfd      Disabe usage of timerfd calls.
+    --disable-timerfd      Disabe usage of timerfd calls.
 
 If, for any reason, you do not need access to BSD sockets (for example you only
 need ZeroMQ, timers, or thread management), you can disable inclusion of these
 features with another configure option:
 
-        --disable-socket       Disable usage of BSD sockets.
+    --disable-socket       Disable usage of BSD sockets.
 
 Example protocol implementations, installed to the Lua module path, can be
 disabled with the following configure options:
 
-        --disable-http         Do not install HTTP protocol implementation.
-        --disable-smtp         Do not install SMTP protocol implementation.
+    --disable-http         Do not install HTTP protocol implementation.
+    --disable-smtp         Do not install SMTP protocol implementation.
 
 To increase the size of the buffer used when the size of a piece of data is
 unknown, you can also use the following configure variable. Currently, it only
 controls the size of the buffer used in recv(2) system calls.
 
-        BUFSIZ    The size of the intermediate buffers used when building large
-                  Lua strings.
+    BUFSIZ    The size of the intermediate buffers used when building large
+              Lua strings.
 
 All other configure options are standard from GNU autotools.
 
 Dependencies
 ============
 
- * Lua 5.2+ (http://www.lua.org)
- * libevent 2+ (http://libevent.org/)
+* Lua 5.2+ (http://www.lua.org)
+* libevent 2+ (http://libevent.org/)
 
- * Without --disable-zeromq:  ZeroMQ 2.1.0+ (http://www.zeromq.org)
- * Without --disable-timerfd: Linux kernel 2.6.25+, Glibc 2.8+
- * Without --disable-openssl: OpenSSL (http://www.openssl.org/)
+* Without --disable-zeromq:  ZeroMQ 2.1.0+ (http://www.zeromq.org)
+* Without --disable-timerfd: Linux kernel 2.6.25+, Glibc 2.8+
+* Without --disable-openssl: OpenSSL (http://www.openssl.org/)
 
