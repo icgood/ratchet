@@ -162,6 +162,9 @@ static void end_thread_persist (lua_State *L, int index)
 /* {{{ end_all_waiting_thread_events() */
 static void end_all_waiting_thread_events (lua_State *L)
 {
+	if (!lua_istable (L, 2))
+		return;
+
 	lua_getfield (L, 2, "event");
 	if (lua_isuserdata (L, -1))
 	{
