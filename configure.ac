@@ -56,7 +56,7 @@ AC_MSG_CHECKING([Lua C module path])
 AC_ARG_WITH([lua-cpath], [AS_HELP_STRING([--with-lua-cpath=CPATH],
 	                                 [Install Lua C modules to CPATH])])
 if test "x${with_lua_cpath}" == "x"; then
-	with_lua_cpath="`pkg-config lua --variable=INSTALL_CMOD`"
+	with_lua_cpath="`pkg-config lua --variable=INSTALL_CMOD 2>&1`"
 	if test $? -ne 0 -o "x${with_lua_cpath}" == "x"; then
 		with_lua_cpath="/usr/lib/lua/5.2"
 	fi
@@ -70,7 +70,7 @@ AC_MSG_CHECKING([Lua module path])
 AC_ARG_WITH([lua-lpath], [AS_HELP_STRING([--with-lua-lpath=LPATH],
 	                                 [Install Lua modules to LPATH])])
 if test "x${with_lua_lpath}" == "x"; then
-	with_lua_lpath="`pkg-config lua --variable=INSTALL_LMOD`"
+	with_lua_lpath="`pkg-config lua --variable=INSTALL_LMOD 2>&1`"
 	if test $? -ne 0 -o "x${with_lua_lpath}" == "x"; then
 		with_lua_lpath="/usr/share/lua/5.2"
 	fi

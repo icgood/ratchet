@@ -79,14 +79,15 @@ built-in method to build the data required for BSD sockets without this feature.
 To encrypt socket channels, ratchet can tie in to the OpenSSL suite. This is
 important, for example, to implement HTTPS or the STARTTLS SMTP command. If
 included in the build, the OpenSSL global state will be initialized every time
-a program using the ratchet library is started, regardless of if/when encryption
-is used (see SSL_library_init() and SSL_load_error_strings()). OpenSSL will not
-be included in the build if the following configure option is given:
+a program using the ratchet library is started, regardless of if/when
+encryption is used (see `SSL_library_init()` and `SSL_load_error_strings()`).
+OpenSSL will not be included in the build if the following configure option is
+given:
 
     --disable-openssl      Disable usage of OpenSSL libraries.
 
 For Linux users (see version requirements below), there is access to the
-timerfd (man page timerfd_create(2)) routines for intelligent time keeping and
+timerfd (man page `timerfd_create()`) routines for intelligent time keeping and
 time-based triggers. If the requirements can't be met, this feature can be
 disabled with a configure option:
 
@@ -106,7 +107,7 @@ disabled with the following configure options:
 
 To increase the size of the buffer used when the size of a piece of data is
 unknown, you can also use the following configure variable. Currently, it only
-controls the size of the buffer used in recv(2) system calls.
+controls the size of the buffer used in `recv()` system calls.
 
     BUFSIZ    The size of the intermediate buffers used when building large
               Lua strings.
