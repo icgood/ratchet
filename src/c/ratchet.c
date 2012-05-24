@@ -506,6 +506,18 @@ static int ratchet_loop (lua_State *L)
 
 	while (1)
 	{
+		lua_getuservalue (L, 1);
+		lua_getfield (L, -1, "break_flag");
+		if (lua_toboolean (L, -1))
+		{
+			lua_pop (L, 1);
+			lua_pushnil (L);
+			lua_setfield (L, -2, "break_flag");
+			lua_pop (L, 1);
+			break;
+		}
+		lua_pop (L, 2);
+
 		lua_getfield (L, 1, "loop_once");
 		lua_pushvalue (L, 1);
 		lua_call (L, 1, 1);
@@ -513,6 +525,19 @@ static int ratchet_loop (lua_State *L)
 			break;
 		lua_pop (L, 1);
 	}
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ ratchet_break() */
+static int ratchet_break (lua_State *L)
+{
+	(void) get_event_base (L, 1);
+
+	lua_getuservalue (L, 1);
+	lua_pushboolean (L, 1);
+	lua_setfield (L, -2, "break_flag");
 
 	return 0;
 }
@@ -1326,6 +1351,7 @@ int luaopen_ratchet (lua_State *L)
 		{"get_method", ratchet_get_method},
 		{"get_num_threads", ratchet_get_num_threads},
 		{"loop", ratchet_loop},
+		{"break", ratchet_break},
 		{"loop_once", ratchet_loop_once},
 		{"get_space", ratchet_get_space},
 		/* Undocumented, helper methods. */
