@@ -571,7 +571,7 @@ function ratchet.smtp.server:handle()
             error(err, 0)
         end
     end
-    self:close()
+    pcall(self.close, self)
 end
 -- }}}
 
