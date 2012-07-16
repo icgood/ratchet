@@ -20,7 +20,7 @@ end
 function smtp_io:close()
     local enc = self.socket:get_encryption()
     if enc then
-        enc:shutdown()
+        pcall(enc.shutdown, enc)
     end
     return self.socket:close()
 end
