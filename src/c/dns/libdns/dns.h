@@ -37,6 +37,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#include <sys/param.h>		/* BYTE_ORDER BIG_ENDIAN _BIG_ENDIAN */
 #include <sys/types.h>		/* socklen_t */
 #include <sys/socket.h>		/* struct socket */
 
@@ -64,9 +65,9 @@
 
 #define DNS_VENDOR "william@25thandClement.com"
 
-#define DNS_V_REL  0x20110114
-#define DNS_V_ABI  0x20100709
-#define DNS_V_API  0x20100709
+#define DNS_V_REL  0x20120711
+#define DNS_V_ABI  0x20120710
+#define DNS_V_API  0x20120618
 
 
 const char *dns_vendor(void);
@@ -79,19 +80,75 @@ int dns_v_api(void);
 /*
  * E R R O R S
  *
+ * Errors and exceptions are always returned through an int. This should
+ * hopefully make integration easier in the majority of circumstances, and
+ * also cut down on useless compiler warnings.
+ *
+ * System and library errors are returned together. POSIX guarantees that
+ * all system errors are positive integers. Library errors are always
+ * negative integers in the range DNS_EBASE to DNS_ELAST, with the high bits
+ * set to the three magic ASCII characters "dns".
+ *
+ * dns_strerror() returns static English string descriptions of all known
+ * errors, and punts the remainder to strerror(3).
+ *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+#define DNS_EBASE -(('d' << 24) | ('n' << 16) | ('s' << 8) | 64)
+
+#define dns_error_t int /* for documentation only */
+
 enum dns_errno {
-	DNS_ENOBUFS	= -(('d' << 24) | ('n' << 16) | ('s' << 8) | 64),
+	DNS_ENOBUFS = DNS_EBASE,
 	DNS_EILLEGAL,
 	DNS_EORDER,
 	DNS_ESECTION,
 	DNS_EUNKNOWN,
+	DNS_EADDRESS,
+	DNS_ELAST,
 }; /* dns_errno */
 
-const char *dns_strerror(int);
+const char *dns_strerror(dns_error_t);
 
 extern int dns_debug;
+
+
+/*
+ * C O M P I L E R  A N N O T A T I O N S
+ *
+ * GCC with -Wextra, and clang by default, complain about overrides in
+ * initializer lists. Overriding previous member initializers is well
+ * defined behavior in C. dns.c relies on this behavior to define default,
+ * overrideable member values when instantiating configuration objects.
+ *
+ * dns_quietinit() guards a compound literal expression with pragmas to
+ * silence these shrill warnings. This alleviates the burden of requiring
+ * third-party projects to adjust their compiler flags.
+ *
+ * NOTE: If you take the address of the compound literal, take the address
+ * of the transformed expression, otherwise the compound literal lifetime is
+ * tied to the scope of the GCC statement expression.
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#if defined __clang__
+#define dns_quietinit(...) \
+	_Pragma("clang diagnostic push") \
+	_Pragma("clang diagnostic ignored \"-Winitializer-overrides\"") \
+	__VA_ARGS__ \
+	_Pragma("clang diagnostic pop")
+#elif (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4
+/* GCC parses the _Pragma operator less elegantly than clang. */
+#define dns_quietinit(...) \
+	({ \
+		_Pragma("GCC diagnostic push") \
+		_Pragma("GCC diagnostic ignored \"-Woverride-init\"") \
+		__VA_ARGS__; \
+		_Pragma("GCC diagnostic pop") \
+	})
+#else
+#define dns_quietinit(...) __VA_ARGS__
+#endif
 
 
 /*
@@ -259,7 +316,7 @@ extern unsigned (*dns_random)(void);
 struct dns_header {
 		unsigned qid:16;
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if (defined BYTE_ORDER && BYTE_ORDER == BIG_ENDIAN) || defined _BIG_ENDIAN
 		unsigned qr:1;
 		unsigned opcode:4;
 		unsigned aa:1;
@@ -420,7 +477,8 @@ int dns_rr_cmp(struct dns_rr *, struct dns_packet *, struct dns_rr *, struct dns
 size_t dns_rr_print(void *, size_t, struct dns_rr *, struct dns_packet *, int *);
 
 
-#define dns_rr_i_new(P, ...)		dns_rr_i_init(&(struct dns_rr_i){ 0, __VA_ARGS__ }, (P))
+#define dns_rr_i_new(P, ...) \
+	dns_rr_i_init(&dns_quietinit((struct dns_rr_i){ 0, __VA_ARGS__ }), (P))
 
 struct dns_rr_i {
 	enum dns_section section;
@@ -883,7 +941,7 @@ void dns_cache_close(struct dns_cache *);
 #define DNS_OPTS_INITIALIZER  { DNS_OPTS_INITIALIZER_ }
 #define DNS_OPTS_INIT(...)    { DNS_OPTS_INITIALIZER_, __VA_ARGS__ }
 
-#define dns_opts(...) (&(struct dns_options)DNS_OPTS_INIT(__VA_ARGS__))
+#define dns_opts(...) (&dns_quietinit((struct dns_options)DNS_OPTS_INIT(__VA_ARGS__)))
 
 struct dns_options {
 	/*

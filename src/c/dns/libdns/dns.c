@@ -23,6 +23,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  * ==========================================================================
  */
+#if !defined(__FreeBSD__) && !defined(__sun)
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE	600
 #endif
@@ -33,8 +34,16 @@
 #undef _DARWIN_C_SOURCE
 #define _DARWIN_C_SOURCE
 
+#undef _NETBSD_SOURCE
+#define _NETBSD_SOURCE
+#endif
+
 #include <stddef.h>		/* offsetof() */
+#ifdef _WIN32
+#define uint32_t unsigned int
+#else
 #include <stdint.h>		/* uint32_t */
+#endif
 #include <stdlib.h>		/* malloc(3) realloc(3) free(3) rand(3) random(3) arc4random(3) */
 #include <stdio.h>		/* FILE fopen(3) fclose(3) getc(3) rewind(3) */
 
@@ -45,7 +54,7 @@
 
 #include <time.h>		/* time_t time(2) */
 
-#include <signal.h>		/* sig_atomic_t */
+#include <signal.h>		/* SIGPIPE SIG_IGN sig_atomic_t sigaction(2) sigemptyset(3) */
 
 #include <errno.h>		/* errno EINVAL ENOENT */
 
@@ -53,6 +62,9 @@
 #include <assert.h>		/* assert(3) */
 
 #if _WIN32
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 256
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -81,6 +93,22 @@
 
 
 /*
+ * C O M P I L E R  A N N O T A T I O N S
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#define DNS_NOTUSED __attribute__((unused))
+
+#if __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
+
+/*
  * S T A N D A R D  M A C R O S
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -101,6 +129,18 @@
 
 #ifndef endof
 #define endof(a)	(&(a)[lengthof((a))])
+#endif
+
+
+/*
+ * M I S C E L L A N E O U S  C O M P A T
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#if _WIN32 || _WIN64
+#define PRIuZ "Iu"
+#else
+#define PRIuZ "zu"
 #endif
 
 
@@ -215,6 +255,8 @@ const char *dns_strerror(int error) {
 		return "Invalid section specified";
 	case DNS_EUNKNOWN:
 		return "Unknown DNS error";
+	case DNS_EADDRESS:
+		return "Invalid textual address form";
 	default:
 		return strerror(error);
 	} /* switch() */
@@ -226,7 +268,7 @@ const char *dns_strerror(int error) {
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-static void dns_atomic_fence(void) {
+DNS_NOTUSED static void dns_atomic_fence(void) {
 	return;
 } /* dns_atomic_fence() */
 
@@ -246,7 +288,7 @@ static unsigned dns_atomic_load(dns_atomic_t *i) {
 } /* dns_atomic_load() */
 
 
-static unsigned dns_atomic_store(dns_atomic_t *i, unsigned n) {
+DNS_NOTUSED static unsigned dns_atomic_store(dns_atomic_t *i, unsigned n) {
 	unsigned o;
 
 	o	= dns_atomic_load(i);
@@ -440,7 +482,7 @@ static unsigned dns_k_permutor_E(struct dns_k_permutor *p, unsigned n) {
 } /* dns_k_permutor_E() */
 
 
-static unsigned dns_k_permutor_D(struct dns_k_permutor *p, unsigned n) {
+DNS_NOTUSED static unsigned dns_k_permutor_D(struct dns_k_permutor *p, unsigned n) {
 	unsigned l[2], r[2];
 	unsigned i;
 
@@ -587,7 +629,7 @@ static size_t dns_af_len(int af) {
 #define dns_sa_len(sa)		dns_af_len(dns_sa_family(sa))
 
 
-#define DNS_SA_NOPORT	&dns_sa_noport;
+#define DNS_SA_NOPORT	&dns_sa_noport
 static unsigned short dns_sa_noport;
 
 static unsigned short *dns_sa_port(int af, void *sa) {
@@ -666,6 +708,23 @@ static const char *dns_inet_ntop(int af, const void *src, void *dst, unsigned lo
 #define dns_inet_pton(...)	inet_pton(__VA_ARGS__)
 #define dns_inet_ntop(...)	inet_ntop(__VA_ARGS__)
 #endif
+
+
+static dns_error_t dns_pton(int af, const void *src, void *dst) {
+	switch (dns_inet_pton(af, src, dst)) {
+	case 1:
+		return 0;
+	case -1:
+		return dns_soerr();
+	default:
+		return DNS_EADDRESS;
+	}
+} /* dns_pton() */
+
+
+static dns_error_t dns_ntop(int af, const void *src, void *dst, unsigned long lim) {
+	return (dns_inet_ntop(af, src, dst, lim))? 0 : dns_soerr();
+} /* dns_ntop() */
 
 
 size_t dns_strlcpy(char *dst, const char *src, size_t lim) {
@@ -764,6 +823,33 @@ static int dns_poll(int fd, short events, int timeout) {
 
 	return 0;
 } /* dns_poll() */
+
+
+static long dns_send(int fd, const void *src, size_t lim, int flags) {
+#if _WIN32 || !defined SIGPIPE || defined SO_NOSIGPIPE
+	return send(fd, src, lim, flags);
+#elif defined MSG_NOSIGNAL
+	return send(fd, src, lim, flags|MSG_NOSIGNAL);
+#else
+	struct sigaction ign, oact;
+	long count;
+	int error;
+
+	ign.sa_handler = SIG_IGN;
+	sigemptyset(&ign.sa_mask);
+	ign.sa_flags = 0;
+
+	sigaction(SIGPIPE, &ign, &oact);
+
+	count = send(fd, src, lim, flags);
+
+	error = errno;
+	sigaction(SIGPIPE, &oact, NULL);
+	errno = error;
+
+	return count;
+#endif
+} /* dns_send() */
 
 
 /*
@@ -3666,7 +3752,7 @@ static enum dns_resconf_keyword dns_resconf_keyword(const char *word) {
 static int dns_resconf_pton(struct sockaddr_storage *ss, const char *src) {
 	struct { char buf[128], *p; } addr = { "", addr.buf };
 	unsigned short port = 0;
-	int ch, af = AF_INET;
+	int ch, af = AF_INET, error;
 
 	while ((ch = *src++)) {
 		switch (ch) {
@@ -3698,12 +3784,8 @@ static int dns_resconf_pton(struct sockaddr_storage *ss, const char *src) {
 	} /* while() */
 inet:
 
-	switch (dns_inet_pton(af, addr.buf, dns_sa_addr(af, ss))) {
-	case -1:
-		return errno;
-	case 0:
-		return EINVAL;
-	} /* switch() */
+	if ((error = dns_pton(af, addr.buf, dns_sa_addr(af, ss))))
+		return error;
 
 	port = (!port)? 53 : port;
 	*dns_sa_port(af, ss) = htons(port);
@@ -3906,10 +3988,11 @@ int dns_resconf_loadpath(struct dns_resolv_conf *resconf, const char *path) {
 
 
 int dns_resconf_setiface(struct dns_resolv_conf *resconf, const char *addr, unsigned short port) {
-	int af	= (strchr(addr, ':'))? AF_INET6 : AF_INET;
+	int af = (strchr(addr, ':'))? AF_INET6 : AF_INET;
+	int error;
 
-	if (1 != dns_inet_pton(af, addr, dns_sa_addr(af, &resconf->iface)))
-		return dns_soerr();
+	if ((error = dns_pton(af, addr, dns_sa_addr(af, &resconf->iface))))
+		return error;
 
 	*dns_sa_port(af, &resconf->iface)	= htons(port);
 	resconf->iface.ss_family		= af;
@@ -4033,6 +4116,17 @@ int dns_resconf_dump(struct dns_resolv_conf *resconf, FILE *fp) {
 		fprintf(fp, " recurse");
 	if (resconf->options.smart)
 		fprintf(fp, " smart");
+
+	switch (resconf->options.tcp) {
+	case DNS_RESCONF_TCP_ENABLE:
+		break;
+	case DNS_RESCONF_TCP_ONLY:
+		fprintf(fp, " tcp");
+		break;
+	case DNS_RESCONF_TCP_DISABLE:
+		fprintf(fp, " tcp:disable");
+		break;
+	}
 
 	fputc('\n', fp);
 
@@ -4193,8 +4287,8 @@ struct dns_hints *dns_hints_root(struct dns_resolv_conf *resconf, int *error_) {
 	for (i = 0; i < lengthof(root_hints); i++) {
 		af	= root_hints[i].af;
 
-		if (1 != dns_inet_pton(af, root_hints[i].addr, dns_sa_addr(af, &ss)))
-			goto soerr;
+		if ((error = dns_pton(af, root_hints[i].addr, dns_sa_addr(af, &ss))))
+			goto error;
 
 		*dns_sa_port(af, &ss)	= htons(53);
 		ss.ss_family		= af;
@@ -4204,10 +4298,6 @@ struct dns_hints *dns_hints_root(struct dns_resolv_conf *resconf, int *error_) {
 	}
 
 	return hints;
-soerr:
-	error	= dns_soerr();
-
-	goto error;
 error:
 	*error_	= error;
 
@@ -4451,15 +4541,16 @@ int dns_hints_dump(struct dns_hints *hints, FILE *fp) {
 	struct dns_hints_soa *soa;
 	char addr[INET6_ADDRSTRLEN];
 	unsigned i;
-	int af;
+	int af, error;
 
 	for (soa = hints->head; soa; soa = soa->next) {
 		fprintf(fp, "ZONE \"%s\"\n", soa->zone);
 
 		for (i = 0; i < soa->count; i++) {
-			af	= soa->addrs[i].ss.ss_family;
-			if (!dns_inet_ntop(af, dns_sa_addr(af, &soa->addrs[i].ss), addr, sizeof addr))
-				return dns_soerr();
+			af = soa->addrs[i].ss.ss_family;
+
+			if ((error = dns_ntop(af, dns_sa_addr(af, &soa->addrs[i].ss), addr, sizeof addr)))
+				return error;
 
 			fprintf(fp, "\t(%d) [%s]:%hu\n", (int)soa->addrs[i].priority, addr, ntohs(*dns_sa_port(af, &soa->addrs[i].ss)));
 		}
@@ -4592,6 +4683,13 @@ static int dns_socket(struct sockaddr *local, int type, int *error_) {
 		goto soerr;
 #endif
 
+#if defined(SO_NOSIGPIPE)
+	if (type == SOCK_DGRAM) {
+		if (0 != setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &(int){ 1 }, sizeof (int)))
+			goto soerr;
+	}
+#endif
+
 	if (local->sa_family != AF_INET && local->sa_family != AF_INET6)
 		return fd;
 
@@ -4622,10 +4720,12 @@ soerr:
 	error	= dns_soerr();
 
 	goto error;
+#if defined(F_SETFD) || defined(O_NONBLOCK)
 syerr:
 	error	= dns_syerr();
 
 	goto error;
+#endif
 error:
 	*error_	= error;
 
@@ -4912,6 +5012,11 @@ static int dns_so_verify(struct dns_socket *so, struct dns_packet *P) {
 } /* dns_so_verify() */
 
 
+#if defined __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warray-bounds"
+#endif
+
 static int dns_so_tcp_send(struct dns_socket *so) {
 	unsigned char *qsrc;
 	size_t qend;
@@ -4924,7 +5029,7 @@ static int dns_so_tcp_send(struct dns_socket *so) {
 	qend = so->query->end + 2;
 
 	while (so->qout < qend) {
-		if (0 > (n = send(so->tcp, (void *)&qsrc[so->qout], qend - so->qout, 0)))
+		if (0 > (n = dns_send(so->tcp, (void *)&qsrc[so->qout], qend - so->qout, 0)))
 			return dns_soerr();
 
 		so->qout += n;
@@ -4973,6 +5078,10 @@ static int dns_so_tcp_recv(struct dns_socket *so) {
 
 	return 0;
 } /* dns_so_tcp_recv() */
+
+#if __clang__
+#pragma clang diagnostic pop
+#endif
 
 
 int dns_so_check(struct dns_socket *so) {
@@ -6113,9 +6222,11 @@ error:
 void dns_res_clear(struct dns_resolver *R) {
 	switch (R->stack[R->sp].state) {
 	case DNS_R_CHECK:
-		return R->cache->clear(R->cache);
+		R->cache->clear(R->cache);
+		break;
 	default:
-		return dns_so_clear(&R->so);
+		dns_so_clear(&R->so);
+		break;
 	}
 } /* dns_res_clear() */
 
@@ -6213,7 +6324,7 @@ struct dns_packet *dns_res_query(struct dns_resolver *res, const char *qname, en
 		if (error != DNS_EAGAIN)
 			goto error;
 
-		if ((error == dns_res_poll(res, 1)))
+		if ((error = dns_res_poll(res, 1)))
 			goto error;
 	}
 
@@ -6564,7 +6675,7 @@ time_t dns_ai_elapsed(struct dns_addrinfo *ai) {
 
 
 void dns_ai_clear(struct dns_addrinfo *ai) {
-	return dns_res_clear(ai->res);
+	dns_res_clear(ai->res);
 } /* dns_ai_clear() */
 
 
@@ -6953,7 +7064,7 @@ static void *grow(unsigned char *p, size_t size) {
 	void *tmp;
 
 	if (!(tmp = realloc(p, size)))
-		panic("realloc(%zu): %s", size, dns_strerror(errno));
+		panic("realloc(%"PRIuZ"): %s", size, dns_strerror(errno));
 
 	return tmp;
 } /* grow() */
@@ -6961,7 +7072,7 @@ static void *grow(unsigned char *p, size_t size) {
 
 static size_t add(size_t a, size_t b) {
 	if (~a < b)
-		panic("%zu + %zu: integer overflow", a, b);
+		panic("%"PRIuZ" + %"PRIuZ": integer overflow", a, b);
 
 	return a + b;
 } /* add() */
@@ -7162,10 +7273,10 @@ static int parse_packet(int argc, char *argv[]) {
 	}
 
 	if (MAIN.verbose > 1) {
-		fprintf(stderr, "orig:%zu\n", P->end);
+		fprintf(stderr, "orig:%"PRIuZ"\n", P->end);
 		hexdump(P->data, P->end, stdout);
 
-		fprintf(stderr, "copy:%zu\n", Q->end);
+		fprintf(stderr, "copy:%"PRIuZ"\n", Q->end);
 		hexdump(Q->data, Q->end, stdout);
 	}
 
@@ -7204,7 +7315,7 @@ static int expand_domain(int argc, char *argv[]) {
 	len = slurp(&src, 0, stdin, "-");
 
 	if (!(pkt = dns_p_make(len, &error)))
-		panic("malloc(%zu): %s", len, dns_strerror(error));
+		panic("malloc(%"PRIuZ"): %s", len, dns_strerror(error));
 
 	memcpy(pkt->data, src, len);
 	pkt->end = len;
@@ -7285,7 +7396,7 @@ static int query_hosts(int argc, char *argv[]) {
 		union { struct in_addr a; struct in6_addr a6; } addr;
 		int af	= (strchr(MAIN.qname, ':'))? AF_INET6 : AF_INET;
 
-		if (1 != dns_inet_pton(af, MAIN.qname, &addr))
+		if ((error = dns_pton(af, MAIN.qname, &addr)))
 			panic("%s: %s", MAIN.qname, dns_strerror(error));
 
 		qlen	= dns_ptr_qname(qname, sizeof qname, af, &addr);
@@ -7395,8 +7506,8 @@ static int send_query(int argc, char *argv[]) {
 	if (argc > 1) {
 		ss.ss_family	= (strchr(argv[1], ':'))? AF_INET6 : AF_INET;
 		
-		if (1 != dns_inet_pton(ss.ss_family, argv[1], dns_sa_addr(ss.ss_family, &ss)))
-			panic("%s: invalid host address", argv[1]);
+		if ((error = dns_pton(ss.ss_family, argv[1], dns_sa_addr(ss.ss_family, &ss))))
+			panic("%s: %s", argv[1], dns_strerror(error));
 
 		*dns_sa_port(ss.ss_family, &ss)	= htons(53);
 	} else
@@ -7428,7 +7539,7 @@ static int send_query(int argc, char *argv[]) {
 		panic("dns_so_open: %s", dns_strerror(error));
 
 	while (!(A = dns_so_query(so, Q, (struct sockaddr *)&ss, &error))) {
-		if (error != EAGAIN)
+		if (error != DNS_EAGAIN)
 			panic("dns_so_query: %s (%d)", dns_strerror(error), error);
 		if (dns_so_elapsed(so) > 10)
 			panic("query timed-out");
@@ -7521,7 +7632,7 @@ static int resolve_query(int argc, char *argv[]) {
 		panic("%s: %s", MAIN.qname, dns_strerror(error));
 
 	while ((error = dns_res_check(R))) {
-		if (error != EAGAIN)
+		if (error != DNS_EAGAIN)
 			panic("dns_res_check: %s (%d)", dns_strerror(error), error);
 		if (dns_res_elapsed(R) > 30)
 			panic("query timed-out");
@@ -7535,11 +7646,11 @@ static int resolve_query(int argc, char *argv[]) {
 
 	st = dns_res_stat(R);
 	putchar('\n');
-	printf(";; queries:  %zu\n", st->queries);
-	printf(";; udp sent: %zu in %zu bytes\n", st->udp.sent.count, st->udp.sent.bytes);
-	printf(";; udp rcvd: %zu in %zu bytes\n", st->udp.rcvd.count, st->udp.rcvd.bytes);
-	printf(";; tcp sent: %zu in %zu bytes\n", st->tcp.sent.count, st->tcp.sent.bytes);
-	printf(";; tcp rcvd: %zu in %zu bytes\n", st->tcp.rcvd.count, st->tcp.rcvd.bytes);
+	printf(";; queries:  %"PRIuZ"\n", st->queries);
+	printf(";; udp sent: %"PRIuZ" in %"PRIuZ" bytes\n", st->udp.sent.count, st->udp.sent.bytes);
+	printf(";; udp rcvd: %"PRIuZ" in %"PRIuZ" bytes\n", st->udp.rcvd.count, st->udp.rcvd.bytes);
+	printf(";; tcp sent: %"PRIuZ" in %"PRIuZ" bytes\n", st->tcp.sent.count, st->tcp.sent.bytes);
+	printf(";; tcp rcvd: %"PRIuZ" in %"PRIuZ" bytes\n", st->tcp.rcvd.count, st->tcp.rcvd.bytes);
 
 	dns_res_close(R);
 
@@ -7581,7 +7692,7 @@ static int resolve_addrinfo(int argc, char *argv[]) {
 			break;
 		case ENOENT:
 			break;
-		case EAGAIN:
+		case DNS_EAGAIN:
 			if (dns_ai_elapsed(ai) > 30)
 				panic("query timed-out");
 
@@ -7598,6 +7709,52 @@ static int resolve_addrinfo(int argc, char *argv[]) {
 
 	return 0;
 } /* resolve_addrinfo() */
+
+
+static int echo_port(int argc, char *argv[]) {
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+	} port;
+	int fd;
+	
+	memset(&port, 0, sizeof port);
+	port.sin.sin_family = AF_INET;
+	port.sin.sin_port = htons(5354);
+	port.sin.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	if (-1 == (fd = socket(PF_INET, SOCK_DGRAM, 0)))
+		panic("socket: %s", strerror(errno));
+
+	if (0 != bind(fd, &port.sa, sizeof port.sa))
+		panic("127.0.0.1:5353: %s", dns_strerror(errno));
+
+	for (;;) {
+		struct dns_packet *pkt = dns_p_new(512);
+		struct sockaddr_storage ss;
+		socklen_t slen = sizeof ss;
+		ssize_t count;
+#if defined(MSG_WAITALL) /* MinGW issue */
+		int rflags = MSG_WAITALL;
+#else
+		int rflags = 0;
+#endif
+
+		count = recvfrom(fd, (char *)pkt->data, pkt->size, rflags, (struct sockaddr *)&ss, &slen);
+
+
+		if (!count || count < 0)
+			panic("recvfrom: %s", strerror(errno));
+
+		pkt->end = count;
+
+		dns_p_dump(pkt, stdout);
+
+		(void)sendto(fd, (char *)pkt->data, pkt->end, 0, (struct sockaddr *)&ss, slen);
+	}
+
+	return 0;
+} /* echo_port() */
 
 
 static int isection(int argc, char *argv[]) {
@@ -7679,15 +7836,15 @@ static int sizes(int argc, char *argv[]) {
 		SIZE(struct dns_sshfp, struct dns_txt, union dns_any),
 		SIZE(struct dns_resolv_conf, struct dns_hosts, struct dns_hints, struct dns_hints_i),
 		SIZE(struct dns_options, struct dns_socket, struct dns_resolver, struct dns_addrinfo),
-		SIZE(struct dns_cache),
+		SIZE(struct dns_cache), SIZE(size_t), SIZE(void *), SIZE(long)
 	};
-	int i, max;
+	unsigned i, max;
 
 	for (i = 0, max = 0; i < lengthof(type); i++)
 		max = MAX(max, strlen(type[i].name));
 
 	for (i = 0; i < lengthof(type); i++)
-		printf("%*s : %zu\n", max, type[i].name, type[i].size);
+		printf("%*s : %"PRIuZ"\n", max, type[i].name, type[i].size);
 
 	return 0;
 } /* sizes() */
@@ -7714,6 +7871,7 @@ static const struct { const char *cmd; int (*run)(); const char *help; } cmds[] 
 	{ "addrinfo-stub",	&resolve_addrinfo,	"resolve through getaddrinfo clone" },
 	{ "addrinfo-recurse",	&resolve_addrinfo,	"resolve through getaddrinfo clone" },
 /*	{ "resolve-nameinfo",	&resolve_query,		"resolve as recursive resolver" }, */
+	{ "echo",		&echo_port,		"server echo mode, for nmap fuzzing" },
 	{ "isection",		&isection,		"parse section string" },
 	{ "iclass",		&iclass,		"parse class string" },
 	{ "itype",		&itype,			"parse type string" },
@@ -7863,3 +8021,14 @@ int main(int argc, char **argv) {
 
 
 #endif /* DNS_MAIN */
+
+
+/*
+ * pop file-scoped compiler annotations
+ */
+#if __clang__
+#pragma clang diagnostic pop
+#elif (__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4
+#pragma GCC diagnostic pop
+#endif
+
