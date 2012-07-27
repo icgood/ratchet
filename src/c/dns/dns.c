@@ -170,6 +170,30 @@ static const char *query_name (enum dns_type type)
 }
 /* }}} */
 
+/* {{{ inet_tostring() */
+static int inet_tostring (lua_State *L)
+{
+	char buffer[INET_ADDRSTRLEN];
+	struct in_addr *in = (struct in_addr *) luaL_checkudata (L, 1, "ratchet_dns_a_meta");
+	if (!inet_ntop (AF_INET, in, buffer, INET_ADDRSTRLEN))
+		return ratchet_error_errno (L, "ratchet.dns.a.__tostring()", "inet_ntop");
+	lua_pushstring (L, buffer);
+	return 1;
+}
+/* }}} */
+
+/* {{{ inet6_tostring() */
+static int inet6_tostring (lua_State *L)
+{
+	char buffer[INET6_ADDRSTRLEN];
+	struct in6_addr *in = (struct in6_addr *) luaL_checkudata (L, 1, "ratchet_dns_aaaa_meta");
+	if (!inet_ntop (AF_INET6, in, buffer, INET6_ADDRSTRLEN))
+		return ratchet_error_errno (L, "ratchet.dns.aaaa.__tostring()", "inet_ntop");
+	lua_pushstring (L, buffer);
+	return 1;
+}
+/* }}} */
+
 /* {{{ parse_XXX() */
 
 /* {{{ parse_rr_a() */
@@ -181,6 +205,8 @@ static int parse_rr_a (lua_State *L, struct dns_rr *rr, struct dns_packet *answe
 		return raise_dns_error (L, lua_tostring (L, 2), "dns_a_parse", error);
 
 	struct in_addr *addr = (struct in_addr *) lua_newuserdata (L, sizeof (struct in_addr));
+	luaL_getmetatable (L, "ratchet_dns_a_meta");
+	lua_setmetatable (L, -2);
 	memcpy (addr, &rec.addr, sizeof (struct in_addr));
 	lua_rawseti (L, -2, i);
 
@@ -197,6 +223,8 @@ static int parse_rr_aaaa (lua_State *L, struct dns_rr *rr, struct dns_packet *an
 		return raise_dns_error (L, lua_tostring (L, 2), "dns_aaaa_parse", error);
 
 	struct in6_addr *addr = (struct in6_addr *) lua_newuserdata (L, sizeof (struct in6_addr));
+	luaL_getmetatable (L, "ratchet_dns_aaaa_meta");
+	lua_setmetatable (L, -2);
 	memcpy (addr, &rec.addr, sizeof (struct in6_addr));
 	lua_rawseti (L, -2, i);
 
@@ -979,6 +1007,24 @@ int luaopen_ratchet_dns (lua_State *L)
 		{"parse_answer", mydns_parse_answer},
 		{NULL}
 	};
+
+	const luaL_Reg in_meths[] = {
+		{"__tostring", inet_tostring},
+		{NULL}
+	};
+
+	const luaL_Reg in6_meths[] = {
+		{"__tostring", inet6_tostring},
+		{NULL}
+	};
+
+	/* Set up A and AAAA record __tostring metamethod. */
+	luaL_newmetatable (L, "ratchet_dns_a_meta");
+	luaL_setfuncs (L, in_meths, 0);
+	lua_pop (L, 1);
+	luaL_newmetatable (L, "ratchet_dns_aaaa_meta");
+	luaL_setfuncs (L, in6_meths, 0);
+	lua_pop (L, 1);
 
 	/* Set up the ratchet.dns class and metatables. */
 	luaL_newmetatable (L, "ratchet_dns_meta");
