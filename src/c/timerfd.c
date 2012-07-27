@@ -188,19 +188,19 @@ static int rtfd_read (lua_State *L)
 int luaopen_ratchet_timerfd (lua_State *L)
 {
 	/* Static functions in the ratchet.timerfd namespace. */
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		{"new", rtfd_new},
 		{NULL}
 	};
 
 	/* Meta-methods for ratchet.timerfd object metatables. */
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__gc", rtfd_gc},
 		{NULL}
 	};
 
 	/* Methods in the ratchet.timerfd class. */
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_fd", rtfd_get_fd},
 		{"settime", rtfd_settime},

@@ -1137,7 +1137,7 @@ encrypted_recv_complete:
 int luaopen_ratchet_socket (lua_State *L)
 {
 	/* Static functions in the ratchet.socket namespace. */
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		/* Documented methods. */
 		{"new", rsock_new},
 		{"new_pair", rsock_new_pair},
@@ -1156,14 +1156,14 @@ int luaopen_ratchet_socket (lua_State *L)
 	};
 
 	/* Meta-methods for ratchet.socket object metatables. */
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__gc", rsock_gc},
 		{"__eq", rsock_eq},
 		{NULL}
 	};
 
 	/* Methods in the ratchet.socket class. */
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_fd", rsock_get_fd},
 		{"get_timeout", rsock_get_timeout},
@@ -1192,7 +1192,7 @@ int luaopen_ratchet_socket (lua_State *L)
 	};
 
 	/* Meta-methods for struct sockaddr userdata. */
-	static const luaL_Reg sockaddrmeta[] = {
+	const luaL_Reg sockaddrmeta[] = {
 		{"__tostring", rsock_sockaddr_tostring},
 		{NULL}
 	};

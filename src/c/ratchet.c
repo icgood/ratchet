@@ -1343,13 +1343,13 @@ static int ratchet_alarm (lua_State *L)
 /* {{{ luaopen_ratchet() */
 int luaopen_ratchet (lua_State *L)
 {
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		{"new", ratchet_new},
 		{"stackdump", ratchet_stackdump},
 		{NULL}
 	};
 
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_method", ratchet_get_method},
 		{"get_num_threads", ratchet_get_num_threads},
@@ -1371,7 +1371,7 @@ int luaopen_ratchet (lua_State *L)
 		{NULL}
 	};
 
-	static const luaL_Reg thread_funcs[] = {
+	const luaL_Reg thread_funcs[] = {
 		{"attach", ratchet_attach},
 		{"kill", ratchet_kill},
 		{"kill_all", ratchet_kill_all},
@@ -1387,12 +1387,12 @@ int luaopen_ratchet (lua_State *L)
 		{NULL}
 	};
 
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__gc", ratchet_gc},
 		{NULL}
 	};
 
-	static const luaL_Reg eventmetameths[] = {
+	const luaL_Reg eventmetameths[] = {
 		{"__gc", ratchet_event_gc},
 		{NULL}
 	};

@@ -729,7 +729,7 @@ static int rexec_file_write (lua_State *L)
 int luaopen_ratchet_exec (lua_State *L)
 {
 	/* Static functions in the ratchet.exec namespace. */
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		/* Documented methods. */
 		{"new", rexec_new},
 		/* Undocumented, helper methods. */
@@ -737,13 +737,13 @@ int luaopen_ratchet_exec (lua_State *L)
 	};
 
 	/* Meta-methods for ratchet.exec object metatables. */
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__gc", rexec_clean_up},
 		{NULL}
 	};
 
 	/* Methods in the ratchet.exec class. */
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_argv", rexec_get_argv},
 		{"communicate", rexec_communicate},
@@ -759,7 +759,7 @@ int luaopen_ratchet_exec (lua_State *L)
 	};
 
 	/* Methods in readable file streams. */
-	static const luaL_Reg readfilemeths[] = {
+	const luaL_Reg readfilemeths[] = {
 		/* Documented methods. */
 		{"get_fd", rexec_file_get_fd},
 		{"read", rexec_file_read},
@@ -769,7 +769,7 @@ int luaopen_ratchet_exec (lua_State *L)
 	};
 
 	/* Methods in writable file streams. */
-	static const luaL_Reg writefilemeths[] = {
+	const luaL_Reg writefilemeths[] = {
 		/* Documented methods. */
 		{"get_fd", rexec_file_get_fd},
 		{"write", rexec_file_write},

@@ -454,20 +454,20 @@ received:
 int luaopen_ratchet_zmqsocket (lua_State *L)
 {
 	/* Static functions in the ratchet.zmqsocket namespace. */
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		{"new", rzmq_new},
 		{"prepare_uri", rzmq_prepare_uri},
 		{NULL}
 	};
 
 	/* Meta-methods for ratchet.zmqsocket object metatables. */
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__gc", rzmq_gc},
 		{NULL}
 	};
 
 	/* Methods in the ratchet.zmqsocket class. */
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"get_fd", rzmq_get_fd},
 		{"get_timeout", rzmq_get_timeout},

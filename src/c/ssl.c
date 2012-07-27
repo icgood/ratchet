@@ -747,12 +747,12 @@ int rsock_encrypt (lua_State *L)
 /* {{{ luaopen_ratchet_ssl() */
 int luaopen_ratchet_ssl (lua_State *L)
 {
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		{"new", rssl_ctx_new},
 		{NULL}
 	};
 
-	static const luaL_Reg ctxmeths[] = {
+	const luaL_Reg ctxmeths[] = {
 		/* Documented methods. */
 		{"create_session", rssl_ctx_create_session},
 		{"set_verify_mode", rssl_ctx_set_verify_mode},
@@ -765,12 +765,12 @@ int luaopen_ratchet_ssl (lua_State *L)
 		{NULL}
 	};
 
-	static const luaL_Reg ctxmetameths[] = {
+	const luaL_Reg ctxmetameths[] = {
 		{"__gc", rssl_ctx_gc},
 		{NULL}
 	};
 
-	static const luaL_Reg sslmeths[] = {
+	const luaL_Reg sslmeths[] = {
 		/* Documented methods. */
 		{"get_engine", rssl_session_get_engine},
 		{"verify_certificate", rssl_session_verify_certificate},
@@ -787,7 +787,7 @@ int luaopen_ratchet_ssl (lua_State *L)
 		{NULL}
 	};
 
-	static const luaL_Reg sslmetameths[] = {
+	const luaL_Reg sslmetameths[] = {
 		{"__gc", rssl_session_gc},
 		{NULL}
 	};

@@ -314,13 +314,13 @@ static int ratchet_error_tostring (lua_State *L)
 /* {{{ luaopen_ratchet_error() */
 int luaopen_ratchet_error (lua_State *L)
 {
-	static const luaL_Reg funcs[] = {
+	const luaL_Reg funcs[] = {
 		{"new", ratchet_error_new},
 		{"is", ratchet_error_is},
 		{NULL}
 	};
 
-	static const luaL_Reg meths[] = {
+	const luaL_Reg meths[] = {
 		/* Documented methods. */
 		{"is", ratchet_error_is},
 		{"get_string", ratchet_error_get_string},
@@ -328,7 +328,7 @@ int luaopen_ratchet_error (lua_State *L)
 		{NULL}
 	};
 
-	static const luaL_Reg metameths[] = {
+	const luaL_Reg metameths[] = {
 		{"__tostring", ratchet_error_tostring},
 		{NULL}
 	};
