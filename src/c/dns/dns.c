@@ -382,6 +382,87 @@ static int parse_rr_ptr (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 }
 /* }}} */
 
+/* {{{ parse_rr_srv() */
+static int parse_rr_srv (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
+{
+	struct dns_srv rec;
+	int error = dns_srv_parse (&rec, rr, answer);
+	if (error)
+		return raise_dns_error (L, lua_tostring (L, 2), "dns_srv_parse", error);
+
+	lua_createtable (L, 0, 4);
+	lua_pushinteger (L, (lua_Integer) rec.priority);
+	lua_setfield (L, -2, "priority");
+	lua_pushinteger (L, (lua_Integer) rec.weight);
+	lua_setfield (L, -2, "weight");
+	lua_pushinteger (L, (lua_Integer) rec.port);
+	lua_setfield (L, -2, "port");
+	lua_pushstring (L, rec.target);
+	lua_setfield (L, -2, "target");
+	lua_rawseti (L, -2, i);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ parse_rr_soa() */
+static int parse_rr_soa (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
+{
+	struct dns_soa rec;
+	memset (&rec, 0, sizeof (rec));
+	int error = dns_soa_parse (&rec, rr, answer);
+	if (error)
+		return raise_dns_error (L, lua_tostring (L, 2), "dns_srv_parse", error);
+
+	lua_createtable (L, 0, 7);
+	lua_pushstring (L, rec.mname);
+	lua_setfield (L, -2, "mname");
+	lua_pushstring (L, rec.rname);
+	lua_setfield (L, -2, "rname");
+	lua_pushinteger (L, (lua_Integer) rec.serial);
+	lua_setfield (L, -2, "serial");
+	lua_pushinteger (L, (lua_Integer) rec.refresh);
+	lua_setfield (L, -2, "refresh");
+	lua_pushinteger (L, (lua_Integer) rec.retry);
+	lua_setfield (L, -2, "retry");
+	lua_pushinteger (L, (lua_Integer) rec.expire);
+	lua_setfield (L, -2, "expire");
+	lua_pushinteger (L, (lua_Integer) rec.minimum);
+	lua_setfield (L, -2, "minimum");
+	lua_rawseti (L, -2, i);
+
+	return 0;
+}
+/* }}} */
+
+/* {{{ parse_rr_sshfp() */
+static int parse_rr_sshfp (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
+{
+	struct dns_sshfp rec;
+	memset (&rec, 0, sizeof (rec));
+	int error = dns_sshfp_parse (&rec, rr, answer);
+	if (error)
+		return raise_dns_error (L, lua_tostring (L, 2), "dns_sshfp_parse", error);
+
+	if (rec.type != DNS_SSHFP_SHA1)
+		return ratchet_error_str (L, "ratchet.dns.query.sshfp", "EINVAL", "Only SHA1 digests are supported.");
+
+	lua_createtable (L, 0, 3);
+	if (rec.algo == DNS_SSHFP_RSA)
+		lua_pushliteral (L, "rsa");
+	else
+		lua_pushliteral (L, "dsa");
+	lua_setfield (L, -2, "algorithm");
+	lua_pushliteral (L, "sha1");
+	lua_setfield (L, -2, "type");
+	lua_pushlstring (L, (char *) rec.digest.sha1, 20);
+	lua_setfield (L, -2, "digest");
+	lua_rawseti (L, -2, i);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ parse_rr_txt() */
 static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *answer, int i)
 {
@@ -389,6 +470,7 @@ static int parse_rr_txt (lua_State *L, struct dns_rr *rr, struct dns_packet *ans
 	size_t size = (size_t) lua_tonumber (L, -1);
 	if (size == 0)
 		size = DNS_TXT_MINDATA;
+	lua_pop (L, 1);
 
 	struct dns_txt rec;
 	dns_txt_init (&rec, size);
@@ -421,11 +503,11 @@ static int parse_rr (lua_State *L, struct dns_rr *rr, struct dns_packet *answer,
 	else if (rr->type == DNS_T_CNAME)
 		return parse_rr_cname (L, rr, answer, i);
 
-//	else if (rr->type == DNS_T_SOA)
-//		return parse_rr_soa (L, rr, answer, i);
+	else if (rr->type == DNS_T_SOA)
+		return parse_rr_soa (L, rr, answer, i);
 
-//	else if (rr->type == DNS_T_SRV)
-//		return parse_rr_srv (L, rr, answer, i);
+	else if (rr->type == DNS_T_SRV)
+		return parse_rr_srv (L, rr, answer, i);
 
 	else if (rr->type == DNS_T_PTR)
 		return parse_rr_ptr (L, rr, answer, i);
@@ -436,8 +518,8 @@ static int parse_rr (lua_State *L, struct dns_rr *rr, struct dns_packet *answer,
 	else if (rr->type == DNS_T_SPF)
 		return parse_rr_txt (L, rr, answer, i);
 
-//	else if (rr->type == DNS_T_SSHFP)
-//		return parse_rr_sshfp (L, rr, answer, i);
+	else if (rr->type == DNS_T_SSHFP)
+		return parse_rr_sshfp (L, rr, answer, i);
 
 	return luaL_error (L, "unimplemented DNS_T_*: %d", (int) rr->type);
 }
