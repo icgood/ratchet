@@ -90,9 +90,11 @@ static int password_cb (char *buf, int size, int rwflag, void *userdata)
 #define setup_ssl_method_field(n) lua_pushlightuserdata (L, n ## _ ## method); lua_setfield (L, -2, #n) 
 void setup_ssl_methods (lua_State *L)
 {
+#ifndef OPENSSL_NO_SSL2
 	setup_ssl_method_field (SSLv2);
 	setup_ssl_method_field (SSLv2_server);
 	setup_ssl_method_field (SSLv2_client);
+#endif
 	setup_ssl_method_field (SSLv3);
 	setup_ssl_method_field (SSLv3_server);
 	setup_ssl_method_field (SSLv3_client);
