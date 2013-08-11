@@ -38,11 +38,20 @@ endif
 libratchet_la_SOURCES = $(allsources)
 
 if ENABLE_MODULE
+if ENABLE_DEVEL
+install-exec-hook:
+	cd @MODULE_PATH@ && \
+		$(LN_S) -f $(libdir)/libratchet.so ratchet.so
+uninstall-local:
+	cd @MODULE_PATH@ && \
+		rm -f ratchet.so
+else
 lualibdir = @MODULE_PATH@
 lualib_LTLIBRARIES = ratchet.la
 ratchet_la_LDFLAGS = -module -avoid-version -shared
 ratchet_la_LIBADD = libratchet.la
 ratchet_la_SOURCES =
+endif
 endif
 
 SUBDIRS =
