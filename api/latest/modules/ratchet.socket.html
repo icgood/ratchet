@@ -1,0 +1,558 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: API Reference</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li>
+<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li><strong>ratchet.socket</strong></li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <u>ratchet.socket</u></h1>
+<p>The socket library provides an implementation of the standard Berkeley sockets on top of the ratchet library. Any methods that pause execution MUST be called from within a thread attached to a ratchet object. This library is also intended for use alongside calls to ratchet:resolve_dns(), see the manual for examples. Most of these functions can fail, see error handling section in manual for details.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#accept">accept</a>&nbsp;(self)</td>
+<td class="summary">Pauses the current thread until a new connection to the socket is attempted.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#bind">bind</a>&nbsp;(self, sockaddr)</td>
+<td class="summary">Binds the socket to the given sockaddr, corresponding to the bind() system call.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#check_errors">check_errors</a>&nbsp;(self)</td>
+<td class="summary">Gets the current state of the socket.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#close">close</a>&nbsp;(self)</td>
+<td class="summary">Closes the socket internal file descriptor.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#connect">connect</a>&nbsp;(self, sockaddr)</td>
+<td class="summary">Attempts a connection to the given sockaddr and pauses the thread until it is completed.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#encrypt">encrypt</a>&nbsp;(self, context)</td>
+<td class="summary">Creates and attaches an encryption session to the socket, based on the given context.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#from_fd">from_fd</a>&nbsp;(fd)</td>
+<td class="summary">Returns a new socket object, using the given file descriptor.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_encryption">get_encryption</a>&nbsp;(self)</td>
+<td class="summary">Returns the current encryption session for the socket.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_fd">get_fd</a>&nbsp;(self)</td>
+<td class="summary">Returns the internal socket file descriptor.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_timeout">get_timeout</a>&nbsp;(self)</td>
+<td class="summary">Gets the current timeout for all socket methods that pause the thread.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#gethostname">gethostname</a>&nbsp;()</td>
+<td class="summary">Gets the currently configured hostname of the machine using the gethostname(2) system call.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#hton">hton</a>&nbsp;(inp)</td>
+<td class="summary">Converts a number into a byte-string ready to be sent over the network.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#hton16">hton16</a>&nbsp;(inp)</td>
+<td class="summary">Converts a number into a byte-string ready to be sent over the network.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#listen">listen</a>&nbsp;(self, backlog)</td>
+<td class="summary">Sets the socket to listen mode.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#multi_recv">multi_recv</a>&nbsp;(sockets, timeout)</td>
+<td class="summary">Waits for incoming data on several sockets, with a single timeout.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(family, socktype, protocol)</td>
+<td class="summary">Returns a new socket object, with its own file descriptor.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new_pair">new_pair</a>&nbsp;()</td>
+<td class="summary">Returns two new socket objects, pre-connected to each other.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#ntoh">ntoh</a>&nbsp;(inp)</td>
+<td class="summary">Converts a byte-string from network byte-order to host byte-order.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#ntoh16">ntoh16</a>&nbsp;(inp)</td>
+<td class="summary">Converts a byte-string from network byte-order to host byte-order.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#prepare_tcp">prepare_tcp</a>&nbsp;(host, port, family)</td>
+<td class="summary">Prepares TCP socket information.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#prepare_udp">prepare_udp</a>&nbsp;(host, port, family)</td>
+<td class="summary">Prepares UDP socket information.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#prepare_unix">prepare_unix</a>&nbsp;(path)</td>
+<td class="summary">Prepares UNIX socket information.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#recv">recv</a>&nbsp;(self, maxlen)</td>
+<td class="summary">Attempts to receive data from across the socket, pausing the thread until data is available.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#send">send</a>&nbsp;(self, data)</td>
+<td class="summary">Attempts to send the given data across the socket, pausing the thread until it is able to do so.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#set_timeout">set_timeout</a>&nbsp;(self, seconds)</td>
+<td class="summary">Sets the current timeout for all socket methods that pause the thread.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#set_tracer">set_tracer</a>&nbsp;(self, tracer)</td>
+<td class="summary">Sets a tracer function on the socket, which is called on the major events on the socket.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#shutdown">shutdown</a>&nbsp;(self, what)</td>
+<td class="summary">Shuts down portions of the socket, corresponding to the system call of the same name.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="accept"></a><strong>accept</strong>&nbsp;(self)</dt>
+<dd>
+Pauses the current thread until a new connection to the socket is attempted. The current socket MUST have called listen().
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new socket object for the connection, followed by the sockaddr userdata of the connecting host (convertible to an IP address with tostring()).
+</dd>
+<dt><a name="bind"></a><strong>bind</strong>&nbsp;(self, sockaddr)</dt>
+<dd>
+Binds the socket to the given sockaddr, corresponding to the bind() system call. This method must be used for sockets that call listen(), and may be used for sockets that call connect() when it is desired to connect from a specific network interface.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>sockaddr</code>: a sockaddr userdata object.
+</li>
+</ul>
+</dd>
+<dt><a name="check_errors"></a><strong>check_errors</strong>&nbsp;(self)</dt>
+<dd>
+Gets the current state of the socket. Returns true if the socket is connected and not in an error state, or returns nil and an error otherwise.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+<h3>Return value:</h3>
+true if the socket is okay. See error handling section in manual.
+</dd>
+<dt><a name="close"></a><strong>close</strong>&nbsp;(self)</dt>
+<dd>
+Closes the socket internal file descriptor. This is called automatically when the socket object is collected, for convenience.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+</dd>
+<dt><a name="connect"></a><strong>connect</strong>&nbsp;(self, sockaddr)</dt>
+<dd>
+Attempts a connection to the given sockaddr and pauses the thread until it is completed.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>sockaddr</code>: a sockaddr userdata object.
+</li>
+</ul>
+<h3>Return value:</h3>
+true if the connection succeeded, false otherwise.
+</dd>
+<dt><a name="encrypt"></a><strong>encrypt</strong>&nbsp;(self, context)</dt>
+<dd>
+Creates and attaches an encryption session to the socket, based on the given context. Once this session is created, it handles all calls to the send()/recv() methods.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>context</code>: a ratchet.ssl context object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the new encryption session for the socket. See ratchet.ssl.session for details.
+</dd>
+<dt><a name="from_fd"></a><strong>from_fd</strong>&nbsp;(fd)</dt>
+<dd>
+Returns a new socket object, using the given file descriptor. This is particularly useful when sockets are returned by the accept() system call.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>fd</code>: an existing file descriptor of a socket.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new socket object.
+</dd>
+<dt><a name="get_encryption"></a><strong>get_encryption</strong>&nbsp;(self)</dt>
+<dd>
+Returns the current encryption session for the socket.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the encryption session, or nil if unencrypted.
+</dd>
+<dt><a name="get_fd"></a><strong>get_fd</strong>&nbsp;(self)</dt>
+<dd>
+Returns the internal socket file descriptor.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+<h3>Return value:</h3>
+a file descriptor.
+</dd>
+<dt><a name="get_timeout"></a><strong>get_timeout</strong>&nbsp;(self)</dt>
+<dd>
+Gets the current timeout for all socket methods that pause the thread.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the current timeout in seconds.
+</dd>
+<dt><a name="gethostname"></a><strong>gethostname</strong>&nbsp;()</dt>
+<dd>
+Gets the currently configured hostname of the machine using the gethostname(2) system call.
+</dd>
+<dt><a name="hton"></a><strong>hton</strong>&nbsp;(inp)</dt>
+<dd>
+Converts a number into a byte-string ready to be sent over the network. This is necessary only for binary socket protocols. See manpage byteorder(3).
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>inp</code>: the number to be converted.
+</li>
+</ul>
+<h3>Return value:</h3>
+a byte-string in network byte-order ready to be sent over the network. Any extra arguments passed are also returned in order.
+</dd>
+<dt><a name="hton16"></a><strong>hton16</strong>&nbsp;(inp)</dt>
+<dd>
+Converts a number into a byte-string ready to be sent over the network. This is necessary only for binary socket protocols. See manpage byteorder(3).
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>inp</code>: the number to be converted. This is the 16-bit version of hton().
+</li>
+</ul>
+<h3>Return value:</h3>
+a byte-string in network byte-order ready to be sent over the network. Any extra arguments passed are also returned in order.
+</dd>
+<dt><a name="listen"></a><strong>listen</strong>&nbsp;(self, backlog)</dt>
+<dd>
+Sets the socket to listen mode. This socket will open the system port it was bind()ed to. Connections to this socket can be accepted by the accept() method.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>backlog</code>: optional maximum length of pending connections queue.
+</li>
+</ul>
+</dd>
+<dt><a name="multi_recv"></a><strong>multi_recv</strong>&nbsp;(sockets, timeout)</dt>
+<dd>
+Waits for incoming data on several sockets, with a single timeout. A recv() call will be run on the first socket to signal incoming data, and the result will be returned by this function.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>sockets</code>: Table array of sockets to wait for data on.
+</li>
+<li>
+<code>timeout</code>: Seconds of inactivity before the function returns nil.
+</li>
+</ul>
+<h3>Return value:</h3>
+The first data received on any of the sockets. If first return is nil, either a timeout occured or the nil will be followed by an error message.
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(family, socktype, protocol)</dt>
+<dd>
+Returns a new socket object, with its own file descriptor.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>family</code>: the protocol family which will be used for communication.
+</li>
+<li>
+<code>socktype</code>: specifies the communication semantics.
+</li>
+<li>
+<code>protocol</code>: specifies a particular protocol to be used.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new socket object.
+</dd>
+<dt><a name="new_pair"></a><strong>new_pair</strong>&nbsp;()</dt>
+<dd>
+Returns two new socket objects, pre-connected to each other. This is done with the socketpair() system call, and does not open a port or create a server.
+<h3>Return value:</h3>
+Two socket objects connected to each other.
+</dd>
+<dt><a name="ntoh"></a><strong>ntoh</strong>&nbsp;(inp)</dt>
+<dd>
+Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 4-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3).
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>inp</code>: the binary input string from the socket to convert to a number.
+</li>
+</ul>
+<h3>Return value:</h3>
+the resulting number after conversion. Any extra arguments passed are also returned in order.
+</dd>
+<dt><a name="ntoh16"></a><strong>ntoh16</strong>&nbsp;(inp)</dt>
+<dd>
+Converts a byte-string from network byte-order to host byte-order. This is necessary only for binary socket protocols. Takes a 2-byte string from the socket and returns the regular number after conversion. See manpage byteorder(3). This is the 16-bit version of ntoh().
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>inp</code>: the binary input string from the socket to convert to a number.
+</li>
+</ul>
+<h3>Return value:</h3>
+the resulting number after conversion. Any extra arguments passed are also returned in order.
+</dd>
+<dt><a name="prepare_tcp"></a><strong>prepare_tcp</strong>&nbsp;(host, port, family)</dt>
+<dd>
+Prepares TCP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>host</code>: queried by DNS for new TCP connection.
+</li>
+<li>
+<code>port</code>: destination port number for new TCP connection.
+</li>
+<li>
+<code>family</code>: optional string indicating socket family. Valid values are "AF_INET", "AF_INET6", or the default "AF_UNSPEC".
+</li>
+</ul>
+<h3>Return value:</h3>
+Table of information useful in creating a new socket, or nil on failure followed by an error. See the manual for details.
+</dd>
+<dt><a name="prepare_udp"></a><strong>prepare_udp</strong>&nbsp;(host, port, family)</dt>
+<dd>
+Prepares UDP socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details. If host is not an IP address, this call will pause the current thread to wait for a DNS lookup.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>host</code>: queried by DNS for new UDP connection.
+</li>
+<li>
+<code>port</code>: destination port number for new UDP connection.
+</li>
+<li>
+<code>family</code>: string indicating socket family, default "AF_UNSPEC".
+</li>
+</ul>
+<h3>Return value:</h3>
+Table of information useful in creating a new socket, or nil on failure followed by an error. See the manual for details.
+</dd>
+<dt><a name="prepare_unix"></a><strong>prepare_unix</strong>&nbsp;(path)</dt>
+<dd>
+Prepares UNIX socket information. On success, the returned object contains all necessary data to create and bind/connect a new socket object. See the manual page for complete details.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>path</code>: file-path to connect/create UNIX socket.
+</li>
+</ul>
+<h3>Return value:</h3>
+Table of information useful in creating a new socket, or nil on failure followed by an error. See the manual for details.
+</dd>
+<dt><a name="recv"></a><strong>recv</strong>&nbsp;(self, maxlen)</dt>
+<dd>
+Attempts to receive data from across the socket, pausing the thread until data is available. As in the system call, recv() will return an empty string if the other end has shut down.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>maxlen</code>: optional maximum number of bytes to receive.
+</li>
+</ul>
+<h3>Return value:</h3>
+string of data received on the socket.
+</dd>
+<dt><a name="send"></a><strong>send</strong>&nbsp;(self, data)</dt>
+<dd>
+Attempts to send the given data across the socket, pausing the thread until it is able to do so. If the entire string of data cannot be sent at once, the portion that was not sent is returned.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>data</code>: a string of data to send.
+</li>
+</ul>
+<h3>Return value:</h3>
+a string of remaining data to still be sent, or nil if the entire string of data was sent.
+</dd>
+<dt><a name="set_timeout"></a><strong>set_timeout</strong>&nbsp;(self, seconds)</dt>
+<dd>
+Sets the current timeout for all socket methods that pause the thread.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>seconds</code>: the new timeout in seconds.
+</li>
+</ul>
+</dd>
+<dt><a name="set_tracer"></a><strong>set_tracer</strong>&nbsp;(self, tracer)</dt>
+<dd>
+Sets a tracer function on the socket, which is called on the major events on the socket. The first argument to the tracer function will be an event type, such as "accept" or "recv". A second argument is passed for those events that have associated data, such as "recv". Tracer functions can be useful for verbose logging or debugging.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>tracer</code>: Function to call as tracer, or none or nil to clear current tracer.
+</li>
+</ul>
+</dd>
+<dt><a name="shutdown"></a><strong>shutdown</strong>&nbsp;(self, what)</dt>
+<dd>
+Shuts down portions of the socket, corresponding to the system call of the same name. You can shut down reads, writes, or both.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the socket object.
+</li>
+<li>
+<code>what</code>: either "read", "write", or "both". Default "both".
+</li>
+</ul>
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

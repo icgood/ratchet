@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li><strong>ratchet.smtp.server</strong></li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.smtp.server</code></h1>
+<p>This library provides server-side capabilities for an SMTP server. Currently the server will advertize the 8BITMIME, PIPELINING, and ENHANCEDSTATUSCODES extensions and is capable of handling arbitrary, custom commands as well. It is provided for convenience and as an example of using the ratchet libraries.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#handle">handle</a>&nbsp;(self)</td>
+<td class="summary">Sends a banner and starts listening for and responding to SMTP commands from the client.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, handlers, send_size)</td>
+<td class="summary">Creates a new SMTP server object.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="handle"></a><strong>handle</strong>&nbsp;(self)</dt>
+<dd>
+Sends a banner and starts listening for and responding to SMTP commands from the client. This function continues until the client sends a QUIT command.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the smtp.server object.
+</li>
+</ul>
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, handlers, send_size)</dt>
+<dd>
+Creates a new SMTP server object. A new object should be created with this function for each socket created by accept()'ing a new connection on a listening socket.
+<h3>Parameters</h3>
+<ul>
+<li>
+socket: Used as the underlying socket for the session, under the assumption that no I/O has taken place, except possibly encryption if not using STARTTLS.
+</li>
+<li>
+handlers: Table whose keys correspond to supported SMTP commands. The command is called as a method of this table, e.g. handlers:MAIL(...), with the first argument being a reply table that the method can use to set the "code" and "message" keys to control the response. See the manual for more details.
+</li>
+<li>
+send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new smtp.server object.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

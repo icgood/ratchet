@@ -1,0 +1,105 @@
+<html>
+<head>
+<title>Error Handling :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Error Handling</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a name="FailTypes"></a></p>
+<h2>Types of Failures</h2>
+<p>An error raised in Lua code generally halts execution and outputs a message
+describing what happened and where. This type of erroring is good for things
+that can and should be fixed by the programmer. Generally, if a user sees this
+kind of error, you would want them to submit a bug report.</p>
+<p>Many functions, especially when dealing with socket programming, can fail
+without there actually being a problem with the application. For example, when
+connecting to a remote host that is currently turned off, you would usually
+rather try again with a different host or eloquently tell the user what
+happened.</p>
+<p><a name="ErrorObjects"></a></p>
+<h2>Error Objects</h2>
+<p>Good practice when using the ratchet library is making library calls with a
+high probability of failure in <em>protected mode</em> with <a href="http://www.lua.org/manual/5.2/manual.html#pdf-pcall"><code>pcall()</code></a> or
+<a href="http://www.lua.org/manual/5.2/manual.html#pdf-xpcall"><code>xpcall()</code></a>.</p>
+<p>Calling a ratchet function within <code>pcall()</code> is slightly uglier and harder to
+read, but the benefits are worth it. The first result of from pcall will always
+be boolean <code>true</code> or <code>false</code>, depending on whether or not the call threw an
+error or not. If the result is <code>true</code>, the call executed without error and the
+remaining results are the return values from the function. If the result is
+<code>false</code>, an error occured and the remaining result is an error message or
+object.</p>
+<p>In the case of "hard" errors, those thrown by Lua internally or errors
+indicating programmer error, the error will be a string value describing the
+error. It is generally best to let the errors propogate so they can be noticed
+and dealt with.</p>
+<p>In the case of "soft" errors, such as a socket call timing out or a connection
+being refused, the error will be a table object with a set of attributes and
+methods providing information about what happened. The most useful decision
+making attribute is the error code or name, which will usually match up with
+an <a href="http://www.kernel.org/doc/man-pages/online/pages/man3/errno.3.html"><code>errno</code></a> code.</p>
+<p>To check for this code, the error object has a method <code>error:is()</code> or you can
+use the long form <code>ratchet.error.is()</code>. The long form is safer; if the error
+is a string and not an error object then using <code>error:is()</code> will itself throw
+an error. Here's an example of good usage:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">success</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="nb">pcall</span><span class="p">(</span><span class="n">socket</span><span class="p">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">success</span> <span class="k">then</span>
+    <span class="k">if</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">error</span><span class="p">.</span><span class="n">is</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">ETIMEDOUT&quot;</span><span class="p">)</span> <span class="k">then</span>
+        <span class="n">logger</span><span class="p">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Connection to host timed out: &quot;</span><span class="o">..</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">false</span>
+    <span class="k">elseif</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">error</span><span class="p">.</span><span class="n">is</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">ECONNREFUSED&quot;</span><span class="p">)</span> <span class="k">then</span>
+        <span class="n">logger</span><span class="p">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Connection to host refused: &quot;</span><span class="o">..</span><span class="n">host</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">false</span>
+    <span class="k">else</span>
+        <span class="nb">error</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+<p>See the man pages for the socket system call you're using for details on exactly
+what errors it can fail with.</p>
+<p>See the API documentation <a href="/api/latest/modules/ratchet.error.html"><code>ratchet.error</code></a> for details on other
+pieces of information available in error objects.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

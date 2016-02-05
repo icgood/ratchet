@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li><strong>ratchet.socketpad</strong></li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.socketpad</code></h1>
+<p>The socketpad library provides a layer on top of the ratchet.socket library to manage buffered socket IO. This allows for more familiar usages and easier implementation of binary and ASCII socket protocols. These functions can fail, see error handling section in manual for details.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#close">close</a>&nbsp;(self)</td>
+<td class="summary">Calls close() on the underlying socket, provided purely as convenience.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket)</td>
+<td class="summary">Returns a new socketpad object, using the given socket as the underlying engine to send and receive buffered IO.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#recv">recv</a>&nbsp;(self, stop)</td>
+<td class="summary">Attempts to receive a specific amount of data from the socket, receiving packets on the underlying socket until the criteria is met.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#send">send</a>&nbsp;(self, data, more)</td>
+<td class="summary">Adds the given data to the send-buffer, and possibly flushes it to the underlying socket.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="close"></a><strong>close</strong>&nbsp;(self)</dt>
+<dd>
+Calls close() on the underlying socket, provided purely as convenience.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the socket object.
+</li>
+</ul>
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket)</dt>
+<dd>
+Returns a new socketpad object, using the given socket as the underlying engine to send and receive buffered IO. The socket object is available in raw form as the "socket" field of the returned socketpad object.
+<h3>Parameters</h3>
+<ul>
+<li>
+socket: A socket object to buffer.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new socketpad object.
+</dd>
+<dt><a name="recv"></a><strong>recv</strong>&nbsp;(self, stop)</dt>
+<dd>
+Attempts to receive a specific amount of data from the socket, receiving packets on the underlying socket until the criteria is met.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the socket object.
+</li>
+<li>
+stop: if given as a number, this method will attempt to receive that many bytes on the socket and return exactly that many. If given as a string, the socket will receive until that string is seen, everything up-to and including that string is returned.
+</li>
+</ul>
+<h3>Return value:</h3>
+string of data received on the socket. As with regular socket recv(), this method can return an empty string signaling the connection has been closed remotely.
+</dd>
+<dt><a name="send"></a><strong>send</strong>&nbsp;(self, data, more)</dt>
+<dd>
+Adds the given data to the send-buffer, and possibly flushes it to the underlying socket.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the socketpad object.
+</li>
+<li>
+data: a string of data to send.
+</li>
+<li>
+more: flag specifying more data will be buffered, so the send-buffer will not be flushed until this parameter is false.
+</li>
+</ul>
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

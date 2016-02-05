@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li><strong>ratchet.ssl</strong></li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.ssl</code></h1>
+<p>The ssl library provides an SSL encryption context. This context can be used by sockets other other encrypted sessions, so that certain initialization only needs to happen once.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#create_session">create_session</a>&nbsp;(self, engine, rbio, wbio)</td>
+<td class="summary">Creates a new SSL session object using the context.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#generate_tmp_rsa">generate_tmp_rsa</a>&nbsp;(self, bits, e)</td>
+<td class="summary">Generates an ephemeral RSA key.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#load_cas">load_cas</a>&nbsp;(self, ca_path, ca_file, depth)</td>
+<td class="summary">Loads the certificate authorities used to verify remote certificates.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#load_certs">load_certs</a>&nbsp;(self, certchainfile, privkeyfile, password)</td>
+<td class="summary">Loads a certificate chain and private key, optionally using a password to decrypt the private key file.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#load_dh_params">load_dh_params</a>&nbsp;(self, file)</td>
+<td class="summary">Loads DH parameters from a file.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#load_randomness">load_randomness</a>&nbsp;(self, randomfile, max_bytes)</td>
+<td class="summary">Loads randomness, from a dependably random source.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(method)</td>
+<td class="summary">Creates a new SSL encryption context.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#set_verify_mode">set_verify_mode</a>&nbsp;(self, mode)</td>
+<td class="summary">Sets a new verification mode for the peer.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="create_session"></a><strong>create_session</strong>&nbsp;(self, engine, rbio, wbio)</dt>
+<dd>
+Creates a new SSL session object using the context. The session is initialized using BIO objects to abstract the communication layer.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+engine: the communication engine object.
+</li>
+<li>
+rbio: the abstract BIO object for reading.
+</li>
+<li>
+wbio: the abstract BIO object for writing, defaults to rbio.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new ssl session object.
+</dd>
+<dt><a name="generate_tmp_rsa"></a><strong>generate_tmp_rsa</strong>&nbsp;(self, bits, e)</dt>
+<dd>
+Generates an ephemeral RSA key.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+bits: optional bit-size to generate for, default 512.
+</li>
+<li>
+e: exponent for generation, default RSA_F4.
+</li>
+</ul>
+</dd>
+<dt><a name="load_cas"></a><strong>load_cas</strong>&nbsp;(self, ca_path, ca_file, depth)</dt>
+<dd>
+Loads the certificate authorities used to verify remote certificates. Either ca_path or ca_file must be given.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+ca_path: path to a directory containing trusted CA files.
+</li>
+<li>
+ca_file: path to a file containing trusted CA info.
+</li>
+<li>
+depth: optional maximum depth for certificate chain, default 1.
+</li>
+</ul>
+</dd>
+<dt><a name="load_certs"></a><strong>load_certs</strong>&nbsp;(self, certchainfile, privkeyfile, password)</dt>
+<dd>
+Loads a certificate chain and private key, optionally using a password to decrypt the private key file.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+certchainfile: file containing the certificate chain.
+</li>
+<li>
+privkeyfile: file containing the, possibly encrypted, private key.
+</li>
+<li>
+password: optional password to decrypt private key.
+</li>
+</ul>
+</dd>
+<dt><a name="load_dh_params"></a><strong>load_dh_params</strong>&nbsp;(self, file)</dt>
+<dd>
+Loads DH parameters from a file.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+file: path to a PEM file with DH parameters.
+</li>
+</ul>
+</dd>
+<dt><a name="load_randomness"></a><strong>load_randomness</strong>&nbsp;(self, randomfile, max_bytes)</dt>
+<dd>
+Loads randomness, from a dependably random source. Typically this is "/dev/urandom". The default action, if randomfile is not given, is to check the RANDFILE environment variable or a ~/.rnd file if one exists.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+randomfile: path to a file with random bytes.
+</li>
+<li>
+max_bytes: maximum bytes to read from file, default 1 Mb.
+</li>
+</ul>
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(method)</dt>
+<dd>
+Creates a new SSL encryption context.
+<h3>Parameters</h3>
+<ul>
+<li>
+method: optional SSL method light userdata, defaults to SSLv3.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new ssl context object.
+</dd>
+<dt><a name="set_verify_mode"></a><strong>set_verify_mode</strong>&nbsp;(self, mode)</dt>
+<dd>
+Sets a new verification mode for the peer. If mode is "none", the peer is not asked to provide a certificate. If mode is "peer", the initial and default value, the peer should provide a certificate if one is available. A mode of "once" is like "peer" except the peer is only asked on the first handshake. A mode of "fail" will cause a handshake error if the peer does not provide a certificate.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the ssl context object.
+</li>
+<li>
+mode: the new verify mode.
+</li>
+</ul>
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: API Reference</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li><strong>ratchet</strong></li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li>
+<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <u>ratchet</u></h1>
+<p>The purpose of the ratchet library is to provide a generic socket control mechanism for large numbers of sockets without using threads or losing the ease of synchronous socket programming. Along with networking, the library provides a sort of kernel to allow side-by-side execution of different streams of logic.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#get_method">get_method</a>&nbsp;(self)</td>
+<td class="summary">Returns the polling method used behind-the-scenes by libevent.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_num_threads">get_num_threads</a>&nbsp;(self)</td>
+<td class="summary">Returns the number of active threads the ratchet object is managing.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_space">get_space</a>&nbsp;(self, thread, default)</td>
+<td class="summary">Gets the table (see ratchet.thread.space()) associated with the given thread.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#loop">loop</a>&nbsp;(self)</td>
+<td class="summary">Processes thread events in a loop.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#loop_once">loop_once</a>&nbsp;(self, noblock)</td>
+<td class="summary">Executes one iteration of event processing.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(entry, errh)</td>
+<td class="summary">Constructs and returns a new ratchet object.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="get_method"></a><strong>get_method</strong>&nbsp;(self)</dt>
+<dd>
+Returns the polling method used behind-the-scenes by libevent.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the ratchet object.
+</li>
+</ul>
+<h3>Return value:</h3>
+a string identifying the kernel event mechanism (kqueue, epoll, etc.).
+</dd>
+<dt><a name="get_num_threads"></a><strong>get_num_threads</strong>&nbsp;(self)</dt>
+<dd>
+Returns the number of active threads the ratchet object is managing. This includes threads that are currently running and threads that are paused, but not any that have completed or errored.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the ratchet object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the number of active threads.
+</dd>
+<dt><a name="get_space"></a><strong>get_space</strong>&nbsp;(self, thread, default)</dt>
+<dd>
+Gets the table (see ratchet.thread.space()) associated with the given thread.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the ratchet object.
+</li>
+<li>
+<code>thread</code>: the thread to get the table for.
+</li>
+<li>
+<code>default</code>: if given, this table (or any object) will be set and returned if no other space has already been set for the thread.
+</li>
+</ul>
+</dd>
+<dt><a name="loop"></a><strong>loop</strong>&nbsp;(self)</dt>
+<dd>
+Processes thread events in a loop. This function simply runs loop_once() with blocking until it returns false.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the ratchet object.
+</li>
+</ul>
+</dd>
+<dt><a name="loop_once"></a><strong>loop_once</strong>&nbsp;(self, noblock)</dt>
+<dd>
+Executes one iteration of event processing. This may include starting a new thread or resuming one that was paused manually or by an event. This function may block unless noblock is given true.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the ratchet object.
+</li>
+<li>
+<code>noblock</code>: given as true, this function will not block waiting for events.
+</li>
+</ul>
+<h3>Return value:</h3>
+false if all threads have completed execution, true otherwise.
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(entry, errh)</dt>
+<dd>
+Constructs and returns a new ratchet object. This also creates a new libevent control structure that is freed when the object is collected.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>entry</code>: called initially as the entry-point ratchet thread.
+</li>
+<li>
+<code>errh</code>: called after an error in a ratchet thread before the stack is unwound. It is given two arguments, the error and the thread.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new ratchet object.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

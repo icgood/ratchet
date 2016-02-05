@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: API Reference</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li><strong>ratchet.exec</strong></li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <u>ratchet.exec</u></h1>
+<p>The exec library provides relatively powerful command execution in an event-based manner. Commands run with these functions will be run in a separate OS process using a fork-exec.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#communicate">communicate</a>&nbsp;(self, data)</td>
+<td class="summary">Starts the command process.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_argv">get_argv</a>&nbsp;(self)</td>
+<td class="summary">Returns the table array of arguments that the exec object was created with.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_start_time">get_start_time</a>&nbsp;(self)</td>
+<td class="summary">Returns the UNIX timestamp when the process command process was started, that is, when the start() method was called.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#kill">kill</a>&nbsp;(self, signal)</td>
+<td class="summary">Sends a signal to the command process.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(argv)</td>
+<td class="summary">Creates a new execution object, running the command stored in table argv.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#start">start</a>&nbsp;(self)</td>
+<td class="summary">Starts the command process.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#stderr">stderr</a>&nbsp;(self)</td>
+<td class="summary">Returns the standard error file, which has its own methods close() and read().</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#stdin">stdin</a>&nbsp;(self)</td>
+<td class="summary">Returns the standard input file, which has its own methods close() and write().</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#stdout">stdout</a>&nbsp;(self)</td>
+<td class="summary">Returns the standard output file, which has its own methods close() and read().</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#wait">wait</a>&nbsp;(self, timeout)</td>
+<td class="summary">Waits for the command process to terminate.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="communicate"></a><strong>communicate</strong>&nbsp;(self, data)</dt>
+<dd>
+Starts the command process. After writing optional data, stdin is closed. Reads data from stdout and stderr until both are closed. Finally, calls wait() to finish the command process. Functions similarly to the Popen.communicate() method of the subprocess module in Python.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+<li>
+<code>data</code>: optional data to write to stdin before closing it.
+</li>
+</ul>
+<h3>Return value:</h3>
+The concatenations of stdout and stderr, respectively, followed by the exit status.
+</dd>
+<dt><a name="get_argv"></a><strong>get_argv</strong>&nbsp;(self)</dt>
+<dd>
+Returns the table array of arguments that the exec object was created with.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+an argv table array.
+</dd>
+<dt><a name="get_start_time"></a><strong>get_start_time</strong>&nbsp;(self)</dt>
+<dd>
+Returns the UNIX timestamp when the process command process was started, that is, when the start() method was called.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+timestamp when the process was started, or nil if unstarted.
+</dd>
+<dt><a name="kill"></a><strong>kill</strong>&nbsp;(self, signal)</dt>
+<dd>
+Sends a signal to the command process.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+<li>
+<code>signal</code>: The signal number of name (see signal(7)), defaulting to "SIGTERM".
+</li>
+</ul>
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(argv)</dt>
+<dd>
+Creates a new execution object, running the command stored in table argv. The object returned by this command is not running until you call its start() method.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>argv</code>: Table array of command arguments, starting with the command itself.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new exec object.
+</dd>
+<dt><a name="start"></a><strong>start</strong>&nbsp;(self)</dt>
+<dd>
+Starts the command process. No other methods may be called before this one.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the operating system PID of the new process.
+</dd>
+<dt><a name="stderr"></a><strong>stderr</strong>&nbsp;(self)</dt>
+<dd>
+Returns the standard error file, which has its own methods close() and read(). Data written to the command process's standard error will be returned by this object's read() method.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the process's standard error file object.
+</dd>
+<dt><a name="stdin"></a><strong>stdin</strong>&nbsp;(self)</dt>
+<dd>
+Returns the standard input file, which has its own methods close() and write(). Data written with write() will show up in the command process's standard input.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the process's standard input file object.
+</dd>
+<dt><a name="stdout"></a><strong>stdout</strong>&nbsp;(self)</dt>
+<dd>
+Returns the standard output file, which has its own methods close() and read(). Data written to the command process's standard output will be returned by this object's read() method.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the process's standard output file object.
+</dd>
+<dt><a name="wait"></a><strong>wait</strong>&nbsp;(self, timeout)</dt>
+<dd>
+Waits for the command process to terminate.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the exec object.
+</li>
+<li>
+<code>timeout</code>: number of seconds to wait (fractions are ok), default forever.
+</li>
+</ul>
+<h3>Return value:</h3>
+The exit status integer.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

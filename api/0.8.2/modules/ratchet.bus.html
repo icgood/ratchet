@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li><strong>ratchet.bus</strong></li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.bus</code></h1>
+<p>This module is designed as a convenience to make requests in the form of a message queue, with simple responses being returned to the sender. Two different forms exist, allowing sharing either between threads in the same ratchet context or sharing across a socket. This can be especially useful as an abstraction when two systems may be running separately or running side-by-side in the same process.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#new_local">new_local</a>&nbsp;()</td>
+<td class="summary">Creates a new, local message bus.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new_server">new_server</a>&nbsp;(socket, request_from_bus, response_to_bus, a, request_to_bus, response_from_bus)</td>
+<td class="summary">Creates the client-side of a socket-based message bus.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new_server">new_server</a>&nbsp;(socket, request_from_bus, response_to_bus, a, request_to_bus, response_from_bus)</td>
+<td class="summary">Creates the client-side of a socket-based message bus.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#recv_request">recv_request</a>&nbsp;(self)</td>
+<td class="summary">Receives a request from the server-side of a message bus.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#send_request">send_request</a>&nbsp;(self, request)</td>
+<td class="summary">Sends a request from the client-side of a message bus.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="new_local"></a><strong>new_local</strong>&nbsp;()</dt>
+<dd>
+Creates a new, local message bus. Waiting for a request in a thread will pause that thread until another sends a request, and waiting for a response will pause until one is sent. Requests are queued if a thread is not actively waiting for them. The same bus object, created by this function, is used for both the client- and server-sides of the message bus.
+<h3>Return value:</h3>
+a new local message bus, returned twice.
+</dd>
+<dt><a name="new_server"></a><strong>new_server</strong>&nbsp;(socket, request_from_bus, response_to_bus, a, request_to_bus, response_from_bus)</dt>
+<dd>
+Creates the client-side of a socket-based message bus. After sending a request, the client-side will need wait to receive a response.
+<h3>Parameters</h3>
+<ul>
+<li>
+socket:
+</li>
+<li>
+request_from_bus:
+</li>
+<li>
+response_to_bus:
+</li>
+<li>
+a: socket already connected to a server.
+</li>
+<li>
+request_to_bus: an arbitrary function that converts a request object into a string.
+</li>
+<li>
+response_from_bus: an arbitrary function that accepts a string and converts it into a response object.
+</li>
+</ul>
+</dd>
+<dt><a name="new_server"></a><strong>new_server</strong>&nbsp;(socket, request_from_bus, response_to_bus, a, request_to_bus, response_from_bus)</dt>
+<dd>
+Creates the client-side of a socket-based message bus. After sending a request, the client-side will need wait to receive a response.
+<h3>Parameters</h3>
+<ul>
+<li>
+socket:
+</li>
+<li>
+request_from_bus:
+</li>
+<li>
+response_to_bus:
+</li>
+<li>
+a: socket already connected to a server.
+</li>
+<li>
+request_to_bus: an arbitrary function that converts a request object into a string.
+</li>
+<li>
+response_from_bus: an arbitrary function that accepts a string and converts it into a response object.
+</li>
+</ul>
+</dd>
+<dt><a name="recv_request"></a><strong>recv_request</strong>&nbsp;(self)</dt>
+<dd>
+Receives a request from the server-side of a message bus. This function can be used by a local message bus object created with <code>new_local()</code> or a server-side socket message bus object created with <code>new_server()</code>.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the server-side of a message bus.
+</li>
+</ul>
+<h3>Return value:</h3>
+a <code>ratchet.bus.transaction</code> object on which to send the response, followed by the request object received.
+</dd>
+<dt><a name="send_request"></a><strong>send_request</strong>&nbsp;(self, request)</dt>
+<dd>
+Sends a request from the client-side of a message bus. This function can be used by a local message bus object created with <code>new_local()</code> or a client-side message bus object created with <code>new_client()</code>.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the client-side of a message bus.
+</li>
+<li>
+request: a request object to send.
+</li>
+</ul>
+<h3>Return value:</h3>
+a <code>ratchet.bus.transaction</code> object on which to receive the response.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

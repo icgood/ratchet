@@ -1,0 +1,132 @@
+<html>
+<head>
+<title>DNS :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: DNS</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.dns.html">ratchet.dns API Reference</a></p>
+<p>Presently, the DNS system uses <a href="http://25thandclement.com/~william/projects/dns.c.html">dns.c</a> as its backend. This code is included
+in the ratchet package and is current as of Jan 14, 2011.</p>
+<p><a name="Querying"></a></p>
+<h2>Querying</h2>
+<p>Submitting a query of a specific type (e.g. MX or AAAA) is done using the
+<code>ratchet.dns.query()</code> function. Submitting multiple query types on
+the same data is done with <code>ratchet.dns.query_all()</code>, and is useful
+for resolving IPv6 and IPv4 records in parallel. These functions can be called
+from any thread; if the full results are not immediately available, the thread
+will be paused until they are.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">emailsrvr.com&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">mx&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="mi">10</span><span class="p">])</span>        <span class="c1">-- &quot;mx1.emailsrvr.com.&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="mi">20</span><span class="p">])</span>        <span class="c1">-- &quot;mx2.emailsrvr.com.&quot;</span>
+</pre></div>
+<p>&nbsp;</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query_all</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">emailsrvr.com&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;</span><span class="s">aaaa&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">a&quot;</span><span class="p">})</span>
+<span class="c1">-- rec.a =&gt; {[1] = &lt;userdata&gt;}</span>
+<span class="c1">-- rec.aaaa =&gt; nil</span>
+<span class="c1">-- rec.aaaa_error =&gt; &quot;emailsrvr.com has no AAAA record&quot;</span>
+</pre></div>
+<h3>IPv4 <em>A</em> Records ("a" Query Type)</h3>
+<p>Until IPv6 takes over, these will be the most useful queries. It does a simple
+<em>A</em> record lookup on a hostname to find its associated IP address. This is, for
+example, what a web browser would do to find out where to connect, given a
+domain name like "www.google.com". Results are given in a numbered Lua table
+in the order they are received, as <code>struct in_addr</code> userdata objects.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">a&quot;</span><span class="p">)</span>
+</pre></div>
+<h3>IPv6 <em>AAAA</em> Records ("aaaa" Query Type)</h3>
+<p>If a hostname has an <em>AAAA</em> record, it will be the associated IPv6 address.
+During the migration to IPv6, if a <em>AAAA</em> record is not returned the client
+should call back to <em>A</em> records. Results are given in a numbered Lua table in
+the order they are received, as <code>struct in6_addr</code> userdata objects.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">aaaa&quot;</span><span class="p">)</span>
+</pre></div>
+<h3><em>PTR</em> Records ("ptr" Query Type)</h3>
+<p>Performs a "reverse" lookup of an IPv4/IPv6 string, for an associated hostname.
+Results are given in a numbered Lua table in the order they are received, as
+hostname strings.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">74.205.6.223&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">ptr&quot;</span><span class="p">)</span>
+<span class="c1">-- rec[1] =&gt; &quot;emailsrvr.com.&quot;</span>
+</pre></div>
+<h3><em>MX</em> Records ("mx" Query Type)</h3>
+<p>Looks up prioritized mail routing records of a hostname. The results are
+acceptable next-hops for mail intended for the domain. These records should
+generally be avoided in favor of a mail server running a configured <a href="http://en.wikipedia.org/wiki/Message_transfer_agent">MTA</a>
+to deliver mail to the outside world. Results are given as a table keyed on
+priority number (e.g. 10, 20, ...) with the value being a next-hop address.
+The address will likely be a hostname that will require an A/AAAA lookup.</p>
+<p>The result table for an MX query has a special method <code>get_i()</code>
+to get a specific hostname from <em>1 .. n</em>, where n is the total number of hosts
+returned by all MX priorities. <em>1</em> would be the first hostname in the lowest
+returned priority, and <em>n</em> would be the last hostname in the highest returned
+priority.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">mx&quot;</span><span class="p">)</span>
+</pre></div>
+<h3><em>TXT</em> Records ("txt" Query Type)</h3>
+<p>Looks up a text field associated with a domain name. Often, this field is used
+for anti-abuse records such as <a href="http://en.wikipedia.org/wiki/Sender_Policy_Framework">SPF</a>. Results are given as a numbered Lua
+table in the order they are received, as arbitrary strings.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">emailsrvr.com&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">txt&quot;</span><span class="p">)</span>
+<span class="c1">-- rec[1] =&gt; &quot;v=spf1 ip4:207.97.245.0/24 ip4:207.97.227.208/28 ...etc...&quot;</span>
+</pre></div>
+<p><a name="Errors"></a></p>
+<h2>Errors</h2>
+<p>In exchange for usually being lightning-fast, DNS queries can and will fail
+occasionally. For a call to <code>ratchet.dns.query()</code>, the return will be
+<strong>nil</strong> followed by an error message. For a call to
+<code>ratchet.dns.query_all()</code>, the return will always be a table, but
+the value for the query type that failed will be <strong>nil</strong> and there will be
+another key, the concatenation of the query type and "<em>_error</em>", that will
+contain the specific error message. For example:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">dns</span><span class="p">.</span><span class="n">query_all</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;</span><span class="s">aaaa&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">a&quot;</span><span class="p">})</span>
+<span class="c1">-- rec.aaaa =&gt; nil</span>
+<span class="c1">-- rec.aaaa_error =&gt; &quot;ratchet.icgood.net has no AAAA record&quot;</span>
+</pre></div>
+<p>If a query does not return from the DNS server, it is tries again at various
+intervals until finally failing or succeeding. During this time, the requesting
+thread will remain paused and other activity continues as usual.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

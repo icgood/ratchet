@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li><strong>ratchet.http.client</strong></li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.http.client</code></h1>
+<p>This library provides client-side access to an HTTP service, commonly used in many different cases across the Web. Currently the client only supports HTTP/1.0, with no current plans to support 1.1 or higher, as it is only provided for convenience and as an example of using the ratchet libraries.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, send_size)</td>
+<td class="summary">Creates a new HTTP client object.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#query">query</a>&nbsp;(self, command, uri, headers, data)</td>
+<td class="summary">Sends an HTTP query, and returns the results.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, send_size)</dt>
+<dd>
+Creates a new HTTP client object.
+<h3>Parameters</h3>
+<ul>
+<li>
+socket: Used as the underlying socket for the query, under the assumption that encryption has been established as needed and no other I/O has taken place.
+</li>
+<li>
+send_size: Used as the maximum size of a send() operation, defaults to half of the SO_SNDBUF socket option.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new http.client object.
+</dd>
+<dt><a name="query"></a><strong>query</strong>&nbsp;(self, command, uri, headers, data)</dt>
+<dd>
+Sends an HTTP query, and returns the results.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the http.client object.
+</li>
+<li>
+command: The HTTP command to use, such as "PUT" or "GET".
+</li>
+<li>
+uri: The URI to query.
+</li>
+<li>
+headers: A table whose keys are header names and values are arrays of strings. Each string in the value array will result in a new header of the given name.
+</li>
+<li>
+data: Additional data to send in the body of the query. It is usually important to specify a "Content-Length" header with the length of this string.
+</li>
+</ul>
+<h3>Return value:</h3>
+In order: the return code of the query, the descriptive return message, additional headers returned (in the same format as the headers parameter), and a string of data returned by the query (if any).
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

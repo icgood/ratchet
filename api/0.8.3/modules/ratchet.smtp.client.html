@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: API Reference</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li>
+<a href="../modules/ratchet.exec.html">ratchet.exec</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li><strong>ratchet.smtp.client</strong></li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <u>ratchet.smtp.client</u></h1>
+<p>This library provides client-side access to an SMTP server, commonly used to transport email messages. Currently the client will take advantage of the SIZE, STARTTLS and PIPELINING extensions and can send custom, arbitrary commands. It is provided for convenience and as an example of using the ratchet libraries.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#custom_command">custom_command</a>&nbsp;(self, command, arg)</td>
+<td class="summary">Sends a custom command.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#data">data</a>&nbsp;(self)</td>
+<td class="summary">Sends the DATA command, indicating to the server that you are ready to send message data.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#ehlo">ehlo</a>&nbsp;(self, ehlo_as)</td>
+<td class="summary">Sends the EHLO command.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_banner">get_banner</a>&nbsp;(self)</td>
+<td class="summary">Receives the SMTP banner from the server.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#helo">helo</a>&nbsp;(self, helo_as)</td>
+<td class="summary">Sends the HELO command.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#mailfrom">mailfrom</a>&nbsp;(self, address, data_size)</td>
+<td class="summary">Sends a MAIL FROM command, which starts a new message transmission on the session and specifies the sending address.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(socket, iter_size)</td>
+<td class="summary">Creates a new SMTP client object.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#quit">quit</a>&nbsp;(self)</td>
+<td class="summary">Sends a QUIT command, and closes the connection.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#rcptto">rcptto</a>&nbsp;(self, address)</td>
+<td class="summary">Sends a RCPT TO command, which specifies one (of possibly many) recipient for the current message transaction, as started by mailfrom().</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#rset">rset</a>&nbsp;(self)</td>
+<td class="summary">Sends a RSET command.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#send_data">send_data</a>&nbsp;(self, data)</td>
+<td class="summary">Sends arbitrary message data.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#send_empty_data">send_empty_data</a>&nbsp;(self)</td>
+<td class="summary">Sends empty message data.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#starttls">starttls</a>&nbsp;(self)</td>
+<td class="summary">Sends a STARTTLS request to the server, which indicates that, on a 250 reply from the server, you will initiate a TLS handshake.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="custom_command"></a><strong>custom_command</strong>&nbsp;(self, command, arg)</dt>
+<dd>
+Sends a custom command. This function implies no logic, but does expect a standard SMTP code-message reply from the server. It is safe to expect the reply table to be populated when this function returns.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>command</code>: The SMTP command to send.
+</li>
+<li>
+<code>arg</code>: A string to send as an argument to the command, if applicable.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="data"></a><strong>data</strong>&nbsp;(self)</dt>
+<dd>
+Sends the DATA command, indicating to the server that you are ready to send message data. When this function returns, its reply table as well as those returned by mailfrom() and rcptto() will be populated. If the reply code is a 354, the SMTP protocol requires you send message data, ending with a "<CRLF>.<CRLF>", even if the mailfrom() or rcptto() commands failed.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="ehlo"></a><strong>ehlo</strong>&nbsp;(self, ehlo_as)</dt>
+<dd>
+Sends the EHLO command. When this function returns, you can safely expect the return table to be populated. The "message" string in the reply table does not include lines designated as SMTP extensions, these are parsed out into the "extensions" member object, see manual for details.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>ehlo_as</code>: The string to identify as.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="get_banner"></a><strong>get_banner</strong>&nbsp;(self)</dt>
+<dd>
+Receives the SMTP banner from the server. When this function returns, you can safely expect the return table to be populated.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="helo"></a><strong>helo</strong>&nbsp;(self, helo_as)</dt>
+<dd>
+Sends the HELO command. When this function returns, you can safely expect the return table to be populated.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>helo_as</code>: The string to identify as.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="mailfrom"></a><strong>mailfrom</strong>&nbsp;(self, address, data_size)</dt>
+<dd>
+Sends a MAIL FROM command, which starts a new message transmission on the session and specifies the sending address. This function will also add the "SIZE=nnn" parameter, if the SIZE extension is supported by the server, where "nnn" is the data_size parameter. When this function returns, the reply table WILL NOT be populated if the server supports the PIPELINING extension. You can only safely expect the return table to be populated after calling the data() function.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>address</code>: The sender address of the message envelope.
+</li>
+<li>
+<code>data_size</code>: The approximate size of the message data.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(socket, iter_size)</dt>
+<dd>
+Creates a new SMTP client object.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>socket</code>: Used as the underlying socket for the session, under the assumption that no I/O has taken place, except possibly encryption if not using STARTTLS.
+</li>
+<li>
+<code>iter_size</code>: Maximum size of each iteration over message data, defaults to 1024 bytes at a time.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new smtp.client object.
+</dd>
+<dt><a name="quit"></a><strong>quit</strong>&nbsp;(self)</dt>
+<dd>
+Sends a QUIT command, and closes the connection. You can safely expect the return table to be populated, when this function returns.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="rcptto"></a><strong>rcptto</strong>&nbsp;(self, address)</dt>
+<dd>
+Sends a RCPT TO command, which specifies one (of possibly many) recipient for the current message transaction, as started by mailfrom(). When this function returns the reply table WILL NOT be populated if the server supports the PIPELINING extension. You can only safely expect the return table to be populated after calling the data() function.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>address</code>: A recipient address to add to the envelope.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="rset"></a><strong>rset</strong>&nbsp;(self)</dt>
+<dd>
+Sends a RSET command. When this function returns, you can safely expect the return table to be populated.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="send_data"></a><strong>send_data</strong>&nbsp;(self, data)</dt>
+<dd>
+Sends arbitrary message data. This function will apply the transparency filters specified by the RFC, so no special care must be taken with the message data before sending it. When message data has been sent, the end marker "<CRLF>.<CRLF>" is also sent. It is not safe to expect the reply table to be populated when this function returns, if the server supports the PIPELINING extension.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+<li>
+<code>data</code>: The message data, typically as per RFC 2822.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="send_empty_data"></a><strong>send_empty_data</strong>&nbsp;(self)</dt>
+<dd>
+Sends empty message data. This function simply sends the message end marker, "<CRLF>.<CRLF>", and should be used when the server replied to the data() function with a "354" code but calls to mailfrom() or rcptto() were not successful. It is not safe to expect the reply table to be populated when this function returns, if the server supports the PIPELINING extension.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+<dt><a name="starttls"></a><strong>starttls</strong>&nbsp;(self)</dt>
+<dd>
+Sends a STARTTLS request to the server, which indicates that, on a 250 reply from the server, you will initiate a TLS handshake. This function does not do the TLS handshake. When this function returns, you can safely expect the return table to be populated.
+<h3>Parameters</h3>
+<ul>
+<li>
+<code>self</code>: the smtp.client object.
+</li>
+</ul>
+<h3>Return value:</h3>
+A reply table with "code" and "message" keys.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

@@ -1,0 +1,139 @@
+<html>
+<head>
+<title>HTTP Protocol Implementation :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: HTTP Protocol Implementation</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.http.client.html">ratchet.http.client API Reference</a><br/>
+<a href="/api/latest/modules/ratchet.http.server.html">ratchet.http.server API Reference</a></p>
+<p>These implementations were written without extensive knowledge or experience in
+the protocol. Feedback (or patches!) is encouraged!</p>
+<p><a name="Client"></a></p>
+<h2>Client</h2>
+<p>The HTTP client can be used to send arbitrary commands to an HTTP server, for
+example to query a REST API or download a file. Once a connection has been
+established, create a <code>ratchet.http.client</code> object to get started.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Initialize &quot;socket&quot;...</span>
+
+<span class="kd">local</span> <span class="n">client</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">http</span><span class="p">.</span><span class="n">client</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+</pre></div>
+<p>Once the object has been created, no more than <b>one</b> query can be performed
+with it. This is due to a limitation in HTTP/1.0, but allows for greater
+simplicity. The only required parameter to a command is a URI, but all commands
+support the passing of additional headers and some also support passing in
+arbitrary data.</p>
+<p>To pass in headers, create a table similar to the following:</p>
+<p><a name="HeaderExample"></a></p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">[</span><span class="s2">&quot;</span><span class="s">X-Fancy-Header&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;</span><span class="s">value1&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">value2&quot;</span><span class="p">},</span>
+    <span class="p">[</span><span class="s2">&quot;</span><span class="s">Content-Length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">252</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+<p>Here are a few examples of HTTP command queries:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">GET&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/index.html&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">200&quot;</span><span class="p">)</span>
+<span class="n">browser</span><span class="p">:</span><span class="n">render</span><span class="p">(</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+</pre></div>
+<p><br/></p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">arbitrary data!&quot;</span>
+<span class="kd">local</span> <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">[</span><span class="s2">&quot;</span><span class="s">Content-Length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">#</span><span class="n">data</span><span class="p">},</span>
+<span class="p">}</span>
+<span class="kd">local</span> <span class="n">code</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/api/container/entry&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">201&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Server"></a></p>
+<h2>Server</h2>
+<p>The HTTP server can be used to handle commands from clients. It requires a table
+be provided whose methods represent the commands supported by the server. Any
+command received from a client that does not have a corresponding method in the
+table will be rejected with a 501 code. The <code>ratchet.http.server</code>
+object does not manage the listening socket or accepting of connections; one
+object should be instantiated per client connection accepted.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Retrieve &quot;socket&quot; from accept() call...</span>
+
+<span class="kd">local</span> <span class="n">server</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">http</span><span class="p">.</span><span class="n">server</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">handlers</span><span class="p">)</span>
+</pre></div>
+<p>Once the object has been created, no more than <b>one</b> command can be
+handled by it. This is due to a limitation in HTTP/1.0, but allows for greater
+simplicity. All client commands must provide a URI, any command may provide
+additional headers, and some commands may also provide arbitrary data. Headers
+will be received and parsed into a table like <a href="#HeaderExample">this one</a>.</p>
+<h3>Handler Tables</h3>
+<p>A handler table defines what commands are supported by a server and the logic
+behind them. The keys of the handler table should be the upper-case of the
+different commands, with the values being methods (functions whose first
+parameter is the handler table). Commands are simply arbitrary strings, there
+is no innate "GET" command unless one is defined by a handler table.</p>
+<p>The HTTP response to the client's command is defined by the return values of
+the command method. Consider a handler method like this:</p>
+<div class="ratchet_lua"><pre><span class="k">function</span> <span class="nf">handlers</span><span class="p">:</span><span class="n">GET</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">uri</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">/important_stuff.txt&quot;</span> <span class="k">then</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="mi">404</span><span class="p">,</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">Not Found.&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">else</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">Ok&quot;</span><span class="p">,</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="p">[</span><span class="s2">&quot;</span><span class="s">Content-Type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;</span><span class="s">text/plain&quot;</span><span class="p">},</span>
+                <span class="p">[</span><span class="s2">&quot;</span><span class="s">Content-Length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">8</span><span class="p">},</span>
+            <span class="p">},</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">secrets!&quot;</span>
+        <span class="p">}</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+<p>The response to the client would be given as "404 Not Found." unless they
+queried the <code>/important_stuff.txt</code> URI. The response can also
+include headers (given in <a href="#HeaderExample">table form</a>) and arbitrary data.
+Passing arbitrary data should follow the standard rules of also providing
+a "Content-Length" header.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

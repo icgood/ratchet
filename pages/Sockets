@@ -1,0 +1,45 @@
+<html>
+<head>
+<title>Page Not Found :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Page Not Found</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<h1>Page Not Found</h1>
+<p>This page does not exist.</p>
+<p>You may wish to <a href="/">return to the beginning</a>.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

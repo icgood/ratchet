@@ -1,0 +1,120 @@
+<html>
+<head>
+<title>SSL Encryption :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: SSL Encryption</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.ssl.html">ratchet.ssl API Reference</a></p>
+<p><a href="/api/latest/modules/ratchet.ssl.session.html">ratchet.ssl.session API Reference</a></p>
+<p><a name="Context"></a></p>
+<h2>Encryption Context</h2>
+<p>So that certificates, keys, and other settings can be loaded once in a central
+location, encryption contexts must be created first and used to create the
+individual encryption sessions used on sockets and the like.</p>
+<div class="ratchet_lua"><pre><span class="n">ssl</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">ssl</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">ratchet</span><span class="p">.</span><span class="n">ssl</span><span class="p">.</span><span class="n">SSLv3</span><span class="p">)</span>
+
+<span class="c1">-- Change verification mode from the default, &quot;peer&quot;.</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">set_verify_mode</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">none&quot;</span><span class="p">)</span>
+
+<span class="c1">-- For servers, or whenever this side of the connection must be verified...</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">load_certs</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">/path/to/cert.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/path/to/private/key.pem&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">password&quot;</span><span class="p">)</span>
+
+<span class="c1">-- For clients, or whenever the remote end will need to be verified by a</span>
+<span class="c1">-- trusted Certificate Authority.</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">load_cas</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">/path/to/CAs/&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/path/to/CA/file.pem&quot;</span><span class="p">)</span>
+
+<span class="c1">-- To generate an ephemeral RSA key.</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">generate_tmp_rsa</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+
+<span class="c1">-- To load DH Parameters.</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">load_dh_params</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">/path/to/dh_params.pem&quot;</span><span class="p">)</span>
+
+<span class="c1">-- To load randomness.</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">load_randomness</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">/dev/urandom&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Session"></a></p>
+<h2>Encryption Session</h2>
+<p>For actual SSL sessions, you create a <code>ratchet.ssl.session</code> object
+for each socket (or other layer). These objects cannot be created directly, and
+actually <code>ratchet.ssl.session</code> is a theoretical name that resolves to
+nil. To start a new session, you use the <code>create_session()</code> method
+of an encryption context object. This method is called automatically by
+<code>socket:encrypt()</code>, so calling it directly is rare unless you aren't
+using sockets or have special needs.</p>
+<p>Once you have an encryption session, you can use it for all transactions. If
+anything fails, an error is propagated. Using encrypted sockets attempts to hide
+the encryption session as much as possible, so that the same code can be used
+for encrypted and unencrypted versions of a protocol. However, direct access to
+the following encrypted actions are available as session methods:</p>
+<ul>
+<li><code>write()</code>: Send encrypted data.</li>
+<li><code>read()</code>: Read encrypted data.</li>
+<li><code>accept()</code>: Server-side encryption handshake, (alias to
+<code>server_handshake()</code>).</li>
+<li><code>connect()</code>: Client-side encryption handshake, (alias to
+<code>client_handshake()</code>).</li>
+<li><code>verify_certificate()</code>: Check the remote peer certificate.</li>
+<li><code>shutdown()</code>: Terminate encrypted session cleanly.</li>
+</ul>
+<p><a name="NonSockets"></a></p>
+<h2>Encrypting Other Non-Socket Channels</h2>
+<p>Encryption sessions are not limited to sockets, just as OpenSSL is not. As long
+as a communication layer can implement the <a href="http://www.openssl.org/docs/crypto/bio.html">BIO</a> abstraction, it can be
+encrypted by both OpenSSL and thus the ratchet library. To create a session,
+you must first have a Lua object that implements the necessary protocol to
+have ratchet wait on reads and writes. That object shall be known as the
+"engine". From this engine object, by whatever means necessary, you must create
+a BIO object (or objects, for separate read and write).</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">engine</span> <span class="o">=</span> <span class="n">get_engine_compatible_with_ratchet</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">rbio</span><span class="p">,</span> <span class="n">wbio</span> <span class="o">=</span> <span class="n">create_BIOs_from_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+
+<span class="kd">local</span> <span class="n">enc</span> <span class="o">=</span> <span class="n">ssl</span><span class="p">:</span><span class="n">create_session</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">rbio</span><span class="p">,</span> <span class="n">wbio</span><span class="p">)</span>
+</pre></div>
+<p>With this new session object, you should be able to perform all encryption
+methods, or tweak your engine to call them instead like the socket library does.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li><strong>ratchet.timerfd</strong></li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.timerfd</code></h1>
+<p>The timerfd library provides an advanced timer interface using the system library of the same name. Timers from this library can be set to fire repeatedly and provide counts if several fires have taken place since last check.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#close">close</a>&nbsp;(self)</td>
+<td class="summary">Closes the timerfd internal file descriptor.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#get_fd">get_fd</a>&nbsp;(self)</td>
+<td class="summary">Returns the file descriptor for the internal timerfd object.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#gettime">gettime</a>&nbsp;(self)</td>
+<td class="summary">Returns information about the current timer, corresponding to the timerfd_gettime() system call.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(clock)</td>
+<td class="summary">Returns a new timerfd object.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#read">read</a>&nbsp;(self)</td>
+<td class="summary">Pauses the current thread until the next firing of the timer.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#settime">settime</a>&nbsp;(self, wait_seconds, interval_seconds, flag)</td>
+<td class="summary">Arms (or disarms) the timerfd object.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="close"></a><strong>close</strong>&nbsp;(self)</dt>
+<dd>
+Closes the timerfd internal file descriptor. This is called automatically when the timerfd object is collected, for convenience.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the timerfd object.
+</li>
+</ul>
+</dd>
+<dt><a name="get_fd"></a><strong>get_fd</strong>&nbsp;(self)</dt>
+<dd>
+Returns the file descriptor for the internal timerfd object.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the timerfd object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the file descriptor.
+</dd>
+<dt><a name="gettime"></a><strong>gettime</strong>&nbsp;(self)</dt>
+<dd>
+Returns information about the current timer, corresponding to the timerfd_gettime() system call. This would be the number of seconds until the next fire of the timer.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the timerfd object.
+</li>
+</ul>
+<h3>Return value:</h3>
+seconds until next timer firing.
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(clock)</dt>
+<dd>
+Returns a new timerfd object.
+<h3>Parameters</h3>
+<ul>
+<li>
+clock: either "monotonic" or "realtime" based on the desired clock type. See man page timerfd_create(2) for details. The default is "monotonic".
+</li>
+</ul>
+<h3>Return value:</h3>
+a new timerfd object.
+</dd>
+<dt><a name="read"></a><strong>read</strong>&nbsp;(self)</dt>
+<dd>
+Pauses the current thread until the next firing of the timer. If the timer has fired since the last call to read(), it will return immediately.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the timerfd object.
+</li>
+</ul>
+<h3>Return value:</h3>
+the number of fires since last call to read().
+</dd>
+<dt><a name="settime"></a><strong>settime</strong>&nbsp;(self, wait_seconds, interval_seconds, flag)</dt>
+<dd>
+Arms (or disarms) the timerfd object. This function corresponds to the timerfd_settime() system call. If wait_seconds is not given or nil, the timer is disarmed.
+<h3>Parameters</h3>
+<ul>
+<li>
+self: the timerfd object.
+</li>
+<li>
+wait_seconds: seconds until first fire of timerfd.
+</li>
+<li>
+interval_seconds: seconds until subsequent fires.
+</li>
+<li>
+flag: either "relative" or "absolute", default "relative".
+</li>
+</ul>
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

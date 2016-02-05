@@ -1,0 +1,181 @@
+<html>
+<head>
+<title>Table of Contents :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Table of Contents</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<div class="warning-box">
+Until a "stable" version (>= 1.0.0) is reached, the information on these pages
+will pertain to the latest master branch. For information on tagged versions,
+see the API archive.
+</div>
+<h2>Ratchet Manual</h2>
+<ol>
+<li><strong><a href="/api/latest">Complete API Reference</a></strong></li>
+<li><a href="/pages/Ratchet">Using Ratchets</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Ratchet#Creation">Creation</a><ol>
+<li><a href="/pages/Ratchet#Creation-Constructor">Constructor</a></li>
+<li><a href="/pages/Ratchet#Creation-Threads">About Threads</a></li>
+<li><a href="/pages/Ratchet#Creation-Attaching">Attaching New Threads</a></li>
+<li><a href="/pages/Ratchet#Creation-ThreadSpace">Thread-scope Variable Space</a></li>
+</ol>
+</li>
+<li><a href="/pages/Ratchet#Scheduling">Scheduling</a><ol>
+<li><a href="/pages/Ratchet#Scheduling-Pause">Pause and Unpause</a></li>
+<li><a href="/pages/Ratchet#Scheduling-BatchWait">Batch Waiting</a></li>
+<li><a href="/pages/Ratchet#Scheduling-BasicTimer">Basic Timers</a></li>
+<li><a href="/pages/Ratchet#Scheduling-Alarms">Alarms</a></li>
+</ol>
+</li>
+<li><a href="/pages/Ratchet#ErrorTrapping">Error Trapping</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/ErrorHandling">Error Handling</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/ErrorHandling#FailTypes">Failure Types</a></li>
+<li><a href="/pages/ErrorHandling#ErrorObjects">Error Objects</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/Socket">Using Berkeley sockets</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Socket#Creation">Creation</a></li>
+<li><a href="/pages/Socket#ConnectListen">Connect / Listen</a></li>
+<li><a href="/pages/Socket#Communication">Communication</a><ol>
+<li><a href="/pages/Socket#Communication-Send">Send</a></li>
+<li><a href="/pages/Socket#Communication-Recv">Recv</a></li>
+<li><a href="/pages/Socket#Communication-Shutdown">Shutdown</a></li>
+</ol>
+</li>
+<li><a href="/pages/Socket#BufferedCommunication">Buffered Communication</a><ol>
+<li><a href="/pages/Socket#BufferedCommunication-Send">Send</a></li>
+<li><a href="/pages/Socket#BufferedCommunication-Recv">Recv</a></li>
+</ol>
+</li>
+<li><a href="/pages/Socket#Encryption">Encryption</a></li>
+<li><a href="/pages/Socket#Timeouts">Timeouts</a></li>
+<li><a href="/pages/Socket#Options">Socket Options</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/ZmqSocket">Using ZeroMQ sockets</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/ZmqSocket#Creation">Creation</a></li>
+<li><a href="/pages/ZmqSocket#ConnectListen">Connect / Listen</a></li>
+<li><a href="/pages/ZmqSocket#Communication">Communication</a><ol>
+<li><a href="/pages/ZmqSocket#Communication-Send">Send</a></li>
+<li><a href="/pages/ZmqSocket#Communication-Recv">Recv</a></li>
+<li><a href="/pages/ZmqSocket#Communication-Multipart">Multi-part Messages</a></li>
+</ol>
+</li>
+<li><a href="/pages/ZmqSocket#Timeouts">Timeouts</a></li>
+<li><a href="/pages/ZmqSocket#URIParsing">URI Parsing</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/DNS">DNS Resolution</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/DNS#Querying">Querying</a></li>
+<li><a href="/pages/DNS#Errors">Errors</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/Encryption">Encryption</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Encryption#Context">Context</a></li>
+<li><a href="/pages/Encryption#Session">Session</a></li>
+<li><a href="/pages/Encryption#NonSockets">Encrypting Non-Sockets</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/Exec">Command Execution</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Exec#Creation">Creation</a></li>
+<li><a href="/pages/Exec#StdIO">Standard IO</a></li>
+<li><a href="/pages/Exec#Wait">Waiting for Completion</a></li>
+<li><a href="/pages/Exec#Communicate">Communicate</a>
+</span></li>
+</ol>
+</li>
+<li><a href="/pages/Timerfd">Using advanced timers</a>
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Timerfd#Creation">Creation</a></li>
+<li><a href="/pages/Timerfd#Functions">Arm, Disarm, and Query</a></li>
+<li><a href="/pages/Timerfd#Monitoring">Monitoring</a>
+</span></li>
+</ol>
+</li>
+<li>Protocol Implementations
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/HTTPImplementation">HTTP</a><ol>
+<li><a href="/pages/HTTPImplementation#Client">Client</a></li>
+<li><a href="/pages/HTTPImplementation#Server">Server</a></li>
+</ol>
+</li>
+<li><a href="/pages/SMTPImplementation">SMTP</a><ol>
+<li><a href="/pages/SMTPImplementation#Client">Client</a></li>
+<li><a href="/pages/SMTPImplementation#Server">Server</a>
+</span></li>
+</ol>
+</li>
+</ol>
+</li>
+<li>Code Examples
+<span class="toc-sub-section"><ol>
+<li><a href="/pages/Examples/TCPSockets">Hello World: TCP Sockets</a></li>
+<li><a href="/pages/Examples/MixingSocketTypes">Mixing Socket Types</a></li>
+<li><a href="/pages/Examples/Timerfd">Advanced Timers</a></li>
+<li><a href="/pages/Examples/ErrorHandling">Error Handling</a></li>
+<li><a href="/pages/Examples/BatchWaiting">Batch Waiting</a>
+</span></li>
+</ol>
+</li>
+</ol> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

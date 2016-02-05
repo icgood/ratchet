@@ -1,0 +1,198 @@
+<html>
+<head>
+<title>SMTP Protocol Implementation :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: SMTP Protocol Implementation</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.smtp.client.html">ratchet.smtp.client API Reference</a><br/>
+<a href="/api/latest/modules/ratchet.smtp.server.html">ratchet.smtp.server API Reference</a></p>
+<p><a name="Client"></a></p>
+<h2>Client</h2>
+<h3>Initialization and "Handshake"</h3>
+<p>The SMTP client can be used to control arbitrary connections to a mail transfer
+agent (MTA). Once a connection has been established, create a
+<code>ratchet.smtp.client</code> object to get started.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Initialize &quot;socket&quot;...</span>
+
+<span class="kd">local</span> <span class="n">client</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">smtp</span><span class="p">.</span><span class="n">client</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+</pre></div>
+<p>Once the object has been created, the first thing to do is generally read the
+banner from the remote server:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">banner</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">get_banner</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">banner</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">220&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Server says: &quot;</span> <span class="o">..</span> <span class="n">banner</span><span class="p">.</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+<p>Next, a client must identify itself to the server with an EHLO or HELO command.
+If the server does not accept a EHLO command first, the client should try the
+HELO command.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">ehlo</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">ehlo</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">my.hostname.com&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">ehlo</span><span class="p">.</span><span class="n">code</span><span class="p">:</span><span class="n">sub</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">5&quot;</span> <span class="k">then</span>
+    <span class="kd">local</span> <span class="n">helo</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">helo</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">my.hostname.com&quot;</span><span class="p">)</span>
+    <span class="nb">assert</span><span class="p">(</span><span class="n">helo</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+<p>After the server responds to the EHLO/HELO commands, the client also knows which
+extensions the server supports. You can manually check for extensions, like
+STARTTLS, like so:</p>
+<div class="ratchet_lua"><pre><span class="k">if</span> <span class="n">client</span><span class="p">.</span><span class="n">extensions</span><span class="p">:</span><span class="n">has</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">STARTTLS&quot;</span><span class="p">)</span> <span class="k">then</span>
+    <span class="kd">local</span> <span class="n">starttls</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">starttls</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">starttls</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span> <span class="k">then</span>
+        <span class="c1">-- Encrypt the socket and re-EHLO...</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+</pre></div>
+<p>At this point, the client is initialized and has completed the handshake.</p>
+<h3>Mail Transactions</h3>
+<p>A single SMTP session can handle multiple mail transactions to a server. Each
+mail transaction will begin with a MAIL FROM command, which also specifies the
+mail sender address. If a server supports the <em>PIPELINING</em> extension, you cannot
+immediately check this command's reply like we have been doing so far. So, for
+now, we'll just queue up all the message envelope commands:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">mailfrom</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">mailfrom</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">sender@slimta.org&quot;</span><span class="p">,</span> <span class="o">#</span><span class="n">message_data</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">rcptto1</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">rcptto</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">rcpt1@slimta.org&quot;</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">rcptto2</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">rcptto</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">rcpt2@slimta.org&quot;</span><span class="p">)</span>
+</pre></div>
+<p>When we're done sending the MAIL FROM command and all RCPT TO commands, we can
+tell the server that we are about to begin sending message data:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">data</span><span class="p">()</span>
+</pre></div>
+<p>Only at this point in the mail transaction will all the mail transaction
+command replies be populated. We should check them for any errors:</p>
+<div class="ratchet_lua"><pre><span class="nb">assert</span><span class="p">(</span><span class="n">mailfrom</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">rcptto1</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">rcptto2</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">354&quot;</span><span class="p">)</span>
+</pre></div>
+<p>If you're being robust and checking reply codes without the
+<code>assert()</code> function, you may encounter a case where the server
+rejects the MAIL FROM or all the RCPT TOs and yet still returns a "354" when
+you send the DATA command. In this case, you should <em>only</em> send an empty message
+data:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">send_data</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">send_empty_data</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">send_data</span><span class="p">.</span><span class="n">code</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">250&quot;</span><span class="p">)</span>
+</pre></div>
+<p>Otherwise, if the message envelope was successful, you can send the message data
+as usual:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">send_data</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">send_data</span><span class="p">(</span><span class="n">message_data</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">send_data</span><span class="p">.</span><span class="n">code</span> <span class="o">~=</span> <span class="s2">&quot;</span><span class="s">250&quot;</span> <span class="k">then</span>
+    <span class="n">client</span><span class="p">:</span><span class="n">rset</span><span class="p">()</span>
+<span class="k">end</span>
+</pre></div>
+<p>At this point, you can safely start another message transaction, or quit the
+session with <code>client:quit()</code>.</p>
+<p><a name="Server"></a></p>
+<h2>Server</h2>
+<p>The SMTP server library allows an application to receive connections and
+messages and act upon them. This could be useful when writing an <a href="http://en.wikipedia.org/wiki/Message_transfer_agent">MTA</a>,
+<a href="http://en.wikipedia.org/wiki/Mail_delivery_agent">MDA</a>, or other mail-related application.</p>
+<p>Because logic and policies can take place at any point during an SMTP session,
+the server library is designed in such a way that incoming SMTP commands from
+the client are handled with the minimum logic required by the RFC, and
+additionally calling a handler function supplied by the application to do any
+custom things and alter the reply code and/or message.</p>
+<p>The first step is creating a table of handler methods. This table should have
+methods whose names are the upper-case simple command names, for example:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">custom_handlers</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">function</span> <span class="nf">custom_handlers</span><span class="p">:</span><span class="n">BANNER</span><span class="p">(</span><span class="n">reply</span><span class="p">)</span>
+    <span class="n">reply</span><span class="p">.</span><span class="n">code</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">220&quot;</span>
+    <span class="n">reply</span><span class="p">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">Welcome to ratchet ESMTP&quot;</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">custom_handlers</span><span class="p">:</span><span class="n">EHLO</span><span class="p">(</span><span class="n">reply</span><span class="p">,</span> <span class="n">ehlo_as</span><span class="p">)</span>
+    <span class="n">reply</span><span class="p">.</span><span class="n">code</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">250&quot;</span>
+    <span class="n">reply</span><span class="p">.</span><span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">Hello, &quot;</span> <span class="o">..</span> <span class="n">ehlo_as</span>
+<span class="k">end</span>
+
+<span class="c1">-- etc. etc.</span>
+</pre></div>
+<p>Notice the first parameter (after from the implicit <em>self</em>) in each method is
+given as <code>reply</code>. This contains the current reply that will be sent
+to the client when the method returns. You can overwrite the <code>code</code>,
+<code>message</code>, and <code>enhanced_status_code</code> attributes of this
+table, but <strong>do not</strong> overwrite <code>reply</code> with a new table as it will
+not be picked up properly.</p>
+<p>Standard SMTP commands are supported, most with custom arguments passed in to
+handler methods. Here is a simple list of built-in commands and the extra
+arguments given to handler methods:</p>
+<ul>
+<li><strong>BANNER</strong>: <em>no arguments</em><br/>
+default reply: <strong>220 ESMTP ratchet SMTP server N.NN.NN</strong></li>
+<li><strong>EHLO</strong>: <em>ehlo_as</em> -- The EHLO string provided by the client.<br/>
+default reply: <strong>250 Hello *ehlo_as</strong>*</li>
+<li><strong>EHLO</strong>: <em>helo_as</em> -- The HELO string provided by the client.<br/>
+default reply: <strong>250 Hello *helo_as</strong>*</li>
+<li><strong>STARTTLS</strong>: <em>extensions</em> -- Supported ESMTP extensions, for possible modification.<br/>
+default reply: <strong>220 2.7.0 Go ahead</strong></li>
+<li><strong>MAIL</strong>: <em>address</em> -- The sender address provided by the client.<br/>
+default reply: <strong>250 2.1.0 Sender &lt;<em>address</em>&gt; Ok</strong><br/>
+oversized message reply: <strong>552 5.3.4 Message size exceeds <em>NNNN</em> limit</strong></li>
+<li><strong>RCPT</strong>: <em>address</em> -- The recipient address provided by the client.<br/>
+default reply: <strong>250 2.1.5 Recipient &lt;<em>address</em>&gt; Ok</strong></li>
+<li><strong>DATA</strong>: <em>no arguments</em><br/>
+default reply: <strong>354 Start mail input; end with &lt;CRLF&gt;.&lt;CRLF&gt;</strong></li>
+<li><strong>RSET</strong>: <em>no arguments</em><br/>
+default reply: <strong>250 Ok</strong></li>
+<li><strong>NOOP</strong>: <em>no arguments</em><br/>
+default reply: <strong>250 Ok</strong></li>
+<li><strong>QUIT</strong>: <em>no arguments</em><br/>
+default reply: <strong>221 Bye</strong></li>
+</ul>
+<p>Additional, arbitrary commands can be supported by adding upper-case methods to
+the handler table. Any key in the handler table that is completely upper-case
+will be recognized as an SMTP command, so be careful.</p>
+<p>Once a connection to the server has been established and a socket has been
+created by <code>accept()</code>, create a <code>ratchet.smtp.server</code>
+object and then completely handle an SMTP session like so:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">server</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">smtp</span><span class="p">.</span><span class="n">server</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">custom_handlers</span><span class="p">)</span>
+<span class="n">server</span><span class="p">:</span><span class="n">handle</span><span class="p">()</span>
+</pre></div>
+<p>Notice that the <code>handle()</code> method does not take any arguments or
+return any values; you should use your own custom handle table logic to control
+the inputs and outputs of the SMTP server. </p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

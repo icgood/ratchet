@@ -1,0 +1,75 @@
+<html>
+<head>
+<title>Installation :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Installation</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<h2>Build Information</h2>
+<p>The ratchet library follows the standard autotools procedure for building.</p>
+<p>Lua 5.2+ is required to build, as this is a Lua library. Other than that, see
+the <a href="https://github.com/icgood/ratchet/blob/master/README.md">README</a> for additional dependencies and information about various
+configure flags.</p>
+<p>All other configure options are standard from GNU autotools.</p>
+<h3>Building from a Source Tarball</h3>
+<p>This method is the encouraged and standard method of building the library, from
+a versioned source tarball.</p>
+<div class="ratchet_lua"><pre><span class="nv">$ </span>./configure
+<span class="nv">$ </span>make
+<span class="nv">$ </span>sudo make install
+</pre></div>
+<h3>Building from Repository</h3>
+<p>This method of build is for bleeding-edge users who want to build directly
+from the latest code in the repository. It requires up-to-date versions of
+the various autotools. Average users are encouraged to build from a versioned
+source tarball.</p>
+<div class="ratchet_lua"><pre><span class="nv">$ </span>autoreconf -i
+<span class="nv">$ </span>./configure
+<span class="nv">$ </span>make
+<span class="nv">$ </span>sudo make install
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<html>
+<head>
+<title>Advanced Timer Example :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Advanced Timer Example</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<h2>Advanced Timers</h2>
+<div class="ratchet_lua"><pre><span class="nb">require</span> <span class="s2">&quot;</span><span class="s">ratchet&quot;</span>
+
+<span class="k">function</span> <span class="nf">ctx1</span><span class="p">()</span>
+    <span class="kd">local</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">timerfd</span><span class="p">.</span><span class="n">new</span><span class="p">()</span>
+    <span class="n">tfd</span><span class="p">:</span><span class="n">settime</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="kc">true</span> <span class="k">do</span>
+        <span class="kd">local</span> <span class="n">fired</span> <span class="o">=</span> <span class="n">tfd</span><span class="p">:</span><span class="n">read</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">fire!&quot;</span><span class="p">)</span>
+    <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="kd">local</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="k">function</span> <span class="p">()</span>
+    <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">ctx1</span><span class="p">)</span>
+<span class="k">end</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>icgood</em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

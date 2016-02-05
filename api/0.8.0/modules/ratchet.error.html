@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li><strong>ratchet.error</strong></li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.uri.html">ratchet.uri</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.error</code></h1>
+<p>A ratchet.error object is thrown in most cases when ratchet functions error. This object exposes certain information to present to the user or to make programmatic decisions based on. Converting these objects to a string presents human-readable information about the error.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#is">is</a>&nbsp;(error, code)</td>
+<td class="summary">Checks is the code assigned to an error message matches the given code.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#new">new</a>&nbsp;(description, code, func, file, line, syscall, errno, descripion)</td>
+<td class="summary">This function allows manual creation of error objects.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="is"></a><strong>is</strong>&nbsp;(error, code)</dt>
+<dd>
+Checks is the code assigned to an error message matches the given code. This function is also exposed as a method of ratchet.error objects.
+<h3>Parameters</h3>
+<ul>
+<li>
+error: the ratchet.error object to check.
+</li>
+<li>
+code: the code to compare against.
+</li>
+</ul>
+<h3>Return value:</h3>
+true if the error matches the code, false otherwise.
+</dd>
+<dt><a name="new"></a><strong>new</strong>&nbsp;(description, code, func, file, line, syscall, errno, descripion)</dt>
+<dd>
+This function allows manual creation of error objects. Usually it is created automatically by ratchet functions when an error occurs. The names of the parameters to this function are also the indices to access the information on a created ratchet.error object.
+<h3>Parameters</h3>
+<ul>
+<li>
+description:
+</li>
+<li>
+code: a string code that can identify the error message.
+</li>
+<li>
+func: optional string identifying the function throwing the error.
+</li>
+<li>
+file: optional C file where the error was thrown.
+</li>
+<li>
+line: optional C file line number where the error was thrown.
+</li>
+<li>
+syscall: optional string identifying system call causing the error.
+</li>
+<li>
+errno: optional integer identifying the system error code.
+</li>
+<li>
+descripion: human-readable description of the error.
+</li>
+</ul>
+<h3>Return value:</h3>
+a new ratchet.error object.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

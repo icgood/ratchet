@@ -1,0 +1,167 @@
+<html>
+<head>
+<title>ZeroMQ Sockets :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: ZeroMQ Sockets</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.zmqsocket.html">ratchet.zmqsocket API Reference</a></p>
+<p><a name="Creation"></a></p>
+<h2>Creation</h2>
+<p>For applications that need more advanced and fool-proof messaging than
+<a href="/pages/Sockets">regular sockets</a> can provide, <a href="http://www.zeromq.org/">ZeroMQ</a> sockets are available in the
+<code>ratchet.zmqsocket</code> library. This is a relatively generic exposure
+of ZeroMQ sockets, so for more details on how they work please see the ZeroMQ
+website and documentation.</p>
+<p>If ZeroMQ is compiled in and the ratchet library is loaded with a basic
+<code>require "ratchet"</code> or <code>require "ratchet.zmqsocket"</code> then
+a <a href="http://api.zeromq.org/zmq_init.html">ZeroMQ context</a> is created automatically for any and all ZeroMQ sockets
+created, regardless of ratchet object. The context is cleaned up as garbage at
+termination, its existence is hidden from the ratchet library's usage.</p>
+<p>To create a new zmqsocket, use the constructor
+<code>ratchet.zmqsocket.new()</code> with a string representing what type of
+socket wanted. The string should be an upper-case version of the socket types
+listed <a href="http://api.zeromq.org/zmq_socket.html">here</a> after the "ZMQ_" prefix, e.g. "PAIR" (default), or "REQ".</p>
+<div class="ratchet_lua"><pre><span class="nb">require</span> <span class="s2">&quot;</span><span class="s">ratchet.zmqsocket&quot;</span>
+
+<span class="kd">local</span> <span class="n">zsock</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">zmqsocket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">PUB&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="ConnectListen"></a></p>
+<h2>Connect / Listen</h2>
+<p>Once you have a zmqsocket object, it needs to either connect to a server or open
+itself to conections.</p>
+<p>To connect to a server, use <code>zmqsocket:connect()</code> with a string that
+defines the endpoint to connect to, as described in the endpoint argument of the
+<a href="http://api.zeromq.org/zmq_connect.html">zmq_connect(3)</a> man page. The connection actually only happens as needed, so
+this call always returns true.</p>
+<div class="ratchet_lua"><pre><span class="n">zsock1</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">inproc://#1&quot;</span><span class="p">)</span>
+</pre></div>
+<p>To listen for connections, use <code>zmqsocket:bind()</code> with a string that
+defines the endpoint to listen on, as described in the endpoint argument of the
+<a href="http://api.zeromq.org/zmq_bind.html">zmq_bind(3)</a> man page. There is no need to make any other calls,
+<code>bind()</code> on a zmqsocket object does what both <code>bind()</code> and
+<code>listen()</code> do on a <a href="/pages/Sockets">normal socket</a>.</p>
+<div class="ratchet_lua"><pre><span class="n">zsock2</span><span class="p">:</span><span class="n">bind</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">inproc://#1&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Communication"></a></p>
+<h2>Communication</h2>
+<p>Once a zmqsocket has established itself as connecting or listening, it is ready
+to send and receive data. The behavior of sending and receiving is controlled by
+the socket <a href="http://api.zeromq.org/zmq_socket.html">type</a> and should be carefully observed.</p>
+<p><a name="Communication-Send"></a></p>
+<h3>Send</h3>
+<p>To send a message (or message part), make a call to
+<code>zmqsocket:send()</code> with a string of data. This will pause the current
+thread until it can safely send without blocking.</p>
+<div class="ratchet_lua"><pre><span class="n">zsock</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello world&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Communication-Recv"></a></p>
+<h3>Recv</h3>
+<p>To receive a message (or message part), make a call to
+<code>zmqsocket:recv()</code> which will return a string of data. This will
+pause the current thread until data is available to receive.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">zsock</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">hello world&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Communication-Multipart"></a></p>
+<h3>Multi-part Messages</h3>
+<p>Every send and receive in ZeroMQ is actually a multi-part message of one or more
+parts, but the ratchet library defaults to and makes it easiest for one part. To
+send a multi-part message, simply call <code>send()</code> with a second boolean
+true argument for each message part until the final one.</p>
+<div class="ratchet_lua"><pre><span class="n">zsock</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello world&quot;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+<span class="n">zsock</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s"> my name is ratchet&quot;</span><span class="p">)</span>
+</pre></div>
+<p>To receive each message part, simply call <code>recv()</code> as usual, but pay
+attention to the second returned value, which is true if more message parts are
+yet to be <code>recv()</code>'ed. The final message part will have false as the
+second returned value.</p>
+<div class="ratchet_lua"><pre><span class="k">repeat</span>
+    <span class="kd">local</span> <span class="n">datapart</span><span class="p">,</span> <span class="n">more</span> <span class="o">=</span> <span class="n">zsock</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">datapart</span><span class="p">)</span>
+<span class="k">until</span> <span class="ow">not</span> <span class="n">more</span>
+</pre></div>
+<p>Finally, if the division of the message parts is not important, there is a
+convenience method <code>zmqsocket:recv_all()</code> that will receive call
+<code>recv()</code> until no more message parts are available and returns a
+concatenated version of all parts in order.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">zsock</span><span class="p">:</span><span class="n">recv_all</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">hello world my name is ratchet&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Timeouts"></a></p>
+<h2>Timeouts</h2>
+<p>By default, zmqsocket methods that pause the thread will do so indefinitely
+until the the action is taken successfully. This is rarely desirable in the real
+world, as a bad remote host could indefinitely consume valuable server
+resources. With timeouts, unsuccessful calls will unpause the thread after a
+certain number of seconds. To set the timeout for <em>all</em> zmqsocket methods that
+pause, use <code>zmqsocket:set_timeout()</code> with a floating-point number of
+seconds. To get the current timeout setting, use
+<code>zmqsocket:get_timeout()</code>. If you need different timeouts for
+different zmqsocket methods, you must call <code>set_timeout()</code> every time
+it must be changed.</p>
+<div class="ratchet_lua"><pre><span class="n">zsock</span><span class="p">:</span><span class="n">set_timeout</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">zsock</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>   <span class="c1">-- may raise an error after 10 seconds</span>
+</pre></div>
+<p><a name="URIParsing"></a></p>
+<h2>URI Parsing</h2>
+<p>The zmqsocket library provides a <a href="/api/latest/modules/ratchet.zmqsocket.html#prepare_uri">function</a> to parse URI strings containing
+everything you need to know about a ZMQ socket. URIs are expected in the
+following form:</p>
+<ul>
+<li><em>zmq:<strong>TYPE</strong>:<strong>ENDPOINT</strong></em></li>
+</ul>
+<p>The <strong><em>TYPE</em></strong> and <strong><em>ENDPOINT</em></strong> placeholders correspond to the different ZMQ
+<a href="http://api.zeromq.org/zmq_socket.html">socket types</a> and the exact string to pass in to the <code>bind()</code> or
+<code>connect()</code> methods.</p>
+<p>The result is a table with the keys "type" and "endpoint". The "type" key has
+been pre-converted into upper-case, as that is how the constructor expects it.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">zmqsocket</span><span class="p">.</span><span class="n">prepare_uri</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">zmq:pull:tcp://*:1337&quot;</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">zsock</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">zmqsocket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">type</span><span class="p">)</span>
+<span class="n">zsock</span><span class="p">:</span><span class="n">bind</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">endpoint</span><span class="p">)</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

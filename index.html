@@ -1,0 +1,92 @@
+<html>
+<head>
+<title>Index :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Index</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<div class="news-box">
+The latest version of ratchet supports (and requires) Lua 5.2.
+See README for compiling against a custom Lua installation.
+</div>
+<h2>Ratchet</h2>
+<p>The purpose of the ratchet library is to provide in Lua an asynchronous socket
+control mechanism for large numbers of sockets without using OS-level threads
+or losing the ease of synchronous socket programming.</p>
+<ol>
+<li><strong><a href="https://github.com/icgood/ratchet/blob/master/README.md">README</a></strong></li>
+<li><strong><a href="/pages/License">License</a></strong></li>
+<li><strong><a href="https://github.com/icgood/ratchet/downloads">Download</a></strong> [<a href="https://github.com/icgood/ratchet">Repository</a>]</li>
+<li><strong><a href="https://github.com/icgood/ratchet/issues">Bug Reports</a></strong></li>
+<li><strong><a href="/pages/Installation">Installation</a></strong></li>
+<li><strong><a href="/api/latest">Complete API Reference</a></strong> [<a href="/api/">Archive</a>]</li>
+<li><strong><a href="/pages/TOC">Usage Manual</a></strong></li>
+</ol>
+<p>&nbsp;</p>
+<div class="ratchet_lua"><pre><span class="nb">require</span> <span class="s2">&quot;</span><span class="s">ratchet&quot;</span>
+<span class="nb">require</span> <span class="s2">&quot;</span><span class="s">ratchet.http.client&quot;</span>
+
+<span class="k">function</span> <span class="nf">http_query</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">google.com&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+    <span class="n">socket</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span>
+
+    <span class="kd">local</span> <span class="n">client</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">http</span><span class="p">.</span><span class="n">client</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+    <span class="kd">local</span> <span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">headers</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="p">:</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">GET&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">/&quot;</span><span class="p">)</span>
+
+    <span class="nb">assert</span><span class="p">(</span><span class="mi">200</span> <span class="o">==</span> <span class="n">code</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;</span><span class="s">[200] != [%s] (%s)&quot;</span><span class="p">):</span><span class="n">format</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">i</span> <span class="o">..</span> <span class="s2">&quot;</span><span class="s">: Received html data from google.com.&quot;</span><span class="p">)</span>
+<span class="k">end</span>
+
+<span class="kd">local</span> <span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="k">function</span> <span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span> <span class="k">do</span>
+        <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">http_query</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+    <span class="k">end</span>
+<span class="k">end</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

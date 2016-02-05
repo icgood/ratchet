@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.html">ratchet.bus</a>
+</li>
+<li>
+<a href="../modules/ratchet.bus.transaction.html">ratchet.bus.transaction</a>
+</li>
+<li>
+<a href="../modules/ratchet.dns.html">ratchet.dns</a>
+</li>
+<li>
+<a href="../modules/ratchet.error.html">ratchet.error</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.socketpad.html">ratchet.socketpad</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.thread.html">ratchet.thread</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li><strong>ratchet.uri</strong></li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.uri</code></h1>
+<p>This module provides a parser for generic RFC 2396 URI strings. Some built-in schema parsers are included, such as "tcp", "udp", and "unix" which each return ratchet.socket objects. New URIs schemas may be registered.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#parse">parse</a>&nbsp;(uri, ...)</td>
+<td class="summary">Parses a URI string and calls its handler.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#register">register</a>&nbsp;(schema, handler)</td>
+<td class="summary">This function registers a new schema to be handled by the given handler function.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="parse"></a><strong>parse</strong>&nbsp;(uri, ...)</dt>
+<dd>
+Parses a URI string and calls its handler. The handler is passed the rest of the URI after the schema portion and the first ":" character, as well as any additional arguments sent to this function. Any values returned from the handler are passed on the caller of this function.
+<h3>Parameters</h3>
+<ul>
+<li>
+uri: the URI string.
+</li>
+<li>
+...: additional parameters to send to the handler.
+</li>
+</ul>
+<h3>Return value:</h3>
+any values returned by the handler are returned by this function.
+</dd>
+<dt><a name="register"></a><strong>register</strong>&nbsp;(schema, handler)</dt>
+<dd>
+This function registers a new schema to be handled by the given handler function. The schema name can only include alpha-numeric characters and hyphens and must begin with an alpha-numeric character.
+<h3>Parameters</h3>
+<ul>
+<li>
+schema: the schema name.
+</li>
+<li>
+handler: the function to call when parsing a URI of this schema.
+</li>
+</ul>
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

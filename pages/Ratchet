@@ -1,0 +1,249 @@
+<html>
+<head>
+<title>Ratchet Objects :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Ratchet Objects</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.html">ratchet API Reference</a></p>
+<p><a name="Creation"></a></p>
+<h2>Creation</h2>
+<p><a name="Creation-Constructor"></a></p>
+<h3>Constructor</h3>
+<p>Objects are created with the <code>ratchet.new()</code> constructor, which takes
+a single argument. This argument is an entry point function, the first and only
+thread initially attached in the ratchet object. The returned
+<code>ratchet</code> object can be executed using the <code>loop()</code> method,
+or under certain circumstances the <code>loop_once()</code> method.</p>
+<div class="ratchet_lua"><pre><span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="k">function</span> <span class="p">()</span>
+    <span class="c1">-- Attach other threads, do stuff...</span>
+<span class="k">end</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div>
+<p><a name="Creation-Threads"></a></p>
+<h3>About Threads</h3>
+<p>The threads the ratchet library uses are not traditional threads, like you would
+create with the pthread library. They are <a href="http://www.lua.org/pil/9.html">coroutines</a>, meaning only one of
+them will be running at a time. Unlike traditional threads, threads created by
+ratchet will only yield control when they make a call that pauses its execution,
+when they complete normally, or by error. The scheduling done by the ratchet
+library is completely controlled by two things: the order the threads were added
+or unpaused, and the order events are triggered by <a href="http://monkey.org/~provos/libevent/">libevent</a>.</p>
+<p><a name="Creation-Attaching"></a></p>
+<h3>Attaching New Threads</h3>
+<p>New threads are created with the function <code>ratchet.thread.attach()</code>.
+This function can only be called from other threads, with the first thread being
+attached by the <a href="/pages/Ratchet#Creation">constructor</a>. The new thread is not started instantaneously,
+instead, once the current thread yields execution, all new threads are started
+in the order they were attached. The object attached to <code>attach()</code>
+does not have to be a function, it can any object implementing
+<code>__call()</code> in its <a href="http://www.lua.org/manual/5.2/manual.html#2.4">metatable</a>.</p>
+<p>The <code>attach()</code> function returns a Lua thread object that was created.
+This is useful for <code>unpause()</code> and <code>wait_all()</code>, more on
+that in <a href="/pages/Ratchet#Scheduling">Scheduling</a>. The current running Lua thread object can be retrieved
+with <code>ratchet.thread.self()</code>, which is identical to Lua's built-in
+<a href="http://www.lua.org/manual/5.2/manual.html#pdf-coroutine.running"><code>coroutine.running()</code></a>.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="k">function</span> <span class="nf">dostuff</span><span class="p">(</span><span class="o">..</span><span class="p">.)</span>
+    <span class="c1">-- Processing...</span>
+<span class="k">end</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="k">function</span> <span class="p">()</span>
+    <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">dostuff</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">abc&quot;</span><span class="p">)</span>
+<span class="k">end</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div>
+<p><a name="Creation-ThreadSpace"></a></p>
+<h3>Thread-scope Variable Space</h3>
+<p>As an alternative to using globals or passing locals among different functions
+called within threads, there can be a table (or any object, see the API) stored
+in relation to the currently running thread that any function run by that thread
+can easily access. The table is created the first time a thread calls
+<code>ratchet.thread.space()</code> and returned every other time the thread
+calls it. For example:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="k">function</span> <span class="nf">get_secret_sauce</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="s">the secret sauce is: &quot;</span> <span class="o">..</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">space</span><span class="p">().</span><span class="n">sauce</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">thread_func_1</span><span class="p">()</span>
+    <span class="kd">local</span> <span class="n">space</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">space</span><span class="p">()</span>
+    <span class="n">space</span><span class="p">.</span><span class="n">sauce</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">foo&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">get_secret_sauce</span><span class="p">())</span>
+<span class="k">end</span>
+
+<span class="k">function</span> <span class="nf">thread_func_2</span><span class="p">()</span>
+    <span class="kd">local</span> <span class="n">space</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">space</span><span class="p">()</span>
+    <span class="n">space</span><span class="p">.</span><span class="n">sauce</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s">bar&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">get_secret_sauce</span><span class="p">())</span>
+<span class="k">end</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="k">function</span> <span class="p">()</span>
+    <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">thread_func_1</span><span class="p">)</span>
+    <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">thread_func_2</span><span class="p">)</span>
+<span class="k">end</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div>
+<p><a name="Scheduling"></a></p>
+<h2>Scheduling</h2>
+<p><a name="Scheduling-Pause"></a></p>
+<h3>Pause and Unpause</h3>
+<p>A thread can choose to arbitrarily pause itself indefinitely, assuming some
+logic in another thread will unpause it. This may be useful when one thread
+depends on only a portion of another thread's code and it can safely resume
+execution before the other thread fully completes. Pause and unpause also
+allows the paused thread to retrieve information, as the thread that unpauses
+the other can pass arguments to be returned to the other.</p>
+<p>When pausing a thread, you should be sure another thread has a reference to it
+to unpause. You can get this reference from <code>attach</code> or in the
+currently running thread with <code>ratchet.thread.self()</code>. Then, the
+thread calls <code>ratchet.thread.pause()</code> with no arguments. This will
+instantly pause the thread and schedule another. When, at some point, another
+thread calls <code>ratchet.thread.unpause()</code> on the paused thread, the
+paused thread will resume execution on the next main loop iteration. The paused
+thread and the thread unpausing it must be attached to the same
+<code>ratchet</code> object.</p>
+<p>To pass data from the thread that calls <code>unpause()</code> to the paused
+thread, simply provide extra arguments to it. These arguments will be passed, in
+order, as the return values to <code>pause()</code>.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Thread that pauses...</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">self</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">important_data</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">pause</span><span class="p">()</span>
+
+<span class="c1">-- Another thread that unpauses...</span>
+<span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">unpause</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">my_data</span><span class="p">)</span>
+</pre></div>
+<p>If ratchet detects that all threads are waiting for others to unpause them and
+no threads are actually waiting on IO, it will throw a deadlock error.</p>
+<p><a name="Scheduling-BatchWait"></a></p>
+<h3>Batch Waiting</h3>
+<p>Often a thread will need to wait for several other threads to complete before
+it can continue. Perhaps some data needs to be dispersed to several other
+services, it would be best to do them all at once and wait until the last
+one finishes before moving on.</p>
+<p>Similar to pause and unpause, for a thread to wait on others it must have a
+reference to the Lua thread object of every thread it waits on. It then passes
+them all in an array table to <code>ratchet.thread.wait_all()</code>.</p>
+<p>When the last thread in the batch completes, the waiting thread will be resumed
+on the next iteration of the main loop. No return values from any threads will
+be saved.</p>
+<div class="ratchet_lua"><pre><span class="n">children</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="nb">table.insert</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">thread1</span><span class="p">))</span>
+<span class="nb">table.insert</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">thread2</span><span class="p">))</span>
+<span class="nb">table.insert</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">attach</span><span class="p">(</span><span class="n">thread3</span><span class="p">))</span>
+<span class="c1">-- etc...</span>
+<span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">wait_all</span><span class="p">(</span><span class="n">children</span><span class="p">)</span>
+</pre></div>
+<p><a name="Scheduling-BasicTimer"></a></p>
+<h3>Basic Timers</h3>
+<p>A thread may choose to pause for a certain time period, and may not need the
+extra features an <a href="/pages/Timerfd">advanced timer</a>. For this, a thread need not create any
+special objects, it can just call <code>ratchet.thread.timer()</code> with the
+timeout given in seconds (fractions are okay, granularity will depend on the
+system capabilities).</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Pause this thread for 3.5 seconds...</span>
+<span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">timer</span><span class="p">(</span><span class="mf">3.5</span><span class="p">)</span>
+</pre></div>
+<p><a name="Scheduling-Alarms"></a></p>
+<h3>Alarms</h3>
+<p>Say, hypothetically, your application can hold a resource lock for no more than
+60 seconds. You must complete your transaction within the duration of the lock,
+otherwise clean up and report an error.</p>
+<p>A <a href="/api/latest/modules/ratchet.thread.html#alarm">ratchet alarm</a> is similar to the <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/alarm.2.html"><code>alarm()</code></a> system call. The idea
+is, when a given number of seconds have elapsed in a thread, an error is thrown
+to stop the thread.</p>
+<p>Optionally, an arbitrary function will be called prior to the error to perform
+any necessary cleanup. However, this function may <em>NOT</em> pause or call any
+functions that yield. Errors may be thrown inside this function, but the
+debug traceback may be misleading, it will indicate which function in the thread
+was currently executing when the alarm was thrown.</p>
+<div class="ratchet_lua"><pre><span class="k">function</span> <span class="nf">timed_request</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">ratchet</span><span class="p">.</span><span class="n">thread</span><span class="p">.</span><span class="n">alarm</span><span class="p">(</span><span class="mf">60.0</span><span class="p">,</span> <span class="k">function</span> <span class="p">()</span>
+        <span class="n">data</span><span class="p">:</span><span class="n">cleanup</span><span class="p">()</span>
+    <span class="k">end</span><span class="p">)</span>
+
+    <span class="n">data</span><span class="p">:</span><span class="n">request_operation</span><span class="p">(</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">:</span><span class="n">request_operation</span><span class="p">(</span><span class="mi">192</span><span class="p">)</span>
+    <span class="c1">-- etc.</span>
+<span class="k">end</span>
+</pre></div>
+<p>The error thrown by the alarm after the cleanup function is a
+<a href="/api/latest/modules/ratchet.error.html">ratchet error</a> with the code <code>ALARM</code>. Using that code, these errors can be
+handled (or, more likely, ignored) appropriately.</p>
+<p><a name="ErrorTrapping"></a></p>
+<h2>Error Trapping</h2>
+<p>In applications that require a library like ratchet, it is generally not desired
+for an error in one thread to propagate through the entire system. The ratchet
+library throws and propagates errors on most types of failures, under the
+assumption that they will be caught and handled gracefully.</p>
+<p>Errors in the threads themselves will propogate down to the <code>loop()</code> or
+<code>loop_once()</code> calls, so putting those in a <a href="http://www.lua.org/manual/5.2/manual.html#pdf-pcall">pcall</a> is one way to catch them.</p>
+<div class="ratchet_lua"><pre><span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">main_thread</span><span class="p">)</span>
+
+<span class="k">repeat</span>
+    <span class="kd">local</span> <span class="n">successful</span><span class="p">,</span> <span class="n">ret</span> <span class="o">=</span> <span class="nb">pcall</span><span class="p">(</span><span class="n">kernel</span><span class="p">.</span><span class="n">loop_once</span><span class="p">,</span> <span class="n">kernel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">successful</span> <span class="k">then</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Error occurred: &quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">Continuing...&quot;</span><span class="p">)</span>
+    <span class="k">end</span>
+<span class="k">until</span> <span class="n">successful</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ret</span>
+</pre></div>
+<p>However, by the time an error has been caught by <code>pcall()</code>, the Lua stack has
+unwound and no useful traceback information will be available. A better
+alternative is to add an error handler function to <code>ratchet.new()</code>.</p>
+<div class="ratchet_lua"><pre><span class="k">function</span> <span class="nf">error_handler</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">thread</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">debug.traceback</span><span class="p">(</span><span class="n">thread</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="nb">os.exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="c1">-- Or skip this to resume event loop.</span>
+<span class="k">end</span>
+
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">main_thread</span><span class="p">,</span> <span class="n">error_handler</span><span class="p">)</span>
+<span class="n">kernel</span><span class="p">:</span><span class="n">loop</span><span class="p">()</span>
+</pre></div>
+<p>All errors thrown by ratchet will be convertible to a human-readable string. For
+more details about errors thrown and how to catch them more effectively, see the
+<a href="/pages/ErrorHandling">Error Handling</a> page.</p> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

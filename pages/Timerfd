@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>Advanced Timers :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Advanced Timers</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.timerfd.html">ratchet.timerfd API Reference</a></p>
+<p><a name="Creation"></a></p>
+<h2>Creation</h2>
+<p>When an application needs to trigger timers on a regular basis, perhaps to do
+some cleanup every minute or poll for changes, a simple timer could work, but
+has some disadvantages. Specifically, whatever code executes after the timer
+triggers but before its scheduled again takes time. Say you wait 60 seconds,
+then do 10 seconds of processing, then wait another 60 seconds, and so on. It
+would take 7 minutes to do 6 iterations, and may throw the whole system off.
+Or perhaps you'd like to update something every 5 seconds, but the update
+process may take 20-30 seconds, an advanced timer will tell you how many ticks
+of the timer have elapsed since you last acted on it.</p>
+<p>To create a timer, call <code>ratchet.timerfd.new()</code>. As with the
+<a href="http://www.kernel.org/doc/man-pages/online/pages/man2/timerfd_create.2.html">timerfd</a> system calls, the constructor must define whether the timer depends
+on the system clock (as in, if a user changes their system clock, what happens
+to the timer). The default is for the timer to be independent of the system
+clock, but that can be changed by passing "realtime" to the constructor or
+forced by passing "monotonic".</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">timerfd</span><span class="p">.</span><span class="n">new</span><span class="p">()</span>
+</pre></div>
+<p><a name="Functions"></a></p>
+<h2>Arm, Disarm, and Query</h2>
+<p>On creation, the timer is disarmed and will not tick. To arm the timer, pass
+a non-zero floating-point number of seconds to <code>timerfd:settime()</code>.
+This will instantly start the timer in the background, but will not pause the
+current thread. If you pass a non-zero floating-point number as a second
+argument, the timer will not disarm after the first elapsing and will instead
+reset to that many seconds. Passing no arguments (or zero as the first
+argument) will instantly disarm the timer.</p>
+<p>To query the time until the next timer tick, call
+<code>timerfd:gettime()</code>. This will return that value as a
+floating-point number, followed by the interval in seconds that the timer will
+keep ticking.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Arm the timer for 30 seconds from now, and keep resetting to 30 seconds.</span>
+<span class="n">tfd</span><span class="p">:</span><span class="n">settime</span><span class="p">(</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">)</span>
+
+<span class="c1">-- Do some processing...</span>
+
+<span class="kd">local</span> <span class="n">time_left</span> <span class="o">=</span> <span class="n">tfd</span><span class="p">:</span><span class="n">gettime</span><span class="p">()</span>
+</pre></div>
+<p><a name="Monitoring"></a></p>
+<h2>Monitoring</h2>
+<p>While querying the timer may be useful, the true power of advanced timers is in
+the monitoring ability. This allows the current thread to be paused until the
+next tick of the timer, or tell how many times the timer has ticked since the
+monitoring call.</p>
+<p>To monitor an advanced timer, use the <code>timerfd:read()</code> method. Behind
+the scenes, this function actually calls the <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/read.2.html">read()</a> system call, hence the
+name. If the timer has fired since the last call, this call <em>will</em> potentially
+yield control to other threads, but should return near immediately with the
+number of ticks since the last call. Otherwise, this call will wait until the
+next tick of the timer and return 1.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Arm the timer for 5 seconds, and keep resetting to 5 seconds.</span>
+<span class="n">tfd</span><span class="p">:</span><span class="n">settime</span><span class="p">(</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span>
+
+<span class="c1">-- Do 60 seconds of processing...</span>
+
+<span class="kd">local</span> <span class="n">ticks</span> <span class="o">=</span> <span class="n">tfd</span><span class="p">:</span><span class="n">read</span><span class="p">()</span>    <span class="c1">-- would return 12 right away</span>
+<span class="n">tfd</span><span class="p">:</span><span class="n">read</span><span class="p">()</span>    <span class="c1">-- pauses thread until next 5 second tick</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

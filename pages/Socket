@@ -1,0 +1,286 @@
+<html>
+<head>
+<title>Sockets :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Sockets</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.socket.html">ratchet.socket API Reference</a></p>
+<p><a name="Creation"></a></p>
+<h2>Creation</h2>
+<p>Sockets are one of the handier usages of the ratchet library, as one process is
+fully capable of handling <em>many</em> connections as long as functions that normally
+would block the process instead allow other code to run. The socket library in
+ratchet looks and works very similar to a simple Lua binding of the system
+calls, but avoids blocking and instead schedules other threads that are ready to
+go.</p>
+<p>To create a new socket object, you generally use one of the
+<code>prepare_XXX</code> functions (such as <code>prepare_tcp</code>) and pass
+parts of the result into <code>ratchet.socket.new()</code>. You may also have an
+existing file descriptor integer from somewhere else that you want to wrap a
+ratchet socket around, in which case <code>ratchet.socket.from_fd()</code> will
+do the trick.</p>
+<p>For sockets that listen on a port, the <code>socket:accept()</code> method will
+return a brand new socket object for new connections.</p>
+<p>Once a socket object is created, that object claims ownership of the file
+descriptor, which will be closed if <code>socket:close()</code> is called or
+when the object is collected.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+</pre></div>
+<p>&nbsp;</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">get_fd_for_some_socket</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">from_fd</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+</pre></div>
+<p>&nbsp;</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">client_socket</span><span class="p">,</span> <span class="n">from_ip</span> <span class="o">=</span> <span class="n">server_socket</span><span class="p">:</span><span class="n">accept</span><span class="p">()</span>
+</pre></div>
+<p><a name="ConnectListen"></a></p>
+<h2>Connect / Listen</h2>
+<p>Once you have a socket object, unless it was created with
+<code>socket:accept()</code>, it needs to either connect to a server or open
+itself to connections.</p>
+<p>To connect to a server, use <code>socket:connect()</code> with a userdata object
+that contains a <code>struct sockaddr</code> to connect to. Often, this sockaddr
+is obtained from a [DNS resolution][1]. When connecting, the thread will pause
+and wait for success or failure. On failure, <code>connect()</code> returns
+false (or raises an error if the failure was unusual). On success, it returns
+true. A socket can also <code>bind()</code> to a <code>struct sockaddr</code>
+pointing to a local network interface before connecting, which means the
+connection will appear to originate from that network interface on the other end
+of the socket.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">self</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span> <span class="k">then</span>
+    <span class="c1">-- Connection succeeded!</span>
+<span class="k">end</span>
+</pre></div>
+<p>To open a socket for listening, first use <code>socket:bind()</code> with a
+userdata object that contains a <code>struct sockaddr</code> with the interface
+and port to listen on. If the sockaddr was from a [DNS resolution][1] where the
+host was given as an asterisk (<code>*</code>), then the socket will listen on
+all network interfaces. Once bound to a sockaddr, the socket must then call
+<code>socket:listen()</code>, which optionally takes the maximum queue size for
+incoming connections and defaults to SOMAXCONN (see <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/listen.2.html">listen(2)</a>). A listening
+socket cannot call <code>send()</code> or <code>recv()</code>, it may only
+call <code>accept()</code>.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+<span class="n">self</span><span class="p">:</span><span class="n">bind</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span>
+<span class="n">self</span><span class="p">:</span><span class="n">listen</span><span class="p">()</span>
+</pre></div>
+<p><a name="Communication"></a></p>
+<h2>Communication</h2>
+<p>On a socket that ran <code>socket:connect()</code> or a socket created by
+<code>socket:accept()</code>, communication is what makes the socket useful.
+A socket may send or receive data, or shutdown a part of the connection.</p>
+<p><a name="Communication-Send"></a></p>
+<h3>Send</h3>
+<p>To send data across the connection, call <code>socket:send()</code> with a
+string of data. This call will pause the current thread until the connection is
+ready to send and then send the string. A connection is "ready to send" when the
+internal buffers used by Berkeley sockets are available (see EAGAIN in
+<a href="http://www.kernel.org/doc/man-pages/online/pages/man2/send.2.html">send(2)</a>).</p>
+<div class="ratchet_lua"><pre><span class="n">socket</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello world&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Communication-Recv"></a></p>
+<h3>Recv</h3>
+<p>To receive data from across the connection, call <code>socket:recv()</code>.
+This call will pause the current thread until data is available on the
+connection, and will return it.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">hello world&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="Communication-Shutdown"></a></p>
+<h3>Shutdown</h3>
+<p>Sometimes it is useful to shutdown either the send or receive capabilities of
+a socket. This is done with <code>socket:shutdown()</code>, which corresponds
+to the <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/shutdown.2.html">shutdown(2)</a> system call. The arguments to shutdown may be one of
+"read", "write", or "both", with "both" being the default.</p>
+<p>If a socket calls <code>shutdown()</code> with "write", the other end of the
+socket will receive an empty string, usually signalling the socket has been
+closed. However, they can still send data back, and the socket can still call
+<code>recv()</code>. This may be useful for protocols to signal to the other
+end that it is done sending an arbitrary data chunk.</p>
+<div class="ratchet_lua"><pre><span class="c1">-- Client side...</span>
+<span class="n">socket</span><span class="p">:</span><span class="n">shutdown</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">write&quot;</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">goodbye&quot;</span><span class="p">)</span>
+
+<span class="c1">-- Server side...</span>
+<span class="kd">local</span> <span class="n">data</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">recv</span><span class="p">()</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">data</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">socket</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">goodbye&quot;</span><span class="p">)</span>
+</pre></div>
+<p><a name="BufferedCommunication"></a></p>
+<h2>Buffered Communication</h2>
+<p>Once a socket has been connected and is in a stage ready for normal
+communication, a <code>socketpad</code> object can be created to wrap the socket
+in a more usable, buffered manner. To create a <code>socketpad</code> object
+from an existing socket:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">pad</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socketpad</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+</pre></div>
+<p>This object can then be used as described in the following subsections.</p>
+<p><a name="BufferedCommunication-Send"></a></p>
+<h3>Buffered Send</h3>
+<p>Often it is desired to save up data for a socket to send all at once. A protocol
+could implement its own buffering, or a <code>socketpad</code> object can store
+up data to be sent.</p>
+<p>The <code>send()</code> method of a socketpad is identical
+to that of a normal socket if called the same way, but it provides an optional
+parameter to say that there is more data coming before the message should be
+sent across the network. The following example shows two equivalent statements,
+one done with raw sockets and one with buffered socketpad:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">pad</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socketpad</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+
+<span class="c1">-- Sending two lines in one message with socketpad:</span>
+<span class="n">pad</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">line one</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+<span class="n">pad</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">line two</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+<span class="c1">-- Sending two lines in one message with raw socket:</span>
+<span class="n">socket</span><span class="p">:</span><span class="n">send</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">line one</span><span class="se">\r\n</span><span class="s">line two</span><span class="se">\r\n</span><span class="s">&#39;</span><span class="p">)</span>
+</pre></div>
+<p>An example use case for this would be the <a href="http://tools.ietf.org/html/rfc2920">PIPELINING</a> extension to the
+SMTP protocol, where a client tries to send as many pipeline-able commands as
+possible in the same transmission.</p>
+<p><a name="BufferedCommunication-Recv"></a></p>
+<h3>Buffered Recv</h3>
+<p>Socket protocol specifications, whether ASCII or binary, often specify methods
+of reading chunks of data. A binary protocol may declare reading 4 bytes from
+the socket to get the size of incoming chunk of data. An ASCII protocol may say
+a command is defined as everything up-to a CR-LF.</p>
+<p>Passing a number to the <code>recv()</code> method of socketpad will attempt to
+read that many bytes from the network. Here is an example of how that could be
+implemented:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">chunk_size</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">ntoh</span><span class="p">(</span><span class="n">pad</span><span class="p">:</span><span class="n">recv</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+<span class="kd">local</span> <span class="n">chunk</span> <span class="o">=</span> <span class="n">pad</span><span class="p">:</span><span class="n">recv</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">)</span>
+</pre></div>
+<p>Passing a string to the <code>recv()</code> method of socketpad will attempt to
+read from the network until that string is seen. Here is an example of how that
+could be implemented:</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">command</span> <span class="o">=</span> <span class="n">pad</span><span class="p">:</span><span class="n">recv</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;</span><span class="s">QUIT</span><span class="se">\r\n</span><span class="s">&quot;</span> <span class="k">then</span>
+    <span class="n">quit</span><span class="p">()</span>
+<span class="k">end</span>
+</pre></div>
+<p>Either way, receiving by bytes or by string, you may have received more data
+from the network than you asked for. That remaining data will be used in the
+next call to socketpad <code>recv()</code>, or you can glance at with the
+<code>peek()</code> method. With <code>peek()</code>, you can be sure that you
+will not pause the thread or attempt to receive data from the network.</p>
+<p><a name="Encryption"></a></p>
+<h2>Encryption</h2>
+<p>Many important web services allow encryption to protect both sensitive data and
+against interception. As SSL/TLS is the dominant form of encryption for sockets,
+ratchet provides it through <a href="http://www.openssl.org/">OpenSSL</a>. Because most encrypted traffic will
+look similar to, and follow the same protocols of, unencrypted traffic, calls to
+<code>send()</code>/<code>recv()</code> after encryption is initiated look and
+function exactly the same as unencrypted ones. That way, encryption can be added
+or enabled without changing or adding special versions of a protocol's
+communication.</p>
+<p>To initiate encryption on a socket, use the <code>socket:encrypt()</code>
+method. This method requires you give it a <code>ratchet.ssl</code> object. The
+returned session object from this method may be worth hanging on to, for example
+to initiate a handshake with the remote host to verify its authenticity. See the
+API<sup><a href="/api/latest/modules/ratchet.ssl.html">1</a> <a href="/api/latest/modules/ratchet.ssl.session.html">2</a></sup> and <a href="/pages/Encryption">manual</a> pages for details</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">ssl</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">ssl</span><span class="p">.</span><span class="n">new</span><span class="p">()</span>
+<span class="n">ssl</span><span class="p">:</span><span class="n">load_cas</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">/path/to/CAs&quot;</span><span class="p">)</span>
+
+<span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">ratchet.icgood.net&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+<span class="n">socket</span><span class="p">:</span><span class="n">connect</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span>
+
+<span class="c1">-- Do any unencrypted send()/recv()&#39;s.</span>
+
+<span class="kd">local</span> <span class="n">enc</span> <span class="o">=</span> <span class="n">socket</span><span class="p">:</span><span class="n">encrypt</span><span class="p">(</span><span class="n">ssl</span><span class="p">)</span>
+<span class="n">enc</span><span class="p">:</span><span class="n">client_handshake</span><span class="p">()</span>
+
+<span class="kd">local</span> <span class="n">got_cert</span><span class="p">,</span> <span class="n">verified</span><span class="p">,</span> <span class="n">host_matched</span> <span class="o">=</span> <span class="n">enc</span><span class="p">:</span><span class="n">verify_certificate</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">host</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">got_cert</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">Remote peer did not provide a certificate.&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">verified</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">Remote peer certificate was not verified by trusted CAs.&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="n">host_matched</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">Remote peer certificate CN did not match host.&quot;</span><span class="p">)</span>
+
+<span class="c1">-- Further send()/recv()&#39;s will be encrypted.</span>
+</pre></div>
+<p><a name="Timeouts"></a></p>
+<h2>Timeouts</h2>
+<p>By default, socket methods that pause the thread will do so indefinitely until
+the the action is taken successfully. This is rarely desirable in the real
+world, as a bad remote host could indefinitely consume valuable server
+resources. With timeouts, unsuccessful calls will unpause the thread after a
+certain number of seconds. To set the timeout for <em>all</em> socket methods that
+pause, use <code>socket:set_timeout()</code> with a floating-point number of
+seconds. To get the current timeout setting, use
+<code>socket:get_timeout()</code>. If you need different timeouts for different
+socket methods, you must call <code>set_timeout()</code> every time it must be
+changed.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">rec</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">prepare_tcp</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">website.is.inaccessible.com&quot;</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+<span class="kd">local</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">socket</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="n">family</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">socktype</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">protocol</span><span class="p">)</span>
+<span class="n">socket</span><span class="p">:</span><span class="n">set_timeout</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="nb">pcall</span><span class="p">(</span><span class="n">socket</span><span class="p">.</span><span class="n">connect</span><span class="p">,</span> <span class="n">socket</span><span class="p">,</span> <span class="n">rec</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span> <span class="k">then</span>
+    <span class="c1">-- Connected refused or 10 second timeout has elapsed.</span>
+<span class="k">end</span>
+</pre></div>
+<p><a name="Options"></a></p>
+<h2>Socket Options</h2>
+<p>POSIX sockets provide certain socket options via the <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/getsockopt.2.html">getsockopt(2)</a> and
+<a href="http://www.kernel.org/doc/man-pages/online/pages/man2/getsockopt.2.html">setsockopt(2)</a> system calls. In the ratchet library, these options are
+exposted for access and change as simple object properties. That means to
+find out, for example, the size of the socket's send buffer, you can simply
+index the socket object on "SO_SNDBUF" and the value is retrieved real-time.
+To change it, you assign a new value to the "SO_SNDBUF" index. Available
+socket options are system-specific, a list of possibilities is found on the
+<a href="http://www.kernel.org/doc/man-pages/online/pages/man7/socket.7.html">socket(7)</a> man page.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="k">function</span> <span class="nf">get_socket_send_size</span><span class="p">(</span><span class="n">socket</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">socket</span><span class="p">:</span><span class="n">getsockopt</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">SO_SNDBUF&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="k">end</span>
+
+<span class="kd">local</span> <span class="k">function</span> <span class="nf">set_socket_send_size</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">new_size</span><span class="p">)</span>
+   <span class="n">socket</span><span class="p">:</span><span class="n">setsockopt</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">SO_SNDBUF&quot;</span><span class="p">,</span> <span class="n">new_size</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>

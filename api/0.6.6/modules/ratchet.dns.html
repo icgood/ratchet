@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8"/>
+<title>Reference</title>
+<link rel="stylesheet" href="../luadoc.css" type="text/css"/>
+ 
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left top-bar-text"><a href="/">Home</a></div>
+<div class="top-bar-middle top-bar-text">Ratchet Library :: API Reference</div>
+<div class="top-bar-right top-bar-text">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div id="container">
+<div id="product">
+<div id="product_logo"></div>
+<div id="product_name"><big><b></b></big></div>
+<div id="product_description"></div>
+</div>  
+<div id="main">
+<div id="navigation">
+<h1>LuaDoc</h1>
+<ul>
+<li><a href="../index.html">Index</a></li>
+</ul>
+ 
+<h1>Modules</h1>
+<ul>
+<li>
+<a href="../modules/ratchet.html">ratchet</a>
+</li>
+<li><strong>ratchet.dns</strong></li>
+<li>
+<a href="../modules/ratchet.http.client.html">ratchet.http.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.http.server.html">ratchet.http.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.client.html">ratchet.smtp.client</a>
+</li>
+<li>
+<a href="../modules/ratchet.smtp.server.html">ratchet.smtp.server</a>
+</li>
+<li>
+<a href="../modules/ratchet.socket.html">ratchet.socket</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.html">ratchet.ssl</a>
+</li>
+<li>
+<a href="../modules/ratchet.ssl.session.html">ratchet.ssl.session</a>
+</li>
+<li>
+<a href="../modules/ratchet.timerfd.html">ratchet.timerfd</a>
+</li>
+<li>
+<a href="../modules/ratchet.zmqsocket.html">ratchet.zmqsocket</a>
+</li>
+</ul>
+ 
+</div> 
+<div id="content">
+<h1>Module <code>ratchet.dns</code></h1>
+<p>Provides a system for querying DNS for information such as A/AAAA, PTR, MX, and TXT records. While there is a class-based system internally, that API is currently hidden by namespace functions that call everything necessary.</p>
+<h2>Functions</h2>
+<table class="function_list">
+<tr>
+<td class="name" nowrap><a href="#query">query</a>&nbsp;(data, type)</td>
+<td class="summary">Queries for results for one type of query for the given data.</td>
+</tr>
+<tr>
+<td class="name" nowrap><a href="#query_all">query_all</a>&nbsp;(data, types)</td>
+<td class="summary">Queries for results for many types of query for the given data.</td>
+</tr>
+</table>
+<br/>
+<br/>
+<h2><a name="functions"></a>Functions</h2>
+<dl class="function">
+<dt><a name="query"></a><strong>query</strong>&nbsp;(data, type)</dt>
+<dd>
+Queries for results for one type of query for the given data. Until the results come in, this function will pause the calling thread. The return value is a table whose contents are defined by the type of query. See manual for complete details.
+<h3>Parameters</h3>
+<ul>
+<li>
+data: The hostname, IP, or special-case to query against.
+</li>
+<li>
+type: The type of query, e.g. "ipv4" or "mx".
+</li>
+</ul>
+<h3>Return value:</h3>
+Table with results, or nil followed by an error message.
+</dd>
+<dt><a name="query_all"></a><strong>query_all</strong>&nbsp;(data, types)</dt>
+<dd>
+Queries for results for many types of query for the given data. Until all results come in, this function will pause the calling thread. This call attempts to perform these lookups in parallel, with a file descriptor for each query type. The return value is a table keyed on either the query types or the query type suffixed with "_error". The values will either be a table of results or an error message, respectively. See manual for complete details.
+<h3>Parameters</h3>
+<ul>
+<li>
+data: The hostname, IP, or special-case to query against.
+</li>
+<li>
+types: Table with types of queries, e.g. "ipv4" or "mx".
+</li>
+</ul>
+<h3>Return value:</h3>
+Table with results, or nil followed by an error message.
+</dd>
+</dl>
+</div>  
+</div>  
+<div id="about">
+</div>  
+</div>  
+</body>
+</html>

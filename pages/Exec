@@ -1,0 +1,127 @@
+<html>
+<head>
+<title>Command Execution :: Ratchet Lua Library</title>
+<link type="text/css" rel="stylesheet" href="/css/ratchet_lua.css"/>
+<link type="text/css" rel="stylesheet" href="/css/main.css"/>
+</head>
+<body>
+<div class="floating-top-bar">
+<div class="top-bar-left"><a href="/">Home</a></div>
+<div class="top-bar-middle">Ratchet Library :: Command Execution</div>
+<div class="top-bar-right">
+<a href="/api/latest">API</a>
+&nbsp;<b>&middot;</b>&nbsp;
+<a href="/pages/TOC">Manual</a>
+</div>
+</div>
+<div class="content">
+<table class="content-table" align=left>
+<tr>
+<td width=150> </td>
+<td>
+<p><a href="/api/latest/modules/ratchet.exec.html">ratchet.exec API Reference</a></p>
+<p><a name="Creation"></a></p>
+<h2>Creation</h2>
+<p>Creating a new <code>ratchet.exec</code> object is the first step towards running a
+command, however it should be noted that creating the object does not actually
+start the new process.</p>
+<p>The argument to <code>ratchet.exec.new()</code> is a table array of arguments to the
+command. This includes the initial command name (known in C as argv[0]). The
+first item in the table array can be a full-path filename or a command from
+the system <code>$PATH</code>.</p>
+<p>To start execution of the process, use the object's <code>start()</code> method, which
+takes no extra parameters and returns nothing. Behind the scenes, this method
+will <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/fork.2.html"><code>fork()</code></a> the process and call <a href="http://www.kernel.org/doc/man-pages/online/pages/man3/exec.3.html"><code>execvp()</code></a>.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">process</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">exec</span><span class="p">.</span><span class="n">new</span><span class="p">({</span><span class="s2">&quot;</span><span class="s">echo&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">world&quot;</span><span class="p">})</span>
+<span class="n">process</span><span class="p">:</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+<p><a name="StdIO"></a></p>
+<h2>Standard IO</h2>
+<p>Once the process is started, three new methods are available to it: <code>stdin()</code>,
+<code>stdout()</code>, and <code>stderr()</code>. These methods return file-like objects whose methods
+will work nicely within ratchet threads. All three have a method <code>close()</code> which
+will close the underlying file descriptor, which is especially useful for the
+<code>stdin()</code> object.</p>
+<p>While not initially intuitive, the <code>stdin()</code> object allows writing and the
+<code>stdout()</code> and <code>stderr()</code> objects allow reading. Writing data to an <code>stdin()</code>
+object will cause that data to be readable in the process's standard input
+stream. Reading from <code>stdout()</code> or <code>stderr()</code> will get data that the process
+wrote to either stream.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">exec</span><span class="p">.</span><span class="n">new</span><span class="p">({</span><span class="s2">&quot;</span><span class="s">echo&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">hello&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">world&quot;</span><span class="p">})</span>
+<span class="n">p</span><span class="p">:</span><span class="n">start</span><span class="p">()</span>
+<span class="n">p</span><span class="p">:</span><span class="n">stdin</span><span class="p">():</span><span class="n">close</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">line</span> <span class="o">=</span> <span class="n">p</span><span class="p">:</span><span class="n">stdout</span><span class="p">():</span><span class="n">read</span><span class="p">()</span>
+<span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">:</span><span class="n">gsub</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">%</span><span class="se">\r</span><span class="s">?%</span><span class="se">\n</span><span class="s">$&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">hello world&quot;</span> <span class="o">==</span> <span class="n">line</span><span class="p">)</span>
+</pre></div>
+<p>&nbsp;</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">exec</span><span class="p">.</span><span class="n">new</span><span class="p">({</span><span class="s2">&quot;</span><span class="s">cat&quot;</span><span class="p">})</span>
+<span class="n">p</span><span class="p">:</span><span class="n">start</span><span class="p">()</span>
+<span class="n">p</span><span class="p">:</span><span class="n">stdin</span><span class="p">():</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">p</span><span class="p">:</span><span class="n">stdin</span><span class="p">():</span><span class="n">close</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">line</span> <span class="o">=</span> <span class="n">p</span><span class="p">:</span><span class="n">stdout</span><span class="p">():</span><span class="n">read</span><span class="p">()</span>
+<span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">:</span><span class="n">gsub</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">%</span><span class="se">\r</span><span class="s">?%</span><span class="se">\n</span><span class="s">$&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">test&quot;</span> <span class="o">==</span> <span class="n">line</span><span class="p">)</span>
+</pre></div>
+<p>All process IO will pause the current ratchet thread until the request can
+be carried out.</p>
+<p><a name="Wait"></a></p>
+<h2>Waiting for Completion</h2>
+<p>Once you are done with IO in a process, you <em>must</em> call the <code>wait()</code> method to
+prevent the process from going zombie, see the <a href="http://www.kernel.org/doc/man-pages/online/pages/man2/wait.2.html">wait manpage</a> for details.
+This method will return an exit status (like what <a href="http://www.lua.org/manual/5.2/manual.html#pdf-os.exit"><code>os.exit()</code></a> provides),
+followed by true or false depending on if the process ended in normal
+circumstances.</p>
+<div class="ratchet_lua"><pre><span class="nb">assert</span><span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">process</span><span class="p">:</span><span class="n">wait</span><span class="p">(),</span> <span class="s2">&quot;</span><span class="s">The process exited unsuccessfully!&quot;</span><span class="p">)</span>
+</pre></div>
+<p>The <code>wait()</code> method will pause the current ratchet thread until the process
+exits. Keep in mind that some processes stream from <code>stdin()</code> and will not
+end until that stream is closed.</p>
+<p><a name="Communicate"></a></p>
+<h2>Communicate Method</h2>
+<p>Instead of doing everything manually, there is a convenience function
+<code>communicate()</code> which is easier to use in most cases.</p>
+<p>The first thing it does it call <code>start()</code> to begin the command process.
+It immediately closes the process's standard input stream, after sending it any
+optional data passed as <code>communicate()</code>'s argument.</p>
+<p>It then waits for the process's standard output and error streams to close,
+concatenating any data received on them into the first two returned values.
+Once both streams have closed, it calls <code>wait()</code> to close the process and
+returns the exit code as the third returned value.</p>
+<div class="ratchet_lua"><pre><span class="kd">local</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ratchet</span><span class="p">.</span><span class="n">exec</span><span class="p">.</span><span class="n">new</span><span class="p">({</span><span class="s2">&quot;</span><span class="s">cat&quot;</span><span class="p">})</span>
+<span class="kd">local</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="n">status</span> <span class="o">=</span> <span class="n">p</span><span class="p">:</span><span class="n">communicate</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">testing&quot;</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">testing&quot;</span> <span class="o">==</span> <span class="n">out</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">&quot;</span> <span class="o">==</span> <span class="n">err</span><span class="p">)</span>
+<span class="nb">assert</span><span class="p">(</span><span class="mi">0</span> <span class="o">==</span> <span class="n">status</span><span class="p">)</span>
+</pre></div> </td>
+</tr>
+<tr>
+<td> </td>
+<td colspan=2 align="center"><br/><br/>
+<hr style="border: none; height:1px; color: black; background-color: black" width=200 />
+<table cellspacing=0 cellpadding=0>
+<tr>
+<td align="right">
+<font size=1>Last modified:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>Sun, 17 Aug 2014 09:32:32 -0400</em></font>
+</td>
+</tr>
+<tr>
+<td align="right">
+<font size=1>Author:&nbsp;</font>
+</td>
+<td align="left">
+<font size=1><em>
+<a href="mailto:icgood@gmail.com">
+ian.good</a></em></font>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</div>
+</body>
+</html>
